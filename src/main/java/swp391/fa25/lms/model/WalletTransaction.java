@@ -1,0 +1,39 @@
+package swp391.fa25.lms.model;
+
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "Wallet_Transaction")
+public class WalletTransaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "transaction_id")
+    private Long transactionId;
+
+    @ManyToOne
+    @JoinColumn(name = "wallet_id", nullable = false)
+    private Wallet wallet;
+
+    @Enumerated(EnumType.STRING)
+    private TransactionType transactionType;
+    public enum TransactionType { DEPOSIT, BUY, RENEW, WITHDRAW }
+
+    @Enumerated(EnumType.STRING)
+    private TransactionStatus status;
+    public enum TransactionStatus { PENDING, SUCCESS, FAILED }
+
+    @Column(nullable = false, precision = 18, scale = 2)
+    private BigDecimal amount;
+
+    @OneToMany(mappedBy = "transaction")
+    private List<CustomerOrder> customerOrders;
+
+    @OneToMany(mappedBy = "transaction")
+    private List<LicenseRenewLog> licenseRenewLogs;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+}
