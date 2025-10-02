@@ -1,6 +1,7 @@
 package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,12 +13,16 @@ public class Account {
     @Column(name = "account_id")
     private Long accountId;
 
+    @NotBlank(message = "Email cannot be blank")
+    @Email(message = "Invalid email format")
     @Column(unique = true, nullable = false)
     private String email;
 
+    @NotBlank(message = "Password cannot be blank")
     private String password;
-    private String fullName;
 
+    @NotBlank(message = "Full name cannot be blank")
+    private String fullName;
 
     @Enumerated(EnumType.STRING)
     private AccountStatus status;
@@ -27,6 +32,8 @@ public class Account {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @Pattern(regexp = "0\\d{7}", message = "Phone must have 8 digits starting with 0")
     private String phone;
     private String address;
 
