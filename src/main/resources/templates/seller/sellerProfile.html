@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Seller Profile</title>
+</head>
+<body>
+<h1>Seller Dashboard</h1>
+
+<div>
+    <p><strong>Full Name:</strong> <span th:text="${account.fullName}"></span></p>
+    <p><strong>Email:</strong> <span th:text="${account.email}"></span></p>
+    <p><strong>Store Address:</strong> <span th:text="${account.address}"></span></p>
+    <p><strong>Phone:</strong> <span th:text="${account.phone}"></span></p>
+</div>
+
+<a href="/seller/products">Manage Products</a> |
+<a href="/">Back</a>
+</body>
+</html>
