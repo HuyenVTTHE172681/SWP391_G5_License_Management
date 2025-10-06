@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Admin • Account detail</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 24px auto; }
+        dt { font-weight: 600; }
+        dd { margin: 0 0 10px 0; }
+    </style>
+</head>
+<body>
+<p><a th:href="@{/admin/accounts}">← Back to list</a></p>
+<h2>Account detail</h2>
+
+<dl>
+    <dt>ID</dt>
+    <dd th:text="${acc.accountId}">1</dd>
+
+    <dt>Email</dt>
+    <dd th:text="${acc.email}">email@example.com</dd>
+
+    <dt>Full name</dt>
+    <dd th:text="${acc.fullName}">Name</dd>
+
+    <dt>Phone</dt>
+    <dd th:text="${acc.phone}">N/A</dd>
+
+    <dt>Address</dt>
+    <dd th:text="${acc.address}">N/A</dd>
+
+    <dt>Role</dt>
+    <dd>
+        <span th:if="${acc.role != null}" th:text="${acc.role.roleName}">ROLE</span>
+        <span th:if="${acc.role == null}">N/A</span>
+    </dd>
+
+    <dt>Status</dt>
+    <dd th:text="${acc.status}">ACTIVE</dd>
+
+    <dt>Created</dt>
+    <dd th:text="${#temporals.format(acc.createdAt, 'yyyy-MM-dd HH:mm')}">-</dd>
+
+    <dt>Updated</dt>
+    <dd th:text="${#temporals.format(acc.updatedAt, 'yyyy-MM-dd HH:mm')}">-</dd>
+</dl>
+</body>
+</html>
