@@ -2,6 +2,8 @@ package swp391.fa25.lms.controller.auth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,6 +18,8 @@ import java.util.Map;
 
 @Controller
 public class WebAuthController {
+    public static final Logger logger = LoggerFactory.getLogger(WebAuthController.class);
+
     @Autowired
     private AccountService accountService;
 
@@ -92,6 +96,62 @@ public class WebAuthController {
         return "public/verify-result";
     }
 
+    // Hien thi form login
+    @GetMapping("/login")
+    public String showLoginForm(Model model) {
+        if (!model.containsAttribute("email")) {
+            model.addAttribute("email", "");
+        }
+        return "public/login";
+    }
+
+    @PostMapping("/login")
+    public String doLogin(@RequestParam String email,
+                          @RequestParam String password,
+                          HttpServletRequest request,
+                          RedirectAttributes redirectAttributes) {
+        logger.info("Login attempt for email={}", email);
+        try {
+            // Check -> trả về Account
+            Account account = accountService.loginForWeb(email, password);
+
+            // Hiển thị password phiên bản "masked".
+            request.getSession().setAttribute("loggedInAccount", account);
+            request.getSession().setAttribute("maskedPassword", "********");
+
+            // Redirect theo role
+            String redirect;
+            if (account.getRole() != null && account.getRole().getRoleName() != null) {
+                switch (account.getRole().getRoleName()) {
+                    case CUSTOMER:
+                        redirect = "redirect:/home";
+                        break;
+                    case SELLER:
+                        redirect = "redirect:/seller/dashboard";
+                        break;
+                    case MOD:
+                        redirect = "redirect:/mod/dashboard";
+                        break;
+                    default:
+                        redirect = "redirect:/home";
+                }
+            } else {
+                redirect = "redirect:/home";
+            }
+
+            logger.info("Login success for email={}, redirect={}", email, redirect);
+            return redirect;
+
+        } catch (RuntimeException ex) {
+            // Gửi message về form login (sử dụng flash để giữ message qua redirect)
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "danger");
+            redirectAttributes.addFlashAttribute("alertMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("email", email);
+            logger.warn("Login failed for email={} : {}", email, ex.getMessage());
+            return "redirect:/login";
+        }
+    }
 
 
 }
