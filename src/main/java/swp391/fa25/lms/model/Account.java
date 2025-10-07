@@ -13,15 +13,17 @@ public class Account {
     @Column(name = "account_id")
     private Long accountId;
 
-    @NotBlank(message = "Email cannot be blank")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Định dạng email không hợp lệ")
     @Column(unique = true, nullable = false)
     private String email;
 
-    @NotBlank(message = "Password cannot be blank")
+    @NotBlank(message = "Mật khẩu không được để trống")
     private String password;
 
-    @NotBlank(message = "Full name cannot be blank")
+    @NotBlank(message = "Họ và tên không được để trống")
+    @Size(min = 10, max = 20, message = "Họ và tên đầy đủ phải từ 10 đến 20 ký tự")
+    @Column(name = "fullName", columnDefinition = "NVARCHAR(100)")
     private String fullName;
 
     @Enumerated(EnumType.STRING)
@@ -33,7 +35,7 @@ public class Account {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    @Pattern(regexp = "0\\d{7}", message = "Phone must have 8 digits starting with 0")
+    @Pattern(regexp = "0\\d{9}", message = "Số điện thoại phải có 9 chữ số bắt đầu bằng số 0")
     private String phone;
     private String address;
 
