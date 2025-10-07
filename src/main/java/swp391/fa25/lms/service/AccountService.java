@@ -124,10 +124,6 @@ public class AccountService {
         return account;
     }
 
-    public Account getAccountByToken(String token) {
-        return accountRepo.findByVerificationToken(token).orElse(null);
-    }
-
     public Map<String, String> login(String email, String password) {
         Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email not found"));
@@ -169,13 +165,6 @@ public class AccountService {
         }
 
         return account;
-    }
-
-
-    // Lay account theo email
-    public Account getAccountByEmail(String email) {
-        return accountRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Account not found with email: " + email));
     }
 
 
