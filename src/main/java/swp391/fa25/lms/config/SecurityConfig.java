@@ -28,6 +28,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
                                 "/register",
                                 "/verify-email/**",
                                 "/login",
@@ -45,18 +46,6 @@ public class SecurityConfig {
                 );
 
         return http.build();
-    }
-
-    @Bean
-    public AuthenticationEntryPoint authenticationEntryPoint() {
-        return (request, response, authException) ->
-                writeJsonError(response, "Unauthorized", HttpServletResponse.SC_UNAUTHORIZED);
-    }
-
-    @Bean
-    public AccessDeniedHandler accessDeniedHandler() {
-        return (request, response, accessDeniedException) ->
-                writeJsonError(response, "Forbidden", HttpServletResponse.SC_FORBIDDEN);
     }
 
     private void writeJsonError(HttpServletResponse response, String message, int status) throws IOException {

@@ -19,7 +19,7 @@ public class HomePageController {
     @GetMapping("/home")
     public String showHomePage(HttpServletRequest request, Model model) {
         Account account = (Account) request.getSession().getAttribute("loggedInAccount");
-        if (account == null) return "redirect:/login";
+//        if (account == null) return "redirect:/login";
         model.addAttribute("account", account);
         model.addAttribute("maskedPassword", request.getSession().getAttribute("maskedPassword"));
         return "public/home";
