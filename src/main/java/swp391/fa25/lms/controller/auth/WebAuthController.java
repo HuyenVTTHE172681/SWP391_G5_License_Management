@@ -25,48 +25,46 @@ public class WebAuthController {
 
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
-        model.addAttribute("account", new Account());
+        if (!model.containsAttribute("account")) {
+            model.addAttribute("account", new Account());
+        }
         return "public/register";
     }
 
     @PostMapping("/register")
-    public String register(@Valid @ModelAttribute Account account,
+    public String register(@Valid @ModelAttribute("account") Account account,
                            BindingResult result,
-                           String confirmPassword,
+                           @RequestParam("confirmPassword") String confirmPassword,
                            RedirectAttributes redirectAttributes,
                            Model model) {
+        // Check password confirmation
+        if (!account.getPassword().equals(confirmPassword)) {
+            result.rejectValue("password", "error.password", "Mật khẩu không khớp.");
+        }
+
+        // Check lỗi validation từ model
         if (result.hasErrors()) {
             model.addAttribute("showAlert", true);
             model.addAttribute("alertType", "danger");
-            model.addAttribute("alertMessage", "Please correct the errors below.");
-            return "public/register";
-        }
-
-        // Check password confirmation
-        if (!account.getPassword().equals(confirmPassword)) {
-            result.rejectValue("password", "error.confirmPassword", "Passwords do not match.");
-            model.addAttribute("showAlert", true);
-            model.addAttribute("alertType", "danger");
-            model.addAttribute("alertMessage", "Passwords do not match.");
+            model.addAttribute("alertMessage", "Vui lòng sửa các lỗi bên dưới và thử lại.");
             return "public/register";
         }
 
         // Additional client-side validation for phone (since model only has pattern, not notBlank)
         if (account.getPhone() == null || account.getPhone().trim().isEmpty()) {
-            result.rejectValue("phone", "error.phone", "Phone number is required.");
+            result.rejectValue("phone", "error.phone", "Bắt buộc phải nhập số điện thoại");
             model.addAttribute("showAlert", true);
             model.addAttribute("alertType", "danger");
-            model.addAttribute("alertMessage", "Phone number is required.");
+            model.addAttribute("alertMessage", "Bắt buộc phải nhập số điện thoại.");
             return "public/register";
         }
 
         try {
             accountService.registerAccount(account);
-
             //  Gán thông báo
             model.addAttribute("showAlert", true);
             model.addAttribute("alertType", "success");
-            model.addAttribute("alertMessage", "Registration successful! Please check your email to verify your account.");
+            model.addAttribute("alertMessage", "Đăng ký thành công! Vui lòng kiểm tra email để xác minh tài khoản của bạn.");
 
             // Reset account trống
             model.addAttribute("account", new Account());
@@ -86,7 +84,7 @@ public class WebAuthController {
             Account account = accountService.verifyAccount(token);
 
             model.addAttribute("verified", true);
-            model.addAttribute("message", "Email verification successful! You can now log in.");
+            model.addAttribute("message", "Xác minh email thành công! Bây giờ bạn có thể đăng nhập.");
             model.addAttribute("redirectUrl", "/login");
 
         } catch (RuntimeException e) {
@@ -116,10 +114,6 @@ public class WebAuthController {
         try {
             // Check -> trả về Account
             Account account = accountService.loginForWeb(email, password);
-            // Tạo Authentication object cho SecurityContext
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(account, null, List.of());
-            SecurityContextHolder.getContext().setAuthentication(authToken);
 
             // Hiển thị password phiên bản "masked".
             request.getSession().setAttribute("loggedInAccount", account);

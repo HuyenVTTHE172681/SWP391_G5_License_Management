@@ -58,77 +58,72 @@
 <div class="container d-flex align-items-center justify-content-center vh-100">
     <div class="col-md-6 col-lg-5">
         <div class="card p-4">
-            <h3 class="text-center mb-4 fw-bold">Sign Up</h3>
+            <h3 class="text-center mb-4 fw-bold">Đăng ký tài khoản</h3>
 
-            <p th:if="${showAlert}" th:text="${alertMessage}" class="text-success fw-semibold text-center"></p>
+            <p th:if="${showAlert}" th:text="${alertMessage}"
+               th:classappend="${alertType == 'danger'} ? 'text-danger' : 'text-success'"
+               class="fw-semibold text-center"></p>
 
-            <form th:action="@{/register}" th:object="${account}" method="post" >
-                <!-- Full Name -->
+            <form th:action="@{/register}" th:object="${account}" method="post" id="registerForm">
+
+                <!-- Họ và tên -->
                 <div class="mb-3">
-                    <label for="fullName" class="form-label">Full Name</label>
-                    <input type="text" th:field="*{fullName}" class="form-control" id="fullName" required>
-                    <div class="text-danger" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                    <label for="fullName" class="form-label">Họ và tên</label>
+                    <input type="text" th:field="*{fullName}" class="form-control" id="fullName">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
                 </div>
 
-                <!-- Phone -->
+                <!-- Số điện thoại -->
                 <div class="mb-3">
-                    <label for="phone" class="form-label">Phone</label>
-                    <input type="text" th:field="*{phone}" class="form-control" id="phone" required>
-                    <div class="text-danger" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+                    <label for="phone" class="form-label">Số điện thoại</label>
+                    <input type="text" th:field="*{phone}" class="form-control" id="phone">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
                 </div>
 
                 <!-- Email -->
                 <div class="mb-3">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" th:field="*{email}" class="form-control" id="email" required>
-                    <div class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" th:field="*{email}" class="form-control" id="email">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
                 </div>
 
-                <!-- Password -->
+                <!-- Mật khẩu -->
                 <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-
+                    <label for="password" class="form-label">Mật khẩu</label>
                     <div class="input-group">
-                        <input id="password" type="password"
-                               th:field="*{password}"
-                               class="form-control"
-                               placeholder="8+ Characters required" required>
-
-                        <!-- icon ở đây là button type="button" để không submit form -->
-                        <button class="btn btn-outline-secondary" type="button"
-                                aria-label="Toggle password visibility"
-                                onclick="togglePassword('password', this)">
+                        <input id="password" type="password" th:field="*{password}" class="form-control">
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password', this)">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
-
                     <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 </div>
 
-                <!-- Confirm Password -->
-                <div class="mb-6">
-                    <label for="confirmPassword" class="form-label">Confirm Password</label>
-
+                <!-- Xác nhận mật khẩu -->
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">Xác nhận mật khẩu</label>
                     <div class="input-group">
-                        <input id="confirmPassword" name="confirmPassword" type="password"
-                               class="form-control" placeholder="Re-enter your password" required>
+                        <input id="confirmPassword" name="confirmPassword" type="password" class="form-control">
                         <button class="btn btn-outline-secondary" type="button"
                                 onclick="togglePassword('confirmPassword', this)">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
+                    <!-- lỗi xác nhận mật khẩu -->
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password') and alertMessage=='Mật khẩu không khớp.'}"
+                         th:text="'Mật khẩu không khớp.'"></div>
                 </div>
 
                 <!-- Button -->
                 <div class="d-grid mt-4">
-                    <button type="submit" class="btn btn-dark btn-custom">Sign Up</button>
+                    <button type="submit" class="btn btn-dark btn-custom">Đăng ký</button>
                 </div>
             </form>
 
             <!-- Sign In link -->
             <div class="text-center mt-3">
-                <small>Already have an account?
-                    <a th:href="@{/login}" class="text-decoration-none">Sign In here</a>
+                <small>Bạn đã có tài khoản?
+                    <a th:href="@{/login}" class="text-decoration-none">Đăng nhập ở đây</a>
                 </small>
             </div>
         </div>
@@ -155,23 +150,25 @@
         }
     }
 
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputs = document.querySelectorAll('#registerForm input');
 
-    // Client-side validation for better UX (optional, server-side is primary)
-    document.getElementById('registerForm').addEventListener('submit', function(e) {
-        const password = document.querySelector('#password').value;
-        const confirmPassword = document.querySelector('#confirmPassword').value;
-        if (password !== confirmPassword) {
-            e.preventDefault();
-            alert('Passwords do not match!');
-        }
-        // Phone basic check (8 digits starting with 0)
-        const phone = document.querySelector('#phone').value;
-        if (!/^0\d{9}$/.test(phone)) {
-            e.preventDefault();
-            alert('Phone must be 9 digits starting with 0 (e.g., 012345678).');
-        }
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                // Xóa alert lỗi thẻ <div th:errors> hoặc <p th:text>
+                const errorDiv = input.closest('.mb-3, .mb-6')?.querySelector('.text-danger, .invalid-feedback');
+                if (errorDiv) {
+                    errorDiv.textContent = '';
+                }
+
+                // Nếu có alert tổng (showAlert)
+                const alertBox = document.querySelector('p[th\\:if="${showAlert}"], p[th\\:text="${alertMessage}"]');
+                if (alertBox) {
+                    alertBox.textContent = '';
+                }
+            });
+        });
     });
-
 </script>
 </body>
 </html>
