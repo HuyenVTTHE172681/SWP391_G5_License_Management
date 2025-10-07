@@ -10,6 +10,7 @@ import swp391.fa25.lms.repository.AccountRepo;
 import swp391.fa25.lms.service.AccountService;
 
 @Controller
+
 public class ProfileController {
     @Autowired
     private AccountService accountService;
@@ -17,15 +18,11 @@ public class ProfileController {
     @GetMapping("/profile")
     public String viewProfile(HttpSession session, Model model) {
         Account loggedInUser = (Account) session.getAttribute("loggedInUser");
-        if (loggedInUser == null) {
+        if(loggedInUser == null){
             return "redirect:/login";
         }
         Account account = accountService.getAccountById(loggedInUser.getAccountId());
         model.addAttribute("account", account);
-
-        /**
-         * Use switch-case to access customer's role
-         */
         switch (account.getRole().getRoleName()) {
             case CUSTOMER:
                 return "profile/customer-profile";
