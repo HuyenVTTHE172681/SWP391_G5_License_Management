@@ -17,23 +17,24 @@ public class ProfileController {
 
     @GetMapping("/profile")
     public String viewProfile(HttpSession session, Model model) {
-        Account loggedInUser = (Account) session.getAttribute("loggedInUser");
-        if(loggedInUser == null){
-            return "redirect:/login";
-        }
-        Account account = accountService.getAccountById(loggedInUser.getAccountId());
-        model.addAttribute("account", account);
-        switch (account.getRole().getRoleName()) {
-            case CUSTOMER:
-                return "profile/customer-profile";
-            case SELLER:
-                return "profile/seller-profile";
-            case MOD:
-                return "profile/moderator-profile";
-            case MANAGER:
-                return "profile/manager-profile";
-            default:
-                return "error/403"; // nếu không có quyền
-        }
+//        Account loggedInUser = (Account) session.getAttribute("loggedInUser");
+//        if(loggedInUser == null){
+//            return "redirect:/login";
+//        }
+//        Account account = accountService.getAccountById(loggedInUser.getAccountId());
+//        model.addAttribute("account", account);
+//        switch (account.getRole().getRoleName()) {
+//            case CUSTOMER:
+//                return "profile/customer-profile";
+//            case SELLER:
+//                return "profile/seller-profile";
+//            case MOD:
+//                return "profile/moderator-profile";
+//            case MANAGER:
+//                return "profile/manager-profile";
+//            default:
+//                return "error/403"; // nếu không có quyền
+//        }
+        return null;
     }
 }
