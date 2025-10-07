@@ -27,14 +27,18 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/verify-email/**", "/login").permitAll()
+                        .requestMatchers(
+                                "/register",
+                                "/verify-email/**",
+                                "/login",
+                                "/home",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**")
+                        .permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form
-                        .loginPage("/login")       // controller của bạn
-                        .defaultSuccessUrl("/home", true)
-                        .permitAll()
-                )
+                .formLogin(form -> form.disable())
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login")
