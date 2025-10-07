@@ -7,4 +7,6 @@ import swp391.fa25.lms.model.Account;
 @Repository
 public interface AccountRepo extends JpaRepository<Account, Long> {
     Account findByEmail(String email);
+
 }
+

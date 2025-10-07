@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.repository.AccountRepo;
 
+import java.time.LocalDateTime;
+
 
 @Service
 public class AccountService {
@@ -18,4 +20,9 @@ public class AccountService {
     public Account getAccountById(long id){
         return accountRepo.findById(id).orElse(null);
     }
+
+    public Account updateAccount(Account account){
+        return accountRepo.save(account);
+    }
+
 }

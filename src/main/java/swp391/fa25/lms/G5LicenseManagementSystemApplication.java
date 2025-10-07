@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class  G5LicenseManagementSystemApplication {
 
     public static void main(String[] args) {
+
         SpringApplication.run(G5LicenseManagementSystemApplication.class, args);
     }
 

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Profile</title>
+</head>
+<body>
+<h2>Edit Profile</h2>
+
+<form th:action="@{/profile/edit}" th:object="${account}" method="post">
+    <label>Full name:</label><br>
+    <input type="text" th:field="*{fullName}" required/><br><br>
+
+    <label>Email:</label><br>
+    <input type="email" th:field="*{email}" readonly/><br><br>
+
+    <label>Phone number:</label><br>
+    <input type="text" th:field="*{phone}" /><br><br>
+
+    <label>Address:</label><br>
+    <input type="text" th:field="*{address}" /><br><br>
+
+    <button type="submit">Save</button>
+</form>
+
+<br>
+<a th:href="@{/profile}">Back</a>
+</body>
+</html>
