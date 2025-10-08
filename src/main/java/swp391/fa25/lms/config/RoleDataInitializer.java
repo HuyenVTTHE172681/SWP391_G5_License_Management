@@ -3,8 +3,10 @@ package swp391.fa25.lms.config;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
+import swp391.fa25.lms.model.Category;
 import swp391.fa25.lms.model.Role;
 import swp391.fa25.lms.model.Role.RoleName;
+import swp391.fa25.lms.repository.CategoryRepo;
 import swp391.fa25.lms.repository.RoleRepo;
 
 import java.util.Arrays;
@@ -14,6 +16,8 @@ public class RoleDataInitializer implements CommandLineRunner {
 
     @Autowired
     private RoleRepo roleRepo;
+    @Autowired
+    private CategoryRepo categoryRepo;
 
     @Override
     public void run(String... args) throws Exception {
@@ -57,5 +61,34 @@ public class RoleDataInitializer implements CommandLineRunner {
         } else {
             System.out.println("Roles already exist, skipping initialization.");
         }
+        if (categoryRepo.count() == 0) {
+            Category email = new Category();
+            email.setCategoryName("Email");
+            email.setDescription("Gmail, Yahoo, Hotmail,... và nhiều hơn thế nữa");
+            email.setIcon("far fa-envelope");
+
+            Category software = new Category();
+            software.setCategoryName("Phần mềm");
+            software.setDescription("Dịch vụ code tool, đồ họa, video,... và các dịch vụ liên quan");
+            software.setIcon("fas fa-terminal");
+
+            Category interaction = new Category();
+            interaction.setCategoryName("Tăng tương tác");
+            interaction.setDescription("Tăng like, share, comment,... cho sản phẩm của bạn");
+            interaction.setIcon("as fa-layer-group");
+
+            Category seo = new Category();
+            seo.setCategoryName("SEO & Marketing");
+            seo.setDescription("Tối ưu hóa công cụ tìm kiếm và chiến dịch quảng cáo");
+            seo.setIcon("fas fa-user");
+
+            categoryRepo.saveAll(Arrays.asList(email, software, interaction, seo));
+
+            System.out.println("Default categories have been initialized.");
+        } else {
+            System.out.println("Categories already exist, skipping initialization.");
+        }
     }
+
+
 }
