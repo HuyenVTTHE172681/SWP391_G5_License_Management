@@ -1,0 +1,187 @@
+/* ===== RESET & BODY ===== */
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    color: #333;
+}
+
+header {
+    background-color: #007bff;
+    color: white;
+    padding: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+header p {
+    margin: 5px 0 0;
+    font-size: 16px;
+}
+
+/* ===== SEARCH BAR ===== */
+.search-bar {
+    margin: 20px auto;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+}
+
+.search-bar input,
+.search-bar select {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: white;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.search-bar input:focus,
+.search-bar select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+/* ===== TOOL LIST ===== */
+.tool-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 30px;
+}
+
+.tool-card {
+    background-color: white;
+    width: 260px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tool-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.tool-card img {
+    width: 100%;
+    height: 150px;
+    border-radius: 8px;
+    object-fit: cover;
+    background-color: #e9ecef;
+}
+
+.tool-card h3 {
+    margin: 10px 0 5px;
+    color: #007bff;
+    font-size: 18px;
+}
+
+.tool-card .desc {
+    color: #555;
+    font-size: 14px;
+    height: 40px;
+    overflow: hidden;
+}
+
+.tool-card p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.btn {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+/* ===== FOOTER ===== */
+footer {
+    background-color: #f1f1f1;
+    padding: 10px 0;
+    font-size: 14px;
+    color: #777;
+    border-top: 1px solid #ddd;
+}
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 15px 40px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Phần bên trái (tên website) */
+.header-left h1 {
+    margin: 0;
+    color: #333;
+    font-size: 26px;
+}
+
+.header-left p {
+    margin: 4px 0 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Phần bên phải (Login / Sign Up) */
+.header-right {
+    display: flex;
+    gap: 15px;
+}
+
+.header-right a {
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+/* Nút Login */
+.btn-login {
+    color: #007bff;
+    border: 1px solid #007bff;
+}
+
+.btn-login:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Nút Sign Up */
+.btn-signup {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+}
+
+.btn-signup:hover {
+    background-color: #0056b3;
+}
