@@ -11,3 +11,4 @@ public interface AccountRepo extends JpaRepository<Account, Long> {
     Optional<Account> findByEmail(String email);
     Optional<Account> findByVerificationToken(String token);
 }
+

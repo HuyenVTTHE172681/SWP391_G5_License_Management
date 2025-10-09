@@ -2,13 +2,14 @@ package swp391.fa25.lms.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Role;
-import swp391.fa25.lms.repository.AccountRepo;
+import swp391.fa25.lms.repository.*;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import swp391.fa25.lms.repository.RoleRepo;
@@ -124,30 +125,6 @@ public class AccountService {
         return account;
     }
 
-    public Map<String, String> login(String email, String password) {
-        Account account = accountRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email not found"));
-
-        if (!passwordEncoder.matches(password, account.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
-
-        if (!account.getVerified()) {
-            throw new RuntimeException("Account not verified");
-        }
-
-        if (account.getStatus() != Account.AccountStatus.ACTIVE) {
-            throw new RuntimeException("Account not ACTIVE");
-        }
-
-        Map<String, String> tokens = new HashMap<>();
-        tokens.put("accessToken", jwtService.generateAccessToken(account));
-        tokens.put("refreshToken", jwtService.generateRefreshToken(account));
-
-        return tokens;
-    }
-
-    // Dành cho web login (không sinh JWT)
     public Account loginForWeb(String email, String password) {
         Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email not found"));
