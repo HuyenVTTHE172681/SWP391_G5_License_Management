@@ -78,6 +78,9 @@ public class ToolService {
 
     }
 
+    public Tool findById(long id) {
+        return toolRepository.findByToolId(id);
+    }
 
 }
 

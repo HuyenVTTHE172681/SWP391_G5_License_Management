@@ -19,4 +19,6 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     List<Tool> findAll(Sort sort);
 
     List<Tool> findAllByCategory_CategoryId(Long categoryId, Sort sort);
+
+    Tool findByToolId(long toolId);
 }

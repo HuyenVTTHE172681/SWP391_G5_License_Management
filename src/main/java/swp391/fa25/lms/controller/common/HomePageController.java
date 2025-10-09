@@ -4,11 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.model.Category;
+import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.service.CategoryService;
+import swp391.fa25.lms.service.FeedbackService;
 import swp391.fa25.lms.service.ToolService;
 
 import java.util.List;
@@ -22,6 +25,8 @@ public class HomePageController {
 
     @Autowired
     private CategoryService categoryService; // ⚠️ Bổ sung @Autowired
+    @Autowired
+    private FeedbackService feedbackService;
 
     @GetMapping
     public String displayToolList(Model model) {
@@ -58,6 +63,30 @@ public class HomePageController {
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("toolName", toolName);
         return "public/homepage";
+    }
+    @GetMapping("/toolDetail/{id}")
+    public String toolDetail(
+            @PathVariable("id") long id,
+            Model model
+    ) {
+        try {
+            Tool tool = toolService.findById(id);
+            List<Feedback> feedbacks = feedbackService.findByTool(tool);
+            if (tool == null) {
+                // Nếu không tìm thấy tool, có thể redirect hoặc báo lỗi
+                model.addAttribute("errorMessage", "Tool not found!");
+                return "common/error";
+            } else {
+                model.addAttribute("tool", tool);
+                model.addAttribute("feedbacks", feedbacks);
+                return "public/toolDetail";
+
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "common/error";
     }
 
 
