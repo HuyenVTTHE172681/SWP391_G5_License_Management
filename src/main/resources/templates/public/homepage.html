@@ -31,7 +31,7 @@
         <option value="">All Categories</option>
         <option th:each="c : ${categories}"
                 th:value="${c.categoryId}"
-                th:text="${c.name}"
+                th:text="${c.categoryName}"
                 th:selected="${categoryId == c.categoryId}"></option>
     </select>
 
@@ -60,7 +60,7 @@
         <p><strong>Updated:</strong>
             <span th:text="${#temporals.format(tool.updatedAt, 'dd/MM/yyyy')}">01/01/2025</span>
         </p>
-        <a th:href="@{/tool/{id}(id=${tool.toolId})}" class="btn">View Details</a>
+        <a th:href="@{homepage/toolDetail/{id}(id=${tool.toolId})}" class="btn">View Details</a>
     </div>
 </section>
 
