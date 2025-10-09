@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tool Market Place</title>
+    <link rel="stylesheet" th:href="@{/css/homepage.css}">
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-left">
+        <h1>Tool Market Place</h1>
+        <p>Trang bán tool của nhóm 5</p>
+    </div>
+
+    <!-- 🔑 Nút Login / Sign Up -->
+    <div class="header-right">
+        <a href="#" class="btn-login">Login</a>
+        <a href="#" class="btn-signup">Sign Up</a>
+    </div>
+</header>
+
+<!-- 🔍 Thanh tìm kiếm + lọc -->
+<form id="filterForm" th:action="@{/homepage/filter}" method="get" class="search-bar">
+    <!-- Search by name -->
+    <input type="text" name="toolName" placeholder="Search by name..."
+           th:value="${toolName}" onchange="this.form.submit()">
+
+    <!-- Category dropdown -->
+    <select name="categoryId" onchange="this.form.submit()">
+        <option value="">All Categories</option>
+        <option th:each="c : ${categories}"
+                th:value="${c.categoryId}"
+                th:text="${c.name}"
+                th:selected="${categoryId == c.categoryId}"></option>
+    </select>
+
+    <!-- Sort by Price -->
+    <select name="priceOrder" onchange="this.form.submit()">
+        <option value="">Sort by Price</option>
+        <option value="asc" th:selected="${priceOrder == 'asc'}">Ascending</option>
+        <option value="desc" th:selected="${priceOrder == 'desc'}">Descending</option>
+    </select>
+
+    <!-- Sort by Updated Date -->
+    <select name="updateDate" onchange="this.form.submit()">
+        <option value="">Sort by Updated Date</option>
+        <option value="asc" th:selected="${updateDate == 'asc'}">Ascending</option>
+        <option value="desc" th:selected="${updateDate == 'desc'}">Descending</option>
+    </select>
+</form>
+
+<!-- 🧩 Danh sách tool -->
+<section class="tool-container">
+    <div class="tool-card" th:each="tool : ${tools}">
+        <img th:src="@{/images/sample-placeholder.png}" alt="Tool Image">
+        <h3 th:text="${tool.toolName}">Tool's Name</h3>
+        <p class="desc" th:text="${tool.description}">Tool's Description</p>
+        <p><strong>Price:</strong> <span th:text="${tool.price}">0</span></p>
+        <p><strong>Updated:</strong>
+            <span th:text="${#temporals.format(tool.updatedAt, 'dd/MM/yyyy')}">01/01/2025</span>
+        </p>
+        <a th:href="@{/tool/{id}(id=${tool.toolId})}" class="btn">View Details</a>
+    </div>
+</section>
+
+<footer>
+    <p>© 2025 Nhóm 5 - SWP391</p>
+</footer>
+
+</body>
+</html>
