@@ -7,8 +7,17 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-color: #e0e0e0;
+        }
         body {
             background-color: #f8f9fa;
+            color: var(--text-dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .navbar-top {
             background: #333;
@@ -31,17 +40,111 @@
             transform: translateY(-5px);
             box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
+        /* Products Section */
+        .products-section {
+            padding: 60px 0;
+            background-color: #f8f9fa;
+        }
+
+        .search-filter-bar {
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding-left: 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .filter-select {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px 15px;
+        }
+
         .product-card {
-            border: 1px solid #eaeaea;
+            background-color: white;
             border-radius: 8px;
-            padding: 10px;
-            background-color: #fff;
-            transition: all 0.2s;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            height: 100%;
+            text-decoration: none;
+            color: inherit;
+            display: block;
         }
+
         .product-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+            text-decoration: none;
+            color: inherit;
         }
+
+        .product-image {
+            width: 100%;
+            height: 250px;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .product-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        /* Favorite Icon Styling */
+        .favorite-icon {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .favorite-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .favorite-icon i {
+            font-size: 18px;
+            color: #e74c3c;
+            transition: all 0.3s ease;
+        }
+
+        .favorite-icon.active i {
+            font-weight: 900;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
         footer {
             border-top: 1px solid #ddd;
             padding: 30px 0;
@@ -52,11 +155,6 @@
             --secondary-color: #3498db;
             --text-muted: #7f8c8d;
         }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
         /* Top Bar */
         .top-bar {
             background-color: #4a4a4a;
@@ -301,6 +399,10 @@
             border-radius: 4px;
         }
 
+        .form-select {
+            padding: 10px 15px 10px 40px;
+        }
+
         .search-box i {
             position: absolute;
             left: 15px;
@@ -484,6 +586,9 @@
             background-color: #1a252f;
             transform: scale(1.1);
         }
+        html {
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 <body>
@@ -504,22 +609,14 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
+
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Sản phẩm</a>
+                    <a class="nav-link" href="#products">Sản phẩm</a>
                 </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="dichVuDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Dịch vụ
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="dichVuDropdown">
-                        <li><a class="dropdown-item" href="#">Email</a></li>
-                        <li><a class="dropdown-item" href="#">Phần mềm</a></li>
-                        <li><a class="dropdown-item" href="#">Tăng tương tác</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Tất cả dịch vụ</a></li>
-                    </ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="#category">Dịch vụ</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">Support</a>
@@ -530,17 +627,17 @@
             </ul>
 
             <div class="d-flex align-items-center">
-                <div class="wishlist-icon">
+                <a href="#" class="wishlist-icon">
                     <i class="far fa-heart"></i>
                     <span class="wishlist-badge">12</span>
-                </div>
+                </a>
 
-                <a th:if="${account == null}" th:href="@{/login}" class="btn-login">
+                <a th:if="${account == null}" th:href="@{/login}" class="btn-login text-decoration-none fw-bolder">
                     <i class="far fa-user"></i> Login
                 </a>
 
                 <div th:if="${account != null}" class="dropdown">
-                    <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
+                    <a class="d-flex align-items-center text-decoration-none dropdown-toggle fw-bolder" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
                         <img src="https://cdn-icons-png.flaticon.com/512/147/147144.png" alt="avatar" class="rounded-circle me-2" width="36" height="36">
                         <span th:text="${account.fullName}">User</span>
                     </a>
@@ -591,7 +688,7 @@
 </section>
 
 <!-- Dịch vụ -->
-<section class="services-section">
+<section class="services-section" id="category">
     <div class="container">
         <h2 class="section-title">DANH SÁCH DỊCH VỤ</h2>
         <div class="position-relative">
@@ -622,248 +719,42 @@
 </section>
 
 <!-- Danh sách sản phẩm -->
-<section class="products-section">
+<section class="products-section" id="products">
     <div class="container">
         <h2 class="section-title">DANH SÁCH SẢN PHẨM</h2>
 
-        <!-- Filter Bar-->
-        <div class="filter-bar">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Tìm kiếm theo tên...">
-            </div>
-            <select class="filter-select">
-                <option>Dịch vụ</option>
-                <option>Email</option>
-                <option>Phần mềm</option>
-                <option>Tăng tương tác</option>
-            </select>
-            <select class="filter-select">
-                <option>Giá</option>
-                <option>Thấp đến cao</option>
-                <option>Cao đến thấp</option>
-            </select>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="product-card">
-                    <div class="product-image">
-                        <div class="product-placeholder">
-                            <i class="fas fa-image"></i>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name">Product Name</h3>
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span class="reviews">55 reviews</span>
-                            <span class="seller">| Người bán: ABC</span>
-                        </div>
-                        <p class="product-details">• Description, color, size</p>
+        <!-- Search and Filter Bar -->
+        <form class="search-filter-bar" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" name="keyword" placeholder="Tìm kiếm theo tên...">
                     </div>
                 </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="product-card">
-                    <div class="product-image">
-                        <div class="product-placeholder">
-                            <i class="fas fa-image"></i>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name">Product Name</h3>
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span class="reviews">55 reviews</span>
-                            <span class="seller">| Người bán: ABC</span>
-                        </div>
-                        <p class="product-details">• Description, color, size</p>
-                    </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="categoryId">
+                        <option value="">Dịch vụ</option>
+                        <option th:each="cate : ${categories}"
+                                th:value="${cate.categoryId}"
+                                th:text="${cate.categoryName}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="dateFilter">
+                        <option value="">Ngày đăng</option>
+                        <option value="1">Mới nhất</option>
+                        <option value="2">30 ngày qua</option>
+                        <option value="3">3 tháng qua</option>
+                    </select>
                 </div>
             </div>
+        </form>
 
-            <div class="col-md-4">
-                <div class="product-card">
-                    <div class="product-image">
-                        <div class="product-placeholder">
-                            <i class="fas fa-image"></i>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name">Product Name</h3>
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span class="reviews">55 reviews</span>
-                            <span class="seller">| Người bán: ABC</span>
-                        </div>
-                        <p class="product-details">• Description, color, size</p>
-                    </div>
-                </div>
-            </div>
+        <!-- Danh sách sản phẩm (load động) -->
+        <div id="product-list"></div>
 
-            <div class="col-md-4">
-                <div class="product-card">
-                    <div class="product-image">
-                        <div class="product-placeholder">
-                            <i class="fas fa-image"></i>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name">Product Name</h3>
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span class="reviews">55 reviews</span>
-                            <span class="seller">| Người bán: ABC</span>
-                        </div>
-                        <p class="product-details">• Description, color, size</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="product-card">
-                    <div class="product-image">
-                        <div class="product-placeholder">
-                            <i class="fas fa-image"></i>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name">Product Name</h3>
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span class="reviews">55 reviews</span>
-                            <span class="seller">| Người bán: ABC</span>
-                        </div>
-                        <p class="product-details">• Description, color, size</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="product-card">
-                    <div class="product-image">
-                        <div class="product-placeholder">
-                            <i class="fas fa-image"></i>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name">Product Name</h3>
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span class="reviews">55 reviews</span>
-                            <span class="seller">| Người bán: ABC</span>
-                        </div>
-                        <p class="product-details">• Description, color, size</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="product-card">
-                    <div class="product-image">
-                        <div class="product-placeholder">
-                            <i class="fas fa-image"></i>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name">Product Name</h3>
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span class="reviews">55 reviews</span>
-                            <span class="seller">| Người bán: ABC</span>
-                        </div>
-                        <p class="product-details">• Description, color, size</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="product-card">
-                    <div class="product-image">
-                        <div class="product-placeholder">
-                            <i class="fas fa-image"></i>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name">Product Name</h3>
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span class="reviews">55 reviews</span>
-                            <span class="seller">| Người bán: ABC</span>
-                        </div>
-                        <p class="product-details">• Description, color, size</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!--Pagination-->
-        <div class="pagination-wrapper">
-            <nav>
-                <ul class="pagination">
-                    <li class="page-item">
-                        <a class="page-link" href="#"><i class="fas fa-arrow-left"></i> Previous</a>
-                    </li>
-                    <li class="page-item"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item active"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">4</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next <i class="fas fa-arrow-right"></i></a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
     </div>
 </section>
 
@@ -898,49 +789,80 @@
 <!-- Thêm Bootstrap JS Bundle ở cuối -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("filterForm");
+        const productList = document.getElementById("product-list");
+
+        // Load dữ liệu ban đầu
+        loadTools();
+
+        // Khi thay đổi filter/search thì reload lại danh sách
+        form.addEventListener("change", () => loadTools());
+        form.addEventListener("submit", e => {
+            e.preventDefault();
+            loadTools();
+        });
+
+        function loadTools(page = 0) {
+            const formData = new FormData(form);
+            formData.append("page", page);
+            const query = new URLSearchParams(formData).toString();
+
+            fetch(`/home/tools?${query}`)
+                .then(res => res.text())
+                .then(html => {
+                    productList.innerHTML = html;
+                    bindPagination();
+                })
+                .catch(err => console.error("Error loading tools:", err));
+        }
+
+        function bindPagination() {
+            productList.querySelectorAll(".page-link").forEach(link => {
+                link.addEventListener("click", e => {
+                    e.preventDefault();
+                    const page = link.getAttribute("data-page");
+                    loadTools(page);
+                });
+            });
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
         const items = document.querySelectorAll(".category-item");
-        const prevBtn = document.getElementById("prevBtn");
         const nextBtn = document.getElementById("nextBtn");
-
+        const prevBtn = document.getElementById("prevBtn");
         const itemsPerPage = 3;
-        let currentPage = 0;
+        let currentIndex = 0;
 
-        function updateView() {
-            // Ẩn tất cả
+        function showItems() {
             items.forEach(item => item.style.display = "none");
-
-            // Hiển thị 3 item hiện tại
-            const start = currentPage * itemsPerPage;
-            const end = start + itemsPerPage;
-
-            for (let i = start; i < end && i < items.length; i++) {
+            for (let i = currentIndex; i < currentIndex + itemsPerPage && i < items.length; i++) {
                 items[i].style.display = "block";
             }
 
-            // Cập nhật trạng thái nút
-            prevBtn.style.display = currentPage === 0 ? "none" : "block";
-            nextBtn.style.display = end >= items.length ? "none" : "block";
+            // Ẩn/hiện nút điều hướng
+            prevBtn.style.display = currentIndex === 0 ? "none" : "block";
+            nextBtn.style.display = currentIndex + itemsPerPage >= items.length ? "none" : "block";
         }
 
-        // Xử lý sự kiện click
-        nextBtn.addEventListener("click", () => {
-            if ((currentPage + 1) * itemsPerPage < items.length) {
-                currentPage++;
-                updateView();
+        nextBtn.addEventListener("click", function () {
+            if (currentIndex + itemsPerPage < items.length) {
+                currentIndex += itemsPerPage;
+                showItems();
             }
         });
 
-        prevBtn.addEventListener("click", () => {
-            if (currentPage > 0) {
-                currentPage--;
-                updateView();
+        prevBtn.addEventListener("click", function () {
+            if (currentIndex - itemsPerPage >= 0) {
+                currentIndex -= itemsPerPage;
+                showItems();
             }
         });
 
-        // Hiển thị ban đầu
-        updateView();
+        showItems(); // Hiển thị ban đầu
     });
 </script>
+
 </body>
 </html>

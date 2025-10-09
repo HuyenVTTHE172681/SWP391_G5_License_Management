@@ -154,4 +154,26 @@ public class Tool {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    @Transient
+    private Double averageRating;
+
+    @Transient
+    private Long totalReviews;
+
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public Long getTotalReviews() {
+        return totalReviews;
+    }
+
+    public void setTotalReviews(Long totalReviews) {
+        this.totalReviews = totalReviews;
+    }
 }

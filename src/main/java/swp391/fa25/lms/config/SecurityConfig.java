@@ -31,6 +31,8 @@ public class SecurityConfig {
                                 "/",
                                 "/register",
                                 "/verify-email/**",
+                                "/home/**",
+                                "/home/tools",
                                 "/login",
                                 "/home",
                                 "/css/**",

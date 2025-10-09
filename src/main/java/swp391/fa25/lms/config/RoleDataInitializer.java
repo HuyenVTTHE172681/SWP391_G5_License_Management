@@ -151,7 +151,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             Tool t1 = new Tool();
             t1.setToolName("Email Bulk Sender Pro");
             t1.setDescription("Gửi email hàng loạt nhanh chóng, chống spam, tối ưu cho marketing.");
-            t1.setImage("/images/tools/email1.png");
+            t1.setImage("/images/tools/cafe.png");
             t1.setSeller(seller1);
             t1.setCategory(categories.get(0)); // Email
             t1.setStatus(Tool.Status.APPROVED);
@@ -160,7 +160,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             Tool t2 = new Tool();
             t2.setToolName("Auto Like & Share Facebook");
             t2.setDescription("Tăng tương tác bài viết tự động, giúp quảng bá hiệu quả.");
-            t2.setImage("/images/tools/interaction1.png");
+            t2.setImage("/images/tools/copy_high_image.jpg");
             t2.setSeller(seller2);
             t2.setCategory(categories.get(2)); // Tăng tương tác
             t2.setStatus(Tool.Status.APPROVED);
@@ -169,13 +169,78 @@ public class RoleDataInitializer implements CommandLineRunner {
             Tool t3 = new Tool();
             t3.setToolName("SEO Keyword Analyzer");
             t3.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
-            t3.setImage("/images/tools/seo1.png");
+            t3.setImage("/images/tools/hinh-shin-de-thuong-1.jpg");
             t3.setSeller(seller1);
             t3.setCategory(categories.get(3)); // SEO
             t3.setStatus(Tool.Status.APPROVED);
             t3.setCreatedAt(LocalDateTime.now().minusDays(2));
 
-            toolRepo.saveAll(Arrays.asList(t1, t2, t3));
+            Tool t4 = new Tool();
+            t4.setToolName("SEO Keyword Analyzer");
+            t4.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
+            t4.setImage("/images/tools/seo1.png");
+            t4.setSeller(seller1);
+            t4.setCategory(categories.get(3)); // SEO
+            t4.setStatus(Tool.Status.APPROVED);
+            t4.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+            Tool t5 = new Tool();
+            t5.setToolName("SEO Keyword Analyzer");
+            t5.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
+            t5.setImage("/images/tools/seo1.png");
+            t5.setSeller(seller1);
+            t5.setCategory(categories.get(3)); // SEO
+            t5.setStatus(Tool.Status.APPROVED);
+            t5.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+            Tool t6 = new Tool();
+            t6.setToolName("SEO Keyword Analyzer");
+            t6.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
+            t6.setImage("/images/tools/seo1.png");
+            t6.setSeller(seller1);
+            t6.setCategory(categories.get(3)); // SEO
+            t6.setStatus(Tool.Status.APPROVED);
+            t6.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+            Tool t7 = new Tool();
+            t7.setToolName("SEO Keyword Analyzer");
+            t7.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
+            t7.setImage("/images/tools/seo1.png");
+            t7.setSeller(seller1);
+            t7.setCategory(categories.get(3)); // SEO
+            t7.setStatus(Tool.Status.APPROVED);
+            t7.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+            Tool t8 = new Tool();
+            t8.setToolName("SEO Keyword Analyzer");
+            t8.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
+            t8.setImage("/images/tools/seo1.png");
+            t8.setSeller(seller1);
+            t8.setCategory(categories.get(3)); // SEO
+            t8.setStatus(Tool.Status.APPROVED);
+            t8.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+            Tool t9 = new Tool();
+            t9.setToolName("SEO Keyword Analyzer");
+            t9.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
+            t9.setImage("/images/tools/seo1.png");
+            t9.setSeller(seller1);
+            t9.setCategory(categories.get(3)); // SEO
+            t9.setStatus(Tool.Status.APPROVED);
+            t9.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+            Tool t10 = new Tool();
+            t10.setToolName("SEO Keyword Analyzer");
+            t10.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
+            t10.setImage("/images/tools/seo1.png");
+            t10.setSeller(seller1);
+            t10.setCategory(categories.get(3)); // SEO
+            t10.setStatus(Tool.Status.APPROVED);
+            t10.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+
+
+            toolRepo.saveAll(Arrays.asList(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10));
         } else {
             System.out.println("Tool already exist, skipping initialization.");
         }
@@ -207,7 +272,14 @@ public class RoleDataInitializer implements CommandLineRunner {
             f3.setComment("Phân tích rất chi tiết, đáng tiền!");
             f3.setCreatedAt(LocalDateTime.now());
 
-            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3));
+            Feedback f4 = new Feedback();
+            f4.setAccount(customer);
+            f4.setTool(tools.get(0));
+            f4.setRating(3);
+            f4.setComment("Kho su dung");
+            f4.setCreatedAt(LocalDateTime.now().minusDays(8));
+
+            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3, f4));
         } else {
             System.out.println("Feedback already exist, skipping initialization.");
         }
