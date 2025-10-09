@@ -2,6 +2,8 @@ package swp391.fa25.lms.repository;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import swp391.fa25.lms.model.Tool;
@@ -21,4 +23,16 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     List<Tool> findAllByCategory_CategoryId(Long categoryId, Sort sort);
 
     Tool findByToolId(long toolId);
+    List<Tool> findByStatus(Tool.Status status);
+
+    @Query("""
+        SELECT t FROM Tool t
+        WHERE (:toolName IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :toolName, '%')))
+          AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+          AND (:status IS NULL OR t.status = :status)
+        ORDER BY t.updatedAt DESC
+    """)
+    List<Tool> filterToolsForModerator(@Param("toolName") String toolName,
+                                       @Param("categoryId") Long categoryId,
+                                       @Param("status") Tool.Status status);
 }

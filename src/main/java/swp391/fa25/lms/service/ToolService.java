@@ -81,6 +81,23 @@ public class ToolService {
     public Tool findById(long id) {
         return toolRepository.findByToolId(id);
     }
+    public List<Tool> availableTools(Tool.Status status) {
+        return toolRepository.findByStatus(status);
+    }
+    public List<Tool> filterToolsForModerator(String toolName, Long categoryId, String status) {
+        Tool.Status toolStatus = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                toolStatus = Tool.Status.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+                ignored.printStackTrace();
+            }
+        }
 
+        if (toolName == null || toolName.isBlank()) toolName = null;
+        if (categoryId != null && categoryId <= 0) categoryId = null;
+
+        return toolRepository.filterToolsForModerator(toolName, categoryId, toolStatus);
+    }
 }
 

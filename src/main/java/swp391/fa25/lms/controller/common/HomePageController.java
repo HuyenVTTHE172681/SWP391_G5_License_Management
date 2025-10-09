@@ -24,7 +24,7 @@ public class HomePageController {
     private ToolService toolService;
 
     @Autowired
-    private CategoryService categoryService; // ⚠️ Bổ sung @Autowired
+    private CategoryService categoryService;
     @Autowired
     private FeedbackService feedbackService;
 
@@ -32,7 +32,7 @@ public class HomePageController {
     public String displayToolList(Model model) {
         try {
             List<Category> categories = categoryService.getCategories();
-            List<Tool> tools = toolService.findAll();
+            List<Tool> tools = toolService.availableTools(Tool.Status.APPROVED);
 
             model.addAttribute("tools", tools);
             model.addAttribute("categories", categories);
