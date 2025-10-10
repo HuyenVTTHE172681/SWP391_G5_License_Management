@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Feedback • ' + ${tool.toolName}">Feedback</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+    <style>
+        .star .on { color:#f39c12 }
+        .star .off{ color:#d9d9d9 }
+        .review{ border-bottom:1px solid #eee; padding:12px 0 }
+        .muted { color:#64748b }
+    </style>
+</head>
+<body class="container" style="padding-top:24px">
+
+<!-- Header -->
+<div class="page-header">
+    <h2 style="margin-top:0" th:text="${tool.toolName}">Tool name</h2>
+    <p class="text-muted">
+        Điểm trung bình:
+        <strong th:text="${#numbers.formatDecimal(avgRating,1,1)}">0.0</strong>/5 ·
+        <span th:text="${totalReviews}">0</span> đánh giá
+    </p>
+</div>
+
+<!-- Empty state -->
+<div th:if="${fbPage.totalElements == 0}" class="alert alert-info">
+    Chưa có feedback nào cho tool này.
+</div>
+
+<!-- List -->
+<div th:if="${fbPage.totalElements > 0}">
+    <div th:each="fb : ${fbPage.content}" class="review">
+        <div class="star">
+        <span th:each="i : ${#numbers.sequence(1,5)}"
+              th:classappend="${i <= (fb.rating != null ? fb.rating : 0)} ? 'on' : 'off'">★</span>
+            <strong th:text="' ' + (fb.rating != null ? fb.rating : 0) + '/5'">4/5</strong>
+        </div>
+        <div class="muted" style="margin:4px 0 8px">
+            <span th:text="${fb.account != null ? fb.account.fullName : 'Người dùng'}">User</span>
+            · <span th:text="${#temporals.format(fb.createdAt, 'dd/MM/yyyy HH:mm')}">01/10/2025 12:00</span>
+        </div>
+        <p th:text="${fb.comment}">Nội dung nhận xét…</p>
+    </div>
+
+    <nav th:if="${fbPage.totalPages > 1}">
+        <ul class="pagination">
+
+            <!-- Prev -->
+            <li class="disabled" th:if="${fbPage.first}">
+                <span aria-label="Previous"><span aria-hidden="true">&laquo;</span></span>
+            </li>
+            <li th:unless="${fbPage.first}">
+                <a th:href="@{/feedback/tool/{id}(id=${tool.toolId}, page=${fbPage.number - 1}, size=${pageSize})}"
+                   aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+            </li>
+
+            <!-- Pages -->
+            <li th:each="p : ${#numbers.sequence(0, fbPage.totalPages - 1)}"
+                th:if="${p != fbPage.number}">
+                <a th:text="${p + 1}"
+                   th:href="@{/feedback/tool/{id}(id=${tool.toolId}, page=${p}, size=${pageSize})}">1</a>
+            </li>
+            <li class="active" th:each="p : ${#numbers.sequence(0, fbPage.totalPages - 1)}"
+                th:if="${p == fbPage.number}">
+                <span th:text="${p + 1}">1</span>
+            </li>
+
+            <!-- Next -->
+            <li class="disabled" th:if="${fbPage.last}">
+                <span aria-label="Next"><span aria-hidden="true">&raquo;</span></span>
+            </li>
+            <li th:unless="${fbPage.last}">
+                <a th:href="@{/feedback/tool/{id}(id=${tool.toolId}, page=${fbPage.number + 1}, size=${pageSize})}"
+                   aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+            </li>
+
+        </ul>
+    </nav>
+</div>
+
+</body>
+</html>

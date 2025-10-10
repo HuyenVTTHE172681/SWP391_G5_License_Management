@@ -129,7 +129,7 @@
             color:var(--muted); text-align:center; background:#ffffff80
         }
 
-        /* (tuỳ chọn) Nếu bạn đang dùng cột Actions dạng flex để xếp View/Update cạnh nhau */
+
         .actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
     </style>
 
@@ -151,7 +151,6 @@
     <div th:if="${!#lists.isEmpty(accounts)}" class="card">
         <div class="card-head">
             <h3 class="card-title">Account List</h3>
-            <!-- Bạn có thể thêm filter/search ở đây sau -->
         </div>
 
         <div class="table-wrap">
