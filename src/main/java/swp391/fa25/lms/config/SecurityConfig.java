@@ -28,16 +28,19 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/",
-                                "/register",
-                                "/verify-email/**",
-                                "/home/**",
-                                "/home/tools",
-                                "/login",
-                                "/home",
-                                "/css/**",
-                                "/js/**",
-                                "/images/**")
+                                "/",                          // Trang chủ
+                                "/home",                      // Trang chủ chính
+                                "/home/**",                   // Các đường dẫn con trong home
+                                "/login",                     // Trang đăng nhập
+                                "/register",                  // Trang đăng ký
+                                "/verify-email/**",           // Xác minh email
+                                "/forgot-password",           // Quên mật khẩu
+                                "/reset-password/**",         // Đặt lại mật khẩu
+                                "/css/**",                    // CSS static
+                                "/js/**",                     // JS static
+                                "/images/**",                 // Ảnh
+                                "/assets/**"                 // Thư mục assets (nếu có)
+                        )
                         .permitAll()
                         .anyRequest().authenticated()
                 )

@@ -153,5 +153,51 @@ public class WebAuthController {
         }
     }
 
+    // Enter email to reset password
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordForm() {
+        return "public/forgot-password";
+    }
 
+    @PostMapping("/forgot-password")
+    public String processForgotPassword(@RequestParam("email") String email,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            accountService.generateResetPasswordToken(email);
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "success");
+            redirectAttributes.addFlashAttribute("alertMessage", "Một email khôi phục mật khẩu đã được gửi đến " + email);
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "danger");
+            redirectAttributes.addFlashAttribute("alertMessage", e.getMessage());
+        }
+        return "redirect:/forgot-password";
+    }
+
+    // Reset password
+    @GetMapping("/reset-password/{token}")
+    public String showResetPasswordForm(@PathVariable("token") String token, Model model) {
+        model.addAttribute("token", token);
+        return "public/reset-password";
+    }
+
+    @PostMapping("/reset-password")
+    public String handleResetPassword(@RequestParam("token") String token,
+                                      @RequestParam("newPassword") String newPassword,
+                                      @RequestParam("confirmPassword") String confirmPassword,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            accountService.resetPassword(token, newPassword, confirmPassword);
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "success");
+            redirectAttributes.addFlashAttribute("alertMessage", "Đặt lại mật khẩu thành công! Hãy đăng nhập lại.");
+            return "redirect:/login";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "danger");
+            redirectAttributes.addFlashAttribute("alertMessage", e.getMessage());
+            return "redirect:/reset-password/" + token;
+        }
+    }
 }

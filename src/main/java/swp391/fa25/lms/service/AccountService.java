@@ -49,6 +49,7 @@ public class AccountService {
         this.roleRepo = roleRepo;
     }
 
+    // Register account
     public Account registerAccount(Account account) {
         // 1. Check format email
         if (account.getEmail() == null || !EMAIL_REGEX.matcher(account.getEmail()).matches()) {
@@ -83,6 +84,7 @@ public class AccountService {
         return saved;
     }
 
+    // Send email verification account after register success
     private void sendVerificationEmail(Account account) {
         try {
             String subject = "[LMS - Register New Account] Please Verify Your Email";
@@ -109,6 +111,7 @@ public class AccountService {
         }
     }
 
+    // Verify account
     public Account verifyAccount(String token) {
         Account account = accountRepo.findByVerificationToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
@@ -125,6 +128,7 @@ public class AccountService {
         return account;
     }
 
+    // Login
     public Account loginForWeb(String email, String password) {
         Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email not found"));
@@ -144,6 +148,74 @@ public class AccountService {
         return account;
     }
 
+    // Generate token reset password and send email
+    public void generateResetPasswordToken(String email) {
+        Account account = accountRepo.findByEmail(email) .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống."));
 
+        String token = UUID.randomUUID().toString();
+        account.setVerificationToken(token);
+        account.setTokenExpiry(LocalDateTime.now().plusMinutes(tokenExpiryMinutes));
+
+        accountRepo.save(account);
+        sendResetPasswordEmail(account);
+    }
+
+    // Send email reset password
+    public void sendResetPasswordEmail(Account account) {
+        try {
+            String subject = "[LMS] Reset Your Password";
+            String resetUrl = baseUrl + "/reset-password/" + account.getVerificationToken();
+
+            String body = "<p>Xin chào <b>" + account.getFullName() + "</b>,</p>"
+                    + "<p>Bạn đã yêu cầu đặt lại mật khẩu. Hãy nhấn vào liên kết bên dưới:</p>"
+                    + "<p><a href=\"" + resetUrl + "\" style=\"display:inline-block;padding:10px 15px;"
+                    + "background-color:#007bff;color:#fff;text-decoration:none;border-radius:5px;\">"
+                    + "Đặt lại mật khẩu</a></p>"
+                    + "<p>Liên kết sẽ hết hạn trong " + tokenExpiryMinutes + " phút.</p>";
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(account.getEmail());
+            helper.setSubject(subject);
+            helper.setText(body, true);
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            logger.error("Send reset email failed", e);
+            throw new RuntimeException("Không thể gửi email đặt lại mật khẩu.");
+        }
+    }
+
+    // Reset password
+    public void resetPassword(String token, String newPassword, String confirmPassword) {
+        Account account = accountRepo.findByVerificationToken(token)
+                .orElseThrow(() -> new RuntimeException("Token không hợp lệ hoặc đã hết hạn."));
+
+        if (account.getTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token đã hết hạn, vui lòng yêu cầu lại.");
+        }
+
+        // Validate password
+        StringBuilder error = new StringBuilder();
+        if(newPassword.length() < 8) error.append("Mật khẩu phải có ít nhất 8 ký tự. ");
+        if (!newPassword.matches(".*[A-Z].*")) error.append("Phải có ít nhất 1 chữ in hoa. ");
+        if (!newPassword.matches(".*[a-z].*")) error.append("Phải có ít nhất 1 chữ thường. ");
+        if (!newPassword.matches(".*\\d.*")) error.append("Phải có ít nhất 1 số. ");
+        if (!newPassword.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) error.append("Phải có ít nhất 1 ký tự đặc biệt. ");
+
+        if (error.length() > 0) throw new RuntimeException(error.toString().trim());
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new RuntimeException("Mật khẩu xác nhận không khớp.");
+        }
+
+        // Encode và lưu
+        account.setPassword(passwordEncoder.encode(newPassword));
+        account.setVerificationToken(null);
+        account.setTokenExpiry(null);
+
+        accountRepo.save(account);
+    }
 
 }
