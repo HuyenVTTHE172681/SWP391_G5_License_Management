@@ -47,7 +47,7 @@ public class DashBoardAdminController {
         }
         model.addAttribute("acc", opt.get());
         model.addAttribute("fixedAdminEmail", FIXED_ADMIN_EMAIL);
-        return "admin/account-detail";
+        return "admin/account-details";
     }
 
     @PostMapping("/accounts/{id}/role")
