@@ -18,4 +18,28 @@ public class Favorite {
     @ManyToOne
     @JoinColumn(name = "tool_id")
     private Tool tool;
+
+    public Long getFavoriteId() {
+        return favoriteId;
+    }
+
+    public void setFavoriteId(Long favoriteId) {
+        this.favoriteId = favoriteId;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
+    public Tool getTool() {
+        return tool;
+    }
+
+    public void setTool(Tool tool) {
+        this.tool = tool;
+    }
 }

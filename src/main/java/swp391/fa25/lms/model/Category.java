@@ -1,6 +1,7 @@
 package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 @Entity
@@ -11,12 +12,28 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long categoryId;
 
+    @NotBlank(message = "Category name cannot be blank")
+    @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
     private String categoryName;
 
+    @Column(columnDefinition = "NVARCHAR(100)")
     private String description;
 
     @OneToMany(mappedBy = "category")
     private List<Tool> tools;
+
+    private String icon;
+
+    public Category() {
+    }
+
+    public Category(Long categoryId, String categoryName, String description, List<Tool> tools, String icon) {
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
+        this.description = description;
+        this.tools = tools;
+        this.icon = icon;
+    }
 
     public Long getCategoryId() {
         return categoryId;
@@ -26,11 +43,11 @@ public class Category {
         this.categoryId = categoryId;
     }
 
-    public String getCategoryName() {
+    public @NotBlank(message = "Category name cannot be blank") String getCategoryName() {
         return categoryName;
     }
 
-    public void setCategoryName(String categoryName) {
+    public void setCategoryName(@NotBlank(message = "Category name cannot be blank") String categoryName) {
         this.categoryName = categoryName;
     }
 
@@ -48,5 +65,13 @@ public class Category {
 
     public void setTools(List<Tool> tools) {
         this.tools = tools;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 }

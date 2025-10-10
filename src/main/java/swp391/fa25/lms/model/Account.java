@@ -1,6 +1,7 @@
 package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,12 +13,18 @@ public class Account {
     @Column(name = "account_id")
     private Long accountId;
 
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Định dạng email không hợp lệ")
     @Column(unique = true, nullable = false)
     private String email;
 
+    @NotBlank(message = "Mật khẩu không được để trống")
     private String password;
-    private String fullName;
 
+    @NotBlank(message = "Họ và tên không được để trống")
+    @Size(min = 10, max = 20, message = "Họ và tên đầy đủ phải từ 10 đến 20 ký tự")
+    @Column(name = "fullName", columnDefinition = "NVARCHAR(100)")
+    private String fullName;
 
     @Enumerated(EnumType.STRING)
     private AccountStatus status;
@@ -27,8 +34,17 @@ public class Account {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @Pattern(regexp = "0\\d{9}", message = "Số điện thoại phải có 9 chữ số bắt đầu bằng số 0")
     private String phone;
     private String address;
+
+    @Column(name = "is_verified")
+    private Boolean verified = false;
+
+    private String verificationToken;
+
+    private LocalDateTime tokenExpiry;
 
     @ManyToOne
     @JoinColumn(name = "role_id")
@@ -49,6 +65,30 @@ public class Account {
 
     @OneToMany(mappedBy = "seller")
     private List<Tool> tools;
+
+    public Account() {
+    }
+
+    public Account(Long accountId, String email, String password, String fullName, AccountStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationToken, LocalDateTime tokenExpiry, Role role, Wallet wallet, List<CustomerOrder> orders, List<Feedback> feedbacks, List<Favorite> favorites, List<Tool> tools) {
+        this.accountId = accountId;
+        this.email = email;
+        this.password = password;
+        this.fullName = fullName;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.phone = phone;
+        this.address = address;
+        this.verified = verified;
+        this.verificationToken = verificationToken;
+        this.tokenExpiry = tokenExpiry;
+        this.role = role;
+        this.wallet = wallet;
+        this.orders = orders;
+        this.feedbacks = feedbacks;
+        this.favorites = favorites;
+        this.tools = tools;
+    }
 
     public Long getAccountId() {
         return accountId;
@@ -120,6 +160,30 @@ public class Account {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public Boolean getVerified() {
+        return verified;
+    }
+
+    public void setVerified(Boolean verified) {
+        this.verified = verified;
+    }
+
+    public String getVerificationToken() {
+        return verificationToken;
+    }
+
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
+    }
+
+    public LocalDateTime getTokenExpiry() {
+        return tokenExpiry;
+    }
+
+    public void setTokenExpiry(LocalDateTime tokenExpiry) {
+        this.tokenExpiry = tokenExpiry;
     }
 
     public Role getRole() {

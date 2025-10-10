@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface AccountRepo extends JpaRepository<Account, Long> {
     long countByStatus(Account.AccountStatus status);
     boolean existsByEmail(String email);
+    Optional<Account> findByEmail(String email);
+    Optional<Account> findByVerificationToken(String token);
 }
