@@ -37,12 +37,10 @@ public class SecurityConfig {
                                 "/home",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
+                                "/images/**",
+                                "/feedback/**"
                         ).permitAll()
-
-                        // >>> CHỈ ĐỂ TEST: mở tự do khu vực admin
                         .requestMatchers("/admin/**").permitAll()
-
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.disable())

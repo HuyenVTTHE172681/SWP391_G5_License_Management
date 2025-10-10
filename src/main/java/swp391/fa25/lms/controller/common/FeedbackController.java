@@ -26,8 +26,6 @@ public class FeedbackController {
         this.toolRepo = toolRepo;
         this.feedbackRepo = feedbackRepo;
     }
-
-    // /feedback/tool/{toolId}
     @GetMapping("/tool/{toolId}")
     public String viewToolFeedback(@PathVariable Long toolId,
                                    @RequestParam(defaultValue = "0") int page,
@@ -38,18 +36,22 @@ public class FeedbackController {
             ra.addFlashAttribute("msg", "Tool không tồn tại");
             return "redirect:/";
         }
+        page = Math.max(page, 0);
+        size = Math.min(Math.max(size, 1), 50);
+
         var tool = toolOpt.get();
-        var pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        var fbPage = feedbackRepo.findByTool(tool, pageable);
-        var avg = feedbackRepo.averageRating(tool);
-        var total = feedbackRepo.countByTool(tool);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Feedback> fbPage = feedbackRepo.findByTool(tool, pageable);
+
+        double avg = Optional.ofNullable(feedbackRepo.averageRating(tool)).orElse(0.0);
+        long total = feedbackRepo.countByTool(tool);
 
         model.addAttribute("tool", tool);
         model.addAttribute("fbPage", fbPage);
         model.addAttribute("avgRating", avg);
         model.addAttribute("totalReviews", total);
         model.addAttribute("pageSize", size);
-
+        model.addAttribute("currentPage", page);
 
         return "common/feedback";
     }
