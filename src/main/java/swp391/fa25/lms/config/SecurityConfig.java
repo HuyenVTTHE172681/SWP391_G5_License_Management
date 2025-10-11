@@ -35,7 +35,7 @@ public class SecurityConfig {
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
             String roleName = (acc.getRole() != null)
-                    ? acc.getRole().getRoleName().name()   // ADMIN/SELLER/CUSTOMER...
+                    ? acc.getRole().getRoleName().name()
                     : "CUSTOMER";
 
             var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));
