@@ -22,15 +22,14 @@ public class CustomUserDetailsService implements UserDetailsService {
         Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với email: " + email));
 
-        // Kiểm tra trạng thái tài khoản
         if (account.getStatus() == Account.AccountStatus.DEACTIVATED) {
             throw new UsernameNotFoundException("Tài khoản đã bị vô hiệu hóa");
         }
+
         if (Boolean.FALSE.equals(account.getVerified())) {
-            throw new UsernameNotFoundException("Tài khoản chưa được xác minh email");
+            throw new UsernameNotFoundException("Tài khoản chưa xác minh email");
         }
 
-        // ✅ Trả về CustomerUserDetail (bạn đã có class này)
         return new CustomerUserDetail(account);
     }
 }

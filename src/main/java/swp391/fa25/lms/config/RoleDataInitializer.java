@@ -14,6 +14,7 @@ import java.util.List;
 
 @Component
 public class RoleDataInitializer implements CommandLineRunner {
+    private static final String FIXED_ADMIN_EMAIL = "admin@gmail.com";
 
     @Autowired
     private RoleRepo roleRepo;
@@ -24,7 +25,7 @@ public class RoleDataInitializer implements CommandLineRunner {
     @Autowired
     private ToolRepo toolRepo;
     @Autowired
-    private FeedbackRepo feedbackRepo;
+    private FeedBackRepo feedbackRepo;
     @Autowired
     private FavoriteRepo favoriteRepo;
     @Autowired
@@ -109,6 +110,7 @@ public class RoleDataInitializer implements CommandLineRunner {
         if (accountRepo.count() == 0)  {
             Role sellerRole = roleRepo.findByRoleName(RoleName.SELLER).get();
             Role customerRole = roleRepo.findByRoleName(RoleName.CUSTOMER).get();
+            Role adminRole = roleRepo.findByRoleName(RoleName.ADMIN).get();
 
             Account seller1 = new Account();
             seller1.setEmail("seller1@example.com");
@@ -137,7 +139,17 @@ public class RoleDataInitializer implements CommandLineRunner {
             customer1.setCreatedAt(LocalDateTime.now().minusDays(10));
             customer1.setRole(customerRole);
 
-            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1));
+            Account admin = new Account();
+            admin.setEmail(FIXED_ADMIN_EMAIL);
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setFullName("System Administrator");
+            admin.setStatus(Account.AccountStatus.ACTIVE);
+            admin.setCreatedAt(LocalDateTime.now());
+            admin.setRole(adminRole);
+            admin.setVerified(true);
+            admin.setVerificationToken(null);
+
+            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin));
         } else {
             System.out.println("Account already exist, skipping initialization.");
         }
