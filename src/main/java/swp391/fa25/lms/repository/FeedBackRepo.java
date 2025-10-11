@@ -11,6 +11,6 @@ import swp391.fa25.lms.model.Tool;
 public interface FeedBackRepo extends JpaRepository<Feedback, Long> {
     Page<Feedback> findByTool(Tool tool, Pageable pageable);
     long countByTool(Tool tool);
-    @Query("select coalesce(avg(f.rating), 0) from Feedback f where f.tool = :tool")
-    double averageRating(@Param("tool") Tool tool);
+    @Query("SELECT AVG(f.rating) FROM Feedback f WHERE f.tool.toolId = :toolId")
+    Double findAverageRatingByTool(@Param("toolId") Long toolId);
 }

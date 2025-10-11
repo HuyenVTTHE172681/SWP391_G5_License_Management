@@ -1,5 +1,10 @@
 package swp391.fa25.lms.controller.admin;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +17,7 @@ import swp391.fa25.lms.repository.RoleRepo;
 
 @Controller
 @RequestMapping("/admin")
+@PreAuthorize("hasRole('ADMIN')")
 public class DashBoardAdminController {
 
     private static final String FIXED_ADMIN_EMAIL = "admin@gmail.com";
@@ -28,10 +34,26 @@ public class DashBoardAdminController {
     public String home() {
         return "redirect:/admin/accounts";
     }
-
     @GetMapping("/accounts")
-    public String list(Model model, @ModelAttribute("msg") String msg) {
-        model.addAttribute("accounts", accountRepo.findAll());
+    public String list(
+            @RequestParam(required = false, defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "accountId,asc") String sort, // ví dụ: email,desc
+            Model model,
+            @ModelAttribute("msg") String msg) {
+
+        String[] s = sort.split(",");
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(s[1]), s[0]));
+
+        Page<Account> accPage =
+                (q == null || q.isBlank())
+                        ? accountRepo.findAll(pageable)
+                        : accountRepo.findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(q, q, pageable);
+
+        model.addAttribute("accPage", accPage);
+        model.addAttribute("q", q);
+        model.addAttribute("sort", sort);
         model.addAttribute("roles", RoleName.values());
         model.addAttribute("msg", msg);
         model.addAttribute("fixedAdminEmail", FIXED_ADMIN_EMAIL);
@@ -68,13 +90,10 @@ public class DashBoardAdminController {
 
         Account acc = accOpt.get();
 
-        //  Không cho đổi role của admin cố định sang role khác
         if (FIXED_ADMIN_EMAIL.equalsIgnoreCase(acc.getEmail()) && newRole != RoleName.ADMIN) {
             ra.addFlashAttribute("msg", "Cannot change role of the fixed admin account.");
             return "redirect:/admin/accounts";
         }
-
-        //  Không cho promote người khác thành ADMIN
         if (!FIXED_ADMIN_EMAIL.equalsIgnoreCase(acc.getEmail()) && newRole == RoleName.ADMIN) {
             ra.addFlashAttribute("msg", "Only account " + FIXED_ADMIN_EMAIL + " can have ADMIN role.");
             return "redirect:/admin/accounts";
@@ -93,13 +112,10 @@ public class DashBoardAdminController {
             ra.addFlashAttribute("msg", "Account not found: " + id);
             return "redirect:/admin/accounts";
         }
-
-        // Không cho xóa admin cố định
         if (FIXED_ADMIN_EMAIL.equalsIgnoreCase(accOpt.get().getEmail())) {
             ra.addFlashAttribute("msg", "Cannot delete the fixed admin account.");
             return "redirect:/admin/accounts";
         }
-
         try {
             accountRepo.deleteById(id);
             ra.addFlashAttribute("msg", "Deleted account: " + id);

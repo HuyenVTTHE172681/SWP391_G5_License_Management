@@ -43,7 +43,7 @@ public class FeedbackController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Feedback> fbPage = feedbackRepo.findByTool(tool, pageable);
 
-        double avg = Optional.ofNullable(feedbackRepo.averageRating(tool)).orElse(0.0);
+        double avg = Optional.ofNullable(feedbackRepo.findAverageRatingByTool(toolId)).orElse(0.0);
         long total = feedbackRepo.countByTool(tool);
 
         model.addAttribute("tool", tool);

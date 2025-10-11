@@ -23,8 +23,13 @@
         .subtitle{ margin:6px 0 0; color:var(--muted); font-size:13px }
 
         .card{ background: linear-gradient(180deg, #ffffff, #fbfdff); border:1px solid var(--border); border-radius:14px; box-shadow: 0 10px 24px rgba(2,6,23,.08); overflow:hidden; }
-        .card-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border) }
+        .card-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border) }
         .card-title{ font-weight:600; margin:0; font-size:15px }
+
+        .filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+        .filters input[type="text"]{ padding:8px 10px; border:1px solid var(--border); border-radius:8px; min-width:220px; background:#fff }
+        .filters select{ padding:7px 10px; border:1px solid var(--border); border-radius:8px; background:#fff }
+        .filters .btn{ margin-right:0 }
 
         .flash{ padding:10px 12px; margin:10px 0; border:1px solid #86efac; background:#ecfdf5; color:#166534; border-radius:10px; font-size:13px }
         .empty{ padding:22px; border:1px dashed var(--border); border-radius:12px; color:var(--muted); text-align:center; background:#ffffff80 }
@@ -65,6 +70,14 @@
         select:focus-visible, .btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
         .actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
         .note{ color:var(--muted); font-size:12px; margin:8px 0 0 }
+
+        .pager{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; border-top:1px solid var(--border); background:#fff }
+        .pagination{ display:flex; gap:6px; flex-wrap:wrap; list-style:none; padding:0; margin:0 }
+        .pagination a, .pagination span{
+            display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:8px; text-decoration:none; color:var(--text); background:#f8fafc;
+        }
+        .pagination .active{ background:#eef2ff; border-color:#bfdbfe; font-weight:600 }
+        .pagination .disabled{ opacity:.5; pointer-events:none }
     </style>
 </head>
 <body>
@@ -73,17 +86,45 @@
     <div class="page-head">
         <div>
             <h1 class="title">Accounts</h1>
-            <p class="subtitle">Quản lý tài khoản: xem, đổi vai trò, và xoá.</p>
+            <p class="subtitle">Quản lý tài khoản</p>
         </div>
     </div>
 
     <p th:if="${msg}" class="flash" th:text="${msg}">Message</p>
 
-    <div th:if="${#lists.isEmpty(accounts)}" class="empty">No accounts.</div>
+    <!-- Empty -->
+    <div th:if="${accPage == null or accPage.totalElements == 0}" class="empty">No accounts.</div>
 
-    <div th:if="${!#lists.isEmpty(accounts)}" class="card">
+    <!-- List -->
+    <div th:if="${accPage != null and accPage.totalElements > 0}" class="card">
         <div class="card-head">
-            <h3 class="card-title">Account List</h3>
+            <h3 class="card-title">
+                Account List
+                <span class="subtitle">• Page [[${accPage.number + 1}]] / [[${accPage.totalPages}]] • Total [[${accPage.totalElements}]]</span>
+            </h3>
+
+            <!-- Filters: GET /admin/accounts -->
+            <form class="filters" th:action="@{/admin/accounts}" method="get">
+                <input type="text" name="q" placeholder="Search email or name…" th:value="${q}">
+                <select name="sort" th:value="${sort}">
+                    <option value="accountId,asc">ID ↑</option>
+                    <option value="accountId,desc">ID ↓</option>
+                    <option value="email,asc">Email A–Z</option>
+                    <option value="email,desc">Email Z–A</option>
+                    <option value="fullName,asc">Name A–Z</option>
+                    <option value="fullName,desc">Name Z–A</option>
+                    <option value="createdAt,desc">Newest</option>
+                    <option value="createdAt,asc">Oldest</option>
+                </select>
+                <select name="size" th:value="${accPage.size}">
+                    <option value="5">5 / page</option>
+                    <option value="10">10 / page</option>
+                    <option value="20">20 / page</option>
+                    <option value="50">50 / page</option>
+                </select>
+                <button class="btn update" type="submit">Apply</button>
+                <a class="btn" th:href="@{/admin/accounts}">Reset</a>
+            </form>
         </div>
 
         <div class="table-wrap">
@@ -99,7 +140,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="a : ${accounts}">
+                <tr th:each="a : ${accPage.content}">
                     <td class="small" th:text="${a.accountId}">1</td>
 
                     <td th:text="${a.email}">email@example.com</td>
@@ -141,10 +182,8 @@
 
                     <!-- Actions -->
                     <td class="actions">
-
                         <a class="btn view" th:href="@{|/admin/accounts/${a.accountId}|}">View</a>
 
-                        <!-- Xóa: đặt button trong form, disable nếu là admin cố định -->
                         <form class="inline"
                               th:action="@{|/admin/accounts/${a.accountId}/delete|}"
                               method="post"
@@ -157,11 +196,40 @@
                                 Delete
                             </button>
                         </form>
-
                     </td>
                 </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Pagination footer -->
+        <div class="pager">
+            <div class="subtitle">Showing page [[${accPage.number + 1}]] of [[${accPage.totalPages}]]</div>
+
+            <ul class="pagination">
+                <!-- Prev -->
+                <li th:classappend="${accPage.first} ? 'disabled'">
+                    <a th:if="${!accPage.first}"
+                       th:href="@{/admin/accounts(q=${q}, page=${accPage.number - 1}, size=${accPage.size}, sort=${sort})}">&laquo; Prev</a>
+                    <span th:if="${accPage.first}">&laquo; Prev</span>
+                </li>
+
+                <!-- Pages -->
+                <li th:each="p : ${#numbers.sequence(0, accPage.totalPages - 1)}"
+                    th:classappend="${p == accPage.number} ? 'active'">
+                    <span th:if="${p == accPage.number}" th:text="${p + 1}">1</span>
+                    <a th:if="${p != accPage.number}"
+                       th:text="${p + 1}"
+                       th:href="@{/admin/accounts(q=${q}, page=${p}, size=${accPage.size}, sort=${sort})}">1</a>
+                </li>
+
+                <!-- Next -->
+                <li th:classappend="${accPage.last} ? 'disabled'">
+                    <a th:if="${!accPage.last}"
+                       th:href="@{/admin/accounts(q=${q}, page=${accPage.number + 1}, size=${accPage.size}, sort=${sort})}">Next &raquo;</a>
+                    <span th:if="${accPage.last}">Next &raquo;</span>
+                </li>
+            </ul>
         </div>
     </div>
 

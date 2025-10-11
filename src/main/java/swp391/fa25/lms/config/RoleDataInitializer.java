@@ -14,6 +14,7 @@ import java.util.List;
 
 @Component
 public class RoleDataInitializer implements CommandLineRunner {
+    private static final String FIXED_ADMIN_EMAIL = "admin@gmail.com";
 
     @Autowired
     private RoleRepo roleRepo;
@@ -137,12 +138,14 @@ public class RoleDataInitializer implements CommandLineRunner {
             customer1.setRole(customerRole);
 
             Account admin = new Account();
-            admin.setEmail("admin@gmail.com");
+            admin.setEmail(FIXED_ADMIN_EMAIL);
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setFullName("System Administrator");
             admin.setStatus(Account.AccountStatus.ACTIVE);
-            admin.setCreatedAt(java.time.LocalDateTime.now());
+            admin.setCreatedAt(LocalDateTime.now());
             admin.setRole(adminRole);
+            admin.setVerified(true);
+            admin.setVerificationToken(null);
             accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1,admin));
         } else {
             System.out.println("Account already exist, skipping initialization.");
