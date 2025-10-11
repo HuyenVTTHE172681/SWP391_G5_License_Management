@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add New Tool</title>
+
+    <style>
+        /* Toàn trang */
+        body {
+            background-color: #f9fafb;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #16a34a;
+        }
+
+        .back-btn {
+            background-color: #e5e7eb;
+            color: #374151;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background-color: #d1d5db;
+        }
+
+        /* Form container */
+        .form-section {
+            max-width: 700px;
+            margin: 2rem auto;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.4rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 0.6rem;
+            font-size: 1rem;
+            background-color: white;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .submit-btn {
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #15803d;
+        }
+    </style>
+</head>
+
+<body>
+<!-- Header -->
+<header>
+    <div class="header-container">
+        <h1 class="header-title">Add New Tool</h1>
+        <a th:href="@{/seller/tools}" class="back-btn">← Back</a>
+    </div>
+</header>
+
+<!-- Add Form -->
+<section class="form-section">
+    <form th:action="@{/seller/tools/add}"
+          th:object="${tool}"
+          method="post"
+          enctype="multipart/form-data">
+
+        <!-- Tool Name -->
+        <div class="form-group">
+            <label class="form-label">Tool Name</label>
+            <input type="text" name="toolName" required class="form-input">
+        </div>
+
+        <!-- Image -->
+        <div class="form-group">
+            <label class="form-label">Select Image</label>
+            <select name="selectedImage" class="form-select" required>
+                <option value="">-- Select an image --</option>
+                <option th:each="img : ${imageFiles}"
+                        th:value="@{'/images/' + ${img}}"
+                        th:text="${img}">
+                </option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">File</label>
+            <input type="file" name="file" class="form-input">
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+            <label class="form-label">Category</label>
+            <select th:field="*{category.categoryId}" required>
+                <option value="">-- Select category --</option>
+                <option th:each="c : ${categories}"
+                        th:value="${c.categoryId}"
+                        th:text="${c.categoryName}">
+                </option>
+            </select>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea name="description" rows="4" class="form-textarea"></textarea>
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option value="available">Available</option>
+                <option value="unavailable">Unavailable</option>
+            </select>
+        </div>
+
+        <!-- Created At -->
+        <div class="form-group">
+            <label class="form-label">Created At</label>
+            <input type="date" name="createdAt" class="form-input">
+        </div>
+
+        <!-- Updated At -->
+        <div class="form-group">
+            <label class="form-label">Updated At</label>
+            <input type="date" name="updatedAt" class="form-input">
+        </div>
+
+        <!-- Submit -->
+        <div class="form-actions">
+            <button type="submit" class="submit-btn">Save Tool</button>
+        </div>
+
+    </form>
+</section>
+</body>
+</html>

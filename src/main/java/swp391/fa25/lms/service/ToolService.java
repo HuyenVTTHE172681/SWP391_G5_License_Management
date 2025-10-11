@@ -4,15 +4,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.model.Account;
+import swp391.fa25.lms.repository.ToolFileRepo;
 import swp391.fa25.lms.repository.ToolRepo;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+
 
 @Service
 public class ToolService {
-
+    @Autowired
+    private  ToolFileRepo toolFileRepository;;
     @Autowired
     private ToolRepo toolRepo;
 
@@ -23,12 +25,13 @@ public class ToolService {
         tool.setUpdatedAt(LocalDateTime.now());
         return toolRepo.save(tool);
     }
-
+    public Tool save(Tool tool) {
+        tool.setUpdatedAt(LocalDateTime.now());
+        return toolRepo.save(tool);
+    }
     public Tool updateTool(Long id, Tool newToolData, Account seller) {
         Tool tool = toolRepo.findById(id).orElseThrow(() -> new RuntimeException("Tool not found"));
-        if (!tool.getSeller().equals(seller)) {
-            throw new RuntimeException("You are not allowed to edit this tool");
-        }
+
         tool.setToolName(newToolData.getToolName());
         tool.setDescription(newToolData.getDescription());
         tool.setImage(newToolData.getImage());
@@ -39,13 +42,18 @@ public class ToolService {
 
     public void deleteTool(Long id, Account seller) {
         Tool tool = toolRepo.findById(id).orElseThrow(() -> new RuntimeException("Tool not found"));
-        if (!tool.getSeller().equals(seller)) {
-            throw new RuntimeException("You are not allowed to delete this tool");
-        }
+        toolFileRepository.deleteAllByToolToolId(id);
+
         toolRepo.delete(tool);
     }
 
     public List<Tool> getToolsBySeller(Account seller) {
         return toolRepo.findBySeller(seller);
+    }
+
+    // ✅ Lấy tool theo ID (thêm để dùng cho edit)
+    public Tool getToolById(Long id) {
+        return toolRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tool not found"));
     }
 }
