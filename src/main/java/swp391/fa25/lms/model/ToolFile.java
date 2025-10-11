@@ -1,6 +1,8 @@
 package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,6 +17,8 @@ public class ToolFile {
     @JoinColumn(name = "tool_id")
     private Tool tool;
 
+    @NotBlank(message = "File path cannot be blank")
+    @Column(nullable = false)
     private String filePath;
 
     @Enumerated(EnumType.STRING)

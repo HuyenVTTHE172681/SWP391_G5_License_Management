@@ -1,6 +1,9 @@
 package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,16 +16,23 @@ public class Tool {
     @Column(name = "tool_id")
     private Long toolId;
 
+    @NotBlank(message = "Tool name cannot be blank")
+    @Column(nullable = false)
     private String toolName;
+
+    @NotBlank(message = "Image cannot be blank")
+    @Column(nullable = false)
     private String image;
 
-    @Column(columnDefinition = "TEXT")
+    @NotBlank(message = "Description cannot be blank")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
     private Account seller;
 
+    @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;

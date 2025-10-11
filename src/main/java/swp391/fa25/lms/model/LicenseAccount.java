@@ -1,6 +1,8 @@
 package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,7 +14,12 @@ public class LicenseAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long licenseAccountId;
 
+    @NotBlank(message = "User name can not blank")
+    @Column(nullable = false)
     private String username;
+
+    @NotBlank(message = "Password name cannot be blank")
+    @Column(nullable = false)
     private String password;
 
     @ManyToOne

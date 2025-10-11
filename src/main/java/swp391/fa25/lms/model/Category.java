@@ -1,6 +1,7 @@
 package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 @Entity
@@ -11,6 +12,8 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long categoryId;
 
+    @NotBlank(message = "Category name cannot be blank")
+    @Column(nullable = false)
     private String categoryName;
 
     private String description;
