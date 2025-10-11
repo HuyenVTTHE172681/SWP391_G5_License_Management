@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Profile</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 40px 0;
+        }
+        .profile-card {
+            max-width: 700px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .profile-card h2 {
+            text-align: center;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+        .profile-item {
+            margin-bottom: 15px;
+        }
+        .profile-item b {
+            color: #555;
+            width: 120px;
+            display: inline-block;
+        }
+        .back-button {
+            display: block;
+            margin: 30px auto 0;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            background-color: #45a049;
+        }
+        hr {
+            border-top: 1px solid #eee;
+            margin: 25px 0;
+        }
+        .welcome-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="profile-card">
+    <h2>Customer Profile</h2>
+
+    <div class="profile-item">
+        <b>Full Name:</b> <span th:text="${account.fullName}"></span>
+    </div>
+    <div class="profile-item">
+        <b>Email:</b> <span th:text="${account.email}"></span>
+    </div>
+    <div class="profile-item">
+        <b>Phone:</b> <span th:text="${account.phone}"></span>
+    </div>
+    <div class="profile-item">
+        <b>Address:</b> <span th:text="${account.address}"></span>
+    </div>
+    <div class="profile-item">
+        <b>Status:</b> <span th:text="${account.status}"></span>
+    </div>
+    <a th:href="@{/profile/edit}" class="btn btn-warning mt-3 w-100 fw-semibold">Edit Profile</a>
+
+    <hr>
+
+    <p class="welcome-text">
+        Chào mừng bạn đã quay trở lại! Ở đây bạn có thể xem được thông tin tài khoản và cập nhật tài khoản của bạn.
+    </p>
+
+    <a th:href="@{/home}" class="back-button">Back to Home</a>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

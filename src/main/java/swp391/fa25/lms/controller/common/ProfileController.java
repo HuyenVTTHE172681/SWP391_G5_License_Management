@@ -1,5 +1,6 @@
 package swp391.fa25.lms.controller.common;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,58 +19,50 @@ public class ProfileController {
     private AccountService accountService;
 
     @GetMapping("/profile")
-    public String viewProfile(HttpSession session, Model model) {
-        Account loggedInUser = (Account) session.getAttribute("loggedInUser");
-        if(loggedInUser == null){
-            return "redirect:/login";
-        }
-        Account account = accountService.getAccountById(loggedInUser.getAccountId());
+    public String viewProfile(Authentication authentication, Model model) {
+        String email = authentication.getName(); // lấy email (username) của user đang đăng nhập
+        Account account = accountService.viewProfile(email);
         model.addAttribute("account", account);
+
         switch (account.getRole().getRoleName()) {
             case CUSTOMER:
-                return "public/customer-profile";
+                return "profile/customerProfile";
             case SELLER:
-                return "seller/seller-profile";
-            case MOD:
-                return "moderator/moderator-profile";
+                return "profile/sellerProfile";
             case MANAGER:
-                return "manager/manager-profile";
+                return "profile/managerProfile";
+            case MOD:
+                return "profile/modProfile";
             default:
-                return "error/403"; // nếu không có quyền
+                return "error/unauthorized";
         }
     }
 
+
     @GetMapping("/profile/edit")
-    public String editProfile(HttpSession session, Model model) {
-        Account loggedInUser = (Account) session.getAttribute("loggedInUser");
-        if(loggedInUser == null){
-            return "redirect:/login";
-        }
-        Account account = accountService.getAccountById(loggedInUser.getAccountId());
+    public String editProfile(Authentication authentication, Model model) {
+        String email = authentication.getName();
+        Account account = accountService.viewProfile(email);
         model.addAttribute("account", account);
-        return "profile/edit-profile";
+        switch (account.getRole().getRoleName()) {
+            case CUSTOMER:
+                return "profile/editProfile";
+            case SELLER:
+                return "profile/editProfile";
+            case MANAGER:
+                return "profile/editProfile";
+            case MOD:
+                return "profile/editProfile";
+            default:
+                return "error/unauthorized";
+        }
     }
 
     @PostMapping("/profile/edit")
     public String updateProfile(@ModelAttribute("account") Account updatedAccount,
-                                HttpSession session, Model model) {
-        Account loggedInUser = (Account) session.getAttribute("loggedInUser");
-        if (loggedInUser == null) {
-            return "redirect:/login";
-        }
-
-        // Giữ nguyên role, password, status... (nếu không cho chỉnh)
-        updatedAccount.setAccountId(loggedInUser.getAccountId());
-        updatedAccount.setRole(loggedInUser.getRole());
-        updatedAccount.setStatus(loggedInUser.getStatus());
-        updatedAccount.setPassword(loggedInUser.getPassword());
-
-        accountService.updateAccount(updatedAccount);
-
-        // Cập nhật session
-        session.setAttribute("loggedInUser", updatedAccount);
-
-        model.addAttribute("message", "Cập nhật hồ sơ thành công!");
+                                Authentication authentication) {
+        String email = authentication.getName();
+        accountService.updateProfile(email, updatedAccount);
         return "redirect:/profile";
     }
 }
