@@ -37,6 +37,8 @@ public class Account {
 
     @Pattern(regexp = "0\\d{9}", message = "Số điện thoại phải có 9 chữ số bắt đầu bằng số 0")
     private String phone;
+
+    @Column(columnDefinition = "NVARCHAR(100)")
     private String address;
 
     @Column(name = "is_verified")

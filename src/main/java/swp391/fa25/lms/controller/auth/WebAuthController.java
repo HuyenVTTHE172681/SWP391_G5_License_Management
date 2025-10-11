@@ -115,6 +115,10 @@ public class WebAuthController {
             // Check -> trả về Account
             Account account = accountService.loginForWeb(email, password);
 
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(account.getEmail(), null, List.of());
+            SecurityContextHolder.getContext().setAuthentication(auth);
+
             // Hiển thị password phiên bản "masked".
             request.getSession().setAttribute("loggedInAccount", account);
             request.getSession().setAttribute("maskedPassword", "********");

@@ -129,6 +129,30 @@ public class AccountService {
     }
 
     // Login
+    public Map<String, String> login(String email, String password) {
+        Account account = accountRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+
+        if (!passwordEncoder.matches(password, account.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
+
+        if (!account.getVerified()) {
+            throw new RuntimeException("Account not verified");
+        }
+
+        if (account.getStatus() != Account.AccountStatus.ACTIVE) {
+            throw new RuntimeException("Account not ACTIVE");
+        }
+
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", jwtService.generateAccessToken(account));
+        tokens.put("refreshToken", jwtService.generateRefreshToken(account));
+
+        return tokens;
+    }
+
+    // Dành cho web login (không sinh JWT)
     public Account loginForWeb(String email, String password) {
         Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email not found"));
@@ -215,6 +239,78 @@ public class AccountService {
         account.setVerificationToken(null);
         account.setTokenExpiry(null);
 
+        accountRepo.save(account);
+    }
+
+    public Account viewProfile(String email){
+        Account account = accountRepo.findByEmail(email).orElseThrow(null);
+
+        if(account == null){
+            throw new RuntimeException("Không tìm thấy tài khoản email: " + email);
+        }
+
+        return account;
+    }
+
+
+    public Account updateProfile(String email, Account updatedAccount) {
+        Account existing = accountRepo.findByEmail(email).orElseThrow(null);
+        if(existing == null){
+            throw new RuntimeException("Không tìm thấy tài khoản email: " + email);
+        }
+
+        existing.setFullName(updatedAccount.getFullName());
+        existing.setPhone(updatedAccount.getPhone());
+        existing.setAddress(updatedAccount.getAddress());
+
+        return accountRepo.save(existing);
+    }
+
+    public void sendResetPasswordEmail(String email) {
+        Account account = accountRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+
+        // Tạo token reset
+        String token = UUID.randomUUID().toString();
+        account.setVerificationToken(token);
+        account.setTokenExpiry(LocalDateTime.now().plusMinutes(tokenExpiryMinutes));
+        accountRepo.save(account);
+
+        // Gửi mail reset
+        try {
+            String subject = "[LMS] Reset Your Password";
+            String resetUrl = baseUrl + "/reset-password?token=" + token;
+
+            String body = "<p>Hello <b>" + account.getFullName() + "</b>,</p>"
+                    + "<p>We received a request to reset your password. Click below to reset it:</p>"
+                    + "<p><a href=\"" + resetUrl + "\" style=\"display:inline-block;padding:10px 15px;"
+                    + "background-color:#007bff;color:#fff;text-decoration:none;border-radius:5px;\">"
+                    + "Reset Password</a></p>"
+                    + "<p>This link will expire in " + tokenExpiryMinutes + " minutes.</p>";
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(email);
+            helper.setSubject(subject);
+            helper.setText(body, true);
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send reset password email");
+        }
+    }
+
+    public void resetPassword(String token, String newPassword) {
+        Account account = accountRepo.findByVerificationToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid or expired token"));
+
+        if (account.getTokenExpiry() == null || account.getTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Reset link has expired");
+        }
+
+        // Cập nhật mật khẩu
+        account.setPassword(passwordEncoder.encode(newPassword));
+        account.setVerificationToken(null);
+        account.setTokenExpiry(null);
         accountRepo.save(account);
     }
 

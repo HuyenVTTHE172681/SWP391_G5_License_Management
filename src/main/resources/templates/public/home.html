@@ -631,22 +631,23 @@
                     <i class="far fa-heart"></i>
                     <span class="wishlist-badge">12</span>
                 </a>
-
+                <!-- Nếu chưa đăng nhập -->
                 <a th:if="${account == null}" th:href="@{/login}" class="btn-login text-decoration-none fw-bolder">
                     <i class="far fa-user"></i> Login
                 </a>
-
+                <!-- Nếu đã đăng nhập -->
                 <div th:if="${account != null}" class="dropdown">
                     <a class="d-flex align-items-center text-decoration-none dropdown-toggle fw-bolder" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
                         <img src="https://cdn-icons-png.flaticon.com/512/147/147144.png" alt="avatar" class="rounded-circle me-2" width="36" height="36">
                         <span th:text="${account.fullName}">User</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                        <li><a class="dropdown-item" href="#">Thông tin tài khoản</a></li>
+                        <li><a class="dropdown-item" href="/profile">Thông tin tài khoản</a></li>
                         <li><a class="dropdown-item" href="#">Đơn hàng đã mua</a></li>
                         <li><a class="dropdown-item" href="#">Gian hàng yêu thích</a></li>
                         <li><a class="dropdown-item" href="#">Lịch sử thanh toán</a></li>
                         <li><a class="dropdown-item" href="#">Quản lý nội dung</a></li>
+                        <li><a class="dropdown-item" th:href="@{/profile/reset-password}">Đặt lại mật khẩu</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" th:href="@{/logout}">Thoát</a></li>
                     </ul>

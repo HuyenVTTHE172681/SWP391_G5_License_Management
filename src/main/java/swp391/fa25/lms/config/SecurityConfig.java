@@ -25,29 +25,28 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/",                          // Trang chủ
-                                "/home",                      // Trang chủ chính
-                                "/home/**",                   // Các đường dẫn con trong home
-                                "/login",                     // Trang đăng nhập
-                                "/register",                  // Trang đăng ký
-                                "/verify-email/**",           // Xác minh email
-                                "/forgot-password",           // Quên mật khẩu
-                                "/reset-password/**",         // Đặt lại mật khẩu
-                                "/css/**",                    // CSS static
-                                "/js/**",                     // JS static
-                                "/images/**",                 // Ảnh
-                                "/assets/**"                 // Thư mục assets (nếu có)
-                        )
-                        .permitAll()
+                                "/", "/home", "/login", "/register",
+                                "/verify-email/**", "/forgot-password", "/reset-password/**",
+                                "/css/**", "/js/**", "/images/**", "/assets/**"
+                        ).permitAll()
+                        .requestMatchers("/profile/**").authenticated() // ✅ Chỉ user đăng nhập mới truy cập
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form.disable())
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                        .defaultSuccessUrl("/home", true)
+                        .permitAll()
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login")
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll()
                 );
 
         return http.build();
