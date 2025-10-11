@@ -28,6 +28,8 @@ public class RoleDataInitializer implements CommandLineRunner {
     @Autowired
     private FavoriteRepo favoriteRepo;
     @Autowired
+    private LicenseToolRepo licenseRepo;
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
@@ -302,6 +304,52 @@ public class RoleDataInitializer implements CommandLineRunner {
         } else {
             System.out.println("Favorite already exist, skipping initialization.");
         }
+
+        // ============ LICENSE ============
+        if (licenseRepo.count() == 0) {
+            List<Tool> tools = toolRepo.findAll();
+
+            License l1 = new License();
+            l1.setName("Gói dùng thử 7 ngày");
+            l1.setTool(tools.get(0)); // Tool Email Bulk Sender Pro
+            l1.setDurationDays(7);
+            l1.setPrice(0.0);
+            l1.setCreatedAt(LocalDateTime.now().minusDays(3));
+
+            License l2 = new License();
+            l2.setName("Gói 1 tháng");
+            l2.setTool(tools.get(0));
+            l2.setDurationDays(30);
+            l2.setPrice(9.99);
+            l2.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+            License l3 = new License();
+            l3.setName("Gói 6 tháng");
+            l3.setTool(tools.get(0));
+            l3.setDurationDays(180);
+            l3.setPrice(49.99);
+            l3.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+            License l4 = new License();
+            l4.setName("Gói trọn đời");
+            l4.setTool(tools.get(1)); // Tool Auto Like & Share Facebook
+            l4.setDurationDays(null); // Không giới hạn
+            l4.setPrice(99.99);
+            l4.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+            License l5 = new License();
+            l5.setName("Gói Premium 1 năm");
+            l5.setTool(tools.get(2)); // SEO Keyword Analyzer
+            l5.setDurationDays(365);
+            l5.setPrice(79.99);
+            l5.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+            licenseRepo.saveAll(Arrays.asList(l1, l2, l3, l4, l5));
+            System.out.println("Default licenses have been initialized.");
+        } else {
+            System.out.println("Licenses already exist, skipping initialization.");
+        }
+
     }
 
 
