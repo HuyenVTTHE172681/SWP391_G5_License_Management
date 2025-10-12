@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.config.CustomerUserDetail;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.service.CategoryService;
-import swp391.fa25.lms.service.ToolService;
+import swp391.fa25.lms.service.used.CategoryService;
+import swp391.fa25.lms.service.used.ToolService;
 
 @Controller
 public class HomePageController {

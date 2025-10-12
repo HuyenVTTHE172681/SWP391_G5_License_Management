@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import swp391.fa25.lms.model.Category;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.repository.ToolRepository;
-import swp391.fa25.lms.service.CategoryService;
-import swp391.fa25.lms.service.ToolService;
+import swp391.fa25.lms.service.used.CategoryService;
+import swp391.fa25.lms.service.used.ToolService;
 
 import java.util.List;
 

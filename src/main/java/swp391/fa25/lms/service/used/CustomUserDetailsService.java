@@ -1,4 +1,4 @@
-package swp391.fa25.lms.service;
+package swp391.fa25.lms.service.used;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
