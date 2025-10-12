@@ -1,103 +1,75 @@
 package swp391.fa25.lms.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.repository.ToolRepository;
+import swp391.fa25.lms.repository.FeedBackRepo;
+import swp391.fa25.lms.repository.ToolRepo;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class ToolService {
     @Autowired
-    private ToolRepository toolRepository;
+    private ToolRepo toolRepo;
 
-    public List<Tool> findAll() {
-        return toolRepository.findAll();
-    }
+    @Autowired
+    private FeedBackRepo feedbackRepo;
 
-    public Tool save(Tool tool) {
-        return toolRepository.save(tool);
-    }
-
-    public List<Tool> filterTools(String toolName,
-                                  Long categoryId,
-                                  String primarySort, String primaryOrder,
-                                  String secondarySort, String secondaryOrder) {
-
-        Sort sort;
-
-        Sort primary = buildSort(primarySort, primaryOrder);
-        Sort secondary = buildSort(secondarySort, secondaryOrder);
-
-
-        if (!primary.isUnsorted() && !secondary.isUnsorted()) sort = primary.and(secondary);
-        else if (!primary.isUnsorted()) sort = primary;
-        else sort = secondary;
-
-        if (toolName == null || toolName.isBlank()) {
-            return (categoryId != null)
-                    ? toolRepository.findAllByCategory_CategoryId(categoryId, sort)
-                    : toolRepository.findAll(sort);
+    public Page<Tool> searchAndFilterTools(String keyword, Long categoryId, String dateFilter, int page, int size) {
+        // Lấy toàn bộ tools hoặc lấy theo tên
+        List<Tool> tools;
+        if (keyword != null && !keyword.isEmpty()) {
+            tools = toolRepo.findByToolNameContainingIgnoreCase(keyword);
+        } else {
+            tools = toolRepo.findAll();
         }
 
-        if (categoryId == null) {
-            return toolRepository.findAllByToolNameContainingIgnoreCase(toolName, sort);
+        // Filter theo category
+        if (categoryId != null && categoryId > 0) {
+            tools = tools.stream()
+                    .filter(t -> t.getCategory() != null && t.getCategory().getCategoryId().equals(categoryId))
+                    .toList();
         }
-        return toolRepository.findAllByToolNameContainingIgnoreCaseAndCategory_CategoryId(toolName, categoryId, sort);
-    }
 
-    private Sort buildSort(String sortBy, String order) {
-
-        if (sortBy == null || order == null) return Sort.unsorted();
-
-        return switch (sortBy.toLowerCase()) {
-            case "priceorder" -> {
-                if ("asc".equalsIgnoreCase(order)) {
-                    yield Sort.by("price").ascending();
-                } else if ("desc".equalsIgnoreCase(order)) {
-                    yield Sort.by("price").descending();
-                } else {
-                    yield Sort.unsorted();
-                }
-            }
-
-            case "updatedat", "updateat", "updatedate" -> {
-                if ("asc".equalsIgnoreCase(order)) {
-                    yield Sort.by("updatedAt").ascending();
-                } else if ("desc".equalsIgnoreCase(order)) {
-                    yield Sort.by("updatedAt").descending();
-                } else {
-                    yield Sort.unsorted();
-                }
-            }
-
-            default -> Sort.unsorted();
-        };
-
-    }
-
-    public Tool findById(long id) {
-        return toolRepository.findByToolId(id);
-    }
-    public List<Tool> availableTools(Tool.Status status) {
-        return toolRepository.findByStatus(status);
-    }
-    public List<Tool> filterToolsForModerator(String toolName, Long categoryId, String status) {
-        Tool.Status toolStatus = null;
-        if (status != null && !status.isBlank()) {
-            try {
-                toolStatus = Tool.Status.valueOf(status.toUpperCase());
-            } catch (IllegalArgumentException ignored) {
-                ignored.printStackTrace();
+        // Filter theo ngày đăng
+        if (dateFilter != null && !dateFilter.isEmpty()) {
+            LocalDateTime now = LocalDateTime.now();
+            switch (dateFilter) {
+                case "1": // Mới nhất
+                    tools = tools.stream()
+                            .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                            .toList();
+                    break;
+                case "2": // 30 ngày qua
+                    tools = tools.stream()
+                            .filter(t -> t.getCreatedAt().isAfter(now.minusDays(30)))
+                            .toList();
+                    break;
+                case "3": // 3 tháng qua
+                    tools = tools.stream()
+                            .filter(t -> t.getCreatedAt().isAfter(now.minusMonths(3)))
+                            .toList();
+                    break;
             }
         }
 
-        if (toolName == null || toolName.isBlank()) toolName = null;
-        if (categoryId != null && categoryId <= 0) categoryId = null;
+        // Tính rating trung bình & số feedback cho từng tool
+        tools.forEach(tool -> {
+            Double avgRating = feedbackRepo.findAverageRatingByTool(tool.getToolId());
+            Long totalReviews = feedbackRepo.countByTool(tool);
 
-        return toolRepository.filterToolsForModerator(toolName, categoryId, toolStatus);
+            tool.setAverageRating(avgRating != null ? avgRating : 0.0);
+            tool.setTotalReviews(totalReviews != null ? totalReviews : 0L);
+        });
+
+        // Phân trang
+        int start = page * size;
+        int end = Math.min(start + size, tools.size());
+        List<Tool> pagedList = tools.subList(start < tools.size() ? start : 0, end);
+
+        return new PageImpl<>(pagedList, PageRequest.of(page, size), tools.size());
     }
 }
-
