@@ -21,10 +21,22 @@ public class Feedback {
 
     private Integer rating;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(100)")
     private String comment;
 
     private LocalDateTime createdAt;
+
+    public Feedback() {
+    }
+
+    public Feedback(Long feedbackId, Account account, Tool tool, Integer rating, String comment, LocalDateTime createdAt) {
+        this.feedbackId = feedbackId;
+        this.account = account;
+        this.tool = tool;
+        this.rating = rating;
+        this.comment = comment;
+        this.createdAt = createdAt;
+    }
 
     public Long getFeedbackId() {
         return feedbackId;

@@ -1,93 +1,86 @@
 package swp391.fa25.lms.controller.common;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import swp391.fa25.lms.model.Category;
-import swp391.fa25.lms.model.Feedback;
+import swp391.fa25.lms.config.CustomerUserDetail;
+import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.service.CategoryService;
-import swp391.fa25.lms.service.FeedbackService;
-import swp391.fa25.lms.service.ToolService;
-
-import java.util.List;
+import swp391.fa25.lms.service.used.CategoryService;
+import swp391.fa25.lms.service.used.ToolService;
 
 @Controller
-@RequestMapping("/homepage")
 public class HomePageController {
-
-    @Autowired
-    private ToolService toolService;
 
     @Autowired
     private CategoryService categoryService;
     @Autowired
-    private FeedbackService feedbackService;
+    private ToolService toolService;
 
-    @GetMapping
-    public String displayToolList(Model model) {
-        try {
-            List<Category> categories = categoryService.getCategories();
-            List<Tool> tools = toolService.availableTools(Tool.Status.APPROVED);
-
-            model.addAttribute("tools", tools);
-            model.addAttribute("categories", categories);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "public/homepage"; // ✅ Tên view (trong templates/public/homepage.html)
+    @GetMapping("/")
+    public String defaultRedirect() {
+        // Default => redirect tới /home
+        return "redirect:/home";
     }
 
-    @GetMapping("/filter")
-    public String filterTools(
-            @RequestParam(required = false) String toolName,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String priceOrder,
-            @RequestParam(required = false) String updateDate,
+    // Home
+    @GetMapping("/home")
+    public String showHomePage(
+            HttpServletRequest request,
             Model model) {
 
-        List<Tool> tools = toolService.filterTools(
-                toolName, categoryId,
-                "price", priceOrder,
-                "updatedAt", updateDate
-        );
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
 
-        model.addAttribute("tools", tools);
-        model.addAttribute("categories", categoryService.getCategories());
-        model.addAttribute("priceOrder", priceOrder);
-        model.addAttribute("updateDate", updateDate);
-        model.addAttribute("categoryId", categoryId);
-        model.addAttribute("toolName", toolName);
-        return "public/homepage";
-    }
-    @GetMapping("/toolDetail/{id}")
-    public String toolDetail(
-            @PathVariable("id") long id,
-            Model model
-    ) {
-        try {
-            Tool tool = toolService.findById(id);
-            List<Feedback> feedbacks = feedbackService.findByTool(tool);
-            if (tool == null) {
-                // Nếu không tìm thấy tool, có thể redirect hoặc báo lỗi
-                model.addAttribute("errorMessage", "Tool not found!");
-                return "common/error";
-            } else {
-                model.addAttribute("tool", tool);
-                model.addAttribute("feedbacks", feedbacks);
-                return "public/toolDetail";
+        if (auth != null && auth.getPrincipal() instanceof CustomerUserDetail userDetail) {
+            // ✅ Lấy thông tin tài khoản từ UserDetails
+            account = userDetail.getAccount();
+            model.addAttribute("account", account);
+            model.addAttribute("maskedPassword", "********");
+        } else {
+            // Trường hợp chưa đăng nhập
+            model.addAttribute("account", null);
+        }
 
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "common/error";
+        // Add vao model
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("account", account);
+        model.addAttribute("maskedPassword", request.getSession().getAttribute("maskedPassword"));
+        return "public/home";
     }
 
+    // API load fragment danh sách san pham (AJAX)
+    @GetMapping("/home/tools")
+    public String getFilteredTools(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "dateFilter", required = false) String dateFilter,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            Model model) {
 
+        int size = 9;
+        Page<Tool> toolPage = toolService.searchAndFilterTools(keyword, categoryId, dateFilter, page, size);
+
+        model.addAttribute("tools", toolPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", toolPage.getTotalPages());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedCategory", categoryId);
+        model.addAttribute("dateFilter", dateFilter);
+
+        // Trả về fragment Thymeleaf
+        return "public/tool-list :: toolList";
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpServletRequest request) {
+        request.getSession().invalidate();
+        return "redirect:/login";
+    }
 }

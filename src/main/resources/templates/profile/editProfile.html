@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Profile</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 40px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #222;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: 600;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0 20px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+            background-color: #fafafa;
+        }
+        input:focus, textarea:focus {
+            border-color: #4CAF50;
+            background-color: #fff;
+            outline: none;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+        }
+        button {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background-color: #43a047;
+        }
+        .btn-cancel {
+            background-color: #aaa;
+        }
+        .btn-cancel:hover {
+            background-color: #888;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Edit Profile</h2>
+    <form th:action="@{/profile/edit}" th:object="${account}" method="post">
+        <label>Full Name</label>
+        <input type="text" th:field="*{fullName}" required>
+
+        <label>Phone</label>
+        <input type="text" th:field="*{phone}" placeholder="Enter your phone">
+
+        <label>Address</label>
+        <textarea th:field="*{address}" rows="3" placeholder="Enter your address"></textarea>
+
+        <div class="btn-group">
+            <button type="submit">Save Changes</button>
+            <a th:href="@{/profile}">
+                <button type="button" class="btn-cancel">Cancel</button>
+            </a>
+        </div>
+    </form>
+</div>
+</body>
+</html>
