@@ -8,10 +8,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Role;
-import swp391.fa25.lms.repository.*;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import swp391.fa25.lms.repository.RoleRepo;
+import swp391.fa25.lms.repository.AccountRepository;
+import swp391.fa25.lms.repository.RoleRepository;
 import swp391.fa25.lms.util.JwtService;
 
 import java.time.LocalDateTime;
@@ -23,11 +23,11 @@ import java.util.regex.Pattern;
 @Service
 public class AccountService {
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
-    private final AccountRepo accountRepo;
+    private final AccountRepository accountRepo;
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final RoleRepo roleRepo;
+    private final RoleRepository roleRepository;
 
     @Value("${app.verification.token.expiry:15}") // mặc định 15 phút
     private int tokenExpiryMinutes;
@@ -40,13 +40,13 @@ public class AccountService {
             "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
     );
 
-    public AccountService(AccountRepo accountRepo, PasswordEncoder passwordEncoder,
-                          JavaMailSender mailSender, JwtService jwtService, RoleRepo roleRepo) {
+    public AccountService(AccountRepository accountRepo, PasswordEncoder passwordEncoder,
+                          JavaMailSender mailSender, JwtService jwtService, RoleRepository roleRepository) {
         this.accountRepo = accountRepo;
         this.passwordEncoder = passwordEncoder;
         this.mailSender = mailSender;
         this.jwtService = jwtService;
-        this.roleRepo = roleRepo;
+        this.roleRepository = roleRepository;
     }
 
     // Register account
@@ -65,7 +65,7 @@ public class AccountService {
         account.setCreatedAt(LocalDateTime.now());
         account.setUpdatedAt(LocalDateTime.now());
         account.setStatus(Account.AccountStatus.ACTIVE);
-        Role customerRole = roleRepo.findByRoleName(Role.RoleName.CUSTOMER)
+        Role customerRole = roleRepository.findByRoleName(Role.RoleName.CUSTOMER)
                 .orElseThrow(() -> new RuntimeException("Default role CUSTOMER not found"));
         account.setRole(customerRole);
         account.setRole(customerRole);

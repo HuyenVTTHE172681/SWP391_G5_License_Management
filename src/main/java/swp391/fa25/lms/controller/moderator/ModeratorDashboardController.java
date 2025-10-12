@@ -22,43 +22,43 @@ public class ModeratorDashboardController {
     @Autowired
     CategoryService categoryService;
 
-    @GetMapping("/upload-request")
-    public String displayUploadRequest(
-            @RequestParam(required = false) String toolName,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String status,
-            Model model) {
-
-        // 🔹 Lấy danh sách tool theo filter
-        List<Tool> toolList = toolService.filterToolsForModerator(toolName, categoryId, status);
-        List<Category> categories = categoryService.getCategories();
-
-        model.addAttribute("toolList", toolList);
-        model.addAttribute("categories", categories);
-        model.addAttribute("toolName", toolName);
-        model.addAttribute("categoryId", categoryId);
-        model.addAttribute("status", status);
-
-        return "moderator/dashboard";
-    }
-
-    @PostMapping("/approve/{id}")
-    public String approveTool(@PathVariable("id") Long id) {
-        Tool tool = toolService.findById(id);
-        if (tool != null) {
-            tool.setStatus(Tool.Status.APPROVED);
-            toolService.save(tool);
-        }
-        return "redirect:/moderator/upload-request";
-    }
-
-    @PostMapping("/reject/{id}")
-    public String rejectTool(@PathVariable("id") Long id) {
-        Tool tool = toolService.findById(id);
-        if (tool != null) {
-            tool.setStatus(Tool.Status.REJECTED);
-            toolService.save(tool);
-        }
-        return "redirect:/moderator/upload-request";
-    }
+//    @GetMapping("/upload-request")
+//    public String displayUploadRequest(
+//            @RequestParam(required = false) String toolName,
+//            @RequestParam(required = false) Long categoryId,
+//            @RequestParam(required = false) String status,
+//            Model model) {
+//
+//        // 🔹 Lấy danh sách tool theo filter
+//        List<Tool> toolList = toolService.filterToolsForModerator(toolName, categoryId, status);
+//        List<Category> categories = categoryService.getCategories();
+//
+//        model.addAttribute("toolList", toolList);
+//        model.addAttribute("categories", categories);
+//        model.addAttribute("toolName", toolName);
+//        model.addAttribute("categoryId", categoryId);
+//        model.addAttribute("status", status);
+//
+//        return "moderator/dashboard";
+//    }
+//
+//    @PostMapping("/approve/{id}")
+//    public String approveTool(@PathVariable("id") Long id) {
+//        Tool tool = toolService.findById(id);
+//        if (tool != null) {
+//            tool.setStatus(Tool.Status.APPROVED);
+//            toolService.save(tool);
+//        }
+//        return "redirect:/moderator/upload-request";
+//    }
+//
+//    @PostMapping("/reject/{id}")
+//    public String rejectTool(@PathVariable("id") Long id) {
+//        Tool tool = toolService.findById(id);
+//        if (tool != null) {
+//            tool.setStatus(Tool.Status.REJECTED);
+//            toolService.save(tool);
+//        }
+//        return "redirect:/moderator/upload-request";
+//    }
 }

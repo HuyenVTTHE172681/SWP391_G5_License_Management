@@ -12,8 +12,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Role.RoleName;
-import swp391.fa25.lms.repository.AccountRepo;
-import swp391.fa25.lms.repository.RoleRepo;
+import swp391.fa25.lms.repository.AccountRepository;
+import swp391.fa25.lms.repository.RoleRepository;
 
 @Controller
 @RequestMapping("/admin")
@@ -22,12 +22,12 @@ public class DashBoardAdminController {
 
     private static final String FIXED_ADMIN_EMAIL = "admin@gmail.com";
 
-    private final AccountRepo accountRepo;
-    private final RoleRepo roleRepo;
+    private final AccountRepository accountRepo;
+    private final RoleRepository roleRepository;
 
-    public DashBoardAdminController(AccountRepo accountRepo, RoleRepo roleRepo) {
+    public DashBoardAdminController(AccountRepository accountRepo, RoleRepository roleRepository) {
         this.accountRepo = accountRepo;
-        this.roleRepo = roleRepo;
+        this.roleRepository = roleRepository;
     }
 
     @GetMapping({"", "/"})
@@ -82,7 +82,7 @@ public class DashBoardAdminController {
             ra.addFlashAttribute("msg", "Account not found: " + id);
             return "redirect:/admin/accounts";
         }
-        var roleOpt = roleRepo.findByRoleName(newRole);
+        var roleOpt = roleRepository.findByRoleName(newRole);
         if (roleOpt.isEmpty()) {
             ra.addFlashAttribute("msg", "Role not found: " + newRole);
             return "redirect:/admin/accounts";

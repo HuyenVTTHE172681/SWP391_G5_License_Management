@@ -35,4 +35,6 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     List<Tool> filterToolsForModerator(@Param("toolName") String toolName,
                                        @Param("categoryId") Long categoryId,
                                        @Param("status") Tool.Status status);
+
+    List<Tool> findByToolNameContainingIgnoreCase(String keyword);
 }
