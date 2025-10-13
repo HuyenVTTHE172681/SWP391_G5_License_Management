@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Moderator Dashboard - Upload Request</title>
+    <link rel="stylesheet" th:href="@{/css/moderator-dashboard.css}">
+</head>
+<body>
+
+<div class="dashboard-container">
+    <!-- 🧭 Sidebar -->
+    <aside class="sidebar">
+        <h2>Moderator Dashboard</h2>
+        <nav>
+            <ul>
+                <li><a th:href="@{/moderator/upload-request}" class="active">Upload Request</a></li>
+                <li><a th:href="@{/moderator/feedback-reports}">Feedback Reports</a></li>
+                <li><a th:href="@{/moderator/tool-reports}">Tool Reports</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- 📋 Main Content -->
+    <main class="main-content">
+        <h1>Upload Request</h1>
+
+        <!-- 🔍 Search + Filter -->
+        <form class="filter-bar" method="get" th:action="@{/moderator/upload-request}">
+            <input type="text" name="toolName" placeholder="Search by Name..." th:value="${toolName}">
+            <select name="categoryId">
+                <option value="">Category</option>
+                <option th:each="c : ${categories}"
+                        th:value="${c.categoryId}"
+                        th:text="${c.categoryName}"
+                        th:selected="${categoryId == c.categoryId}"></option>
+            </select>
+            <select name="status">
+                <option value="">Status</option>
+                <option value="PENDING" th:selected="${status == 'PENDING'}">Pending</option>
+                <option value="APPROVED" th:selected="${status == 'APPROVED'}">Approved</option>
+                <option value="REJECTED" th:selected="${status == 'REJECTED'}">Rejected</option>
+            </select>
+            <button type="submit">Filter</button>
+        </form>
+
+        <!-- 🧾 Tool Table -->
+        <table class="tool-table">
+            <thead>
+            <tr>
+                <th>Tool's Name</th>
+                <th>Seller</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="tool : ${toolList}">
+                <td th:text="${tool.toolName}">Example Tool</td>
+                <td th:text="${tool.seller != null ? tool.seller.fullName : 'Unknown Seller'}">John Doe</td>
+                <td th:text="${tool.category != null ? tool.category.categoryName : 'Unknown'}">Security</td>
+                <td th:text="${tool.status}">PENDING</td>
+                <td class="actions">
+                    <div th:if="${tool.status != null and tool.status.name() == 'PENDING'}">
+                        <form th:action="@{/moderator/approve/{id}(id=${tool.toolId})}" method="post"
+                              style="display:inline;">
+                            <button type="submit" class="btn-approve">Approve</button>
+                        </form>
+                        <form th:action="@{/moderator/reject/{id}(id=${tool.toolId})}" method="post"
+                              style="display:inline;">
+                            <button type="submit" class="btn-reject">Reject</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+
+</body>
+</html>

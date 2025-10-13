@@ -1,0 +1,140 @@
+/* 🔲 Tổng thể layout */
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    background-color: #f6f7fb;
+}
+
+.dashboard-container {
+    display: flex;
+    width: 100%;
+}
+
+/* 🧭 Sidebar */
+.sidebar {
+    width: 220px;
+    background-color: #1e1e2f;
+    color: white;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar li {
+    margin-bottom: 15px;
+}
+
+.sidebar a {
+    text-decoration: none;
+    color: #bbb;
+    font-weight: 500;
+    display: block;
+    padding: 8px 10px;
+    border-radius: 5px;
+}
+
+.sidebar a:hover, .sidebar a.active {
+    background-color: #4a4a6a;
+    color: #fff;
+}
+
+/* 📋 Main Content */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    background-color: white;
+    border-radius: 10px;
+    margin: 20px;
+}
+
+.main-content h1 {
+    margin-top: 0;
+    font-size: 24px;
+}
+
+/* 🔍 Filter bar */
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filter-bar input,
+.filter-bar select,
+.filter-bar button {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.filter-bar button {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.filter-bar button:hover {
+    background-color: #2563eb;
+}
+
+/* 🧾 Table */
+.tool-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fefefe;
+}
+
+.tool-table th, .tool-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+.tool-table th {
+    background-color: #eaeaea;
+    font-weight: bold;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* 🟢 Approve & Reject Buttons */
+.btn-approve {
+    background-color: #22c55e;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-approve:hover {
+    background-color: #16a34a;
+}
+
+.btn-reject {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-reject:hover {
+    background-color: #dc2626;
+}

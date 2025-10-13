@@ -7,7 +7,7 @@ import swp391.fa25.lms.model.Account;
 
 import java.util.Optional;
 
-public interface AccountRepo extends JpaRepository<Account, Long> {
+public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByEmail(String email);
     Optional<Account> findByVerificationToken(String token);
     Page<Account> findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(

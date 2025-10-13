@@ -403,6 +403,24 @@
             padding: 10px 15px 10px 40px;
         }
 
+        .submit {
+            display: flex;                /* Dùng flex để canh giữa icon */
+            justify-content: center;
+            align-items: center;
+            padding: 10px;                /* Giảm padding đều để không lệch */
+            background-color: black;      /* Nền đen */
+            color: white;                 /* Icon trắng */
+            border: none;                 /* Bỏ viền nếu muốn */
+            border-radius: 6px;           /* Bo góc nhẹ */
+            transition: all 0.2s ease;
+        }
+
+        .submit:hover {
+            background-color: white;      /* Khi hover thì nền trắng */
+            color: black;                 /* Icon chuyển sang đen */
+            border: 1px solid black;      /* Viền đen khi hover */
+        }
+
         .search-box i {
             position: absolute;
             left: 15px;
@@ -726,13 +744,14 @@
 
         <!-- Search and Filter Bar -->
         <form class="search-filter-bar" id="filterForm">
-            <div class="row g-3">
+            <div class="row g-3 align-items-end">
                 <div class="col-md-6">
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" class="form-control" name="keyword" placeholder="Tìm kiếm theo tên...">
+                    <div class="search-box position-relative">
+                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                        <input type="text" class="form-control ps-5" name="keyword" placeholder="Tìm kiếm theo tên...">
                     </div>
                 </div>
+
                 <div class="col-md-3">
                     <select class="form-select" name="categoryId">
                         <option value="">Dịch vụ</option>
@@ -742,7 +761,8 @@
                         </option>
                     </select>
                 </div>
-                <div class="col-md-3">
+
+                <div class="col-md-2">
                     <select class="form-select" name="dateFilter">
                         <option value="">Ngày đăng</option>
                         <option value="1">Mới nhất</option>
@@ -750,8 +770,15 @@
                         <option value="3">3 tháng qua</option>
                     </select>
                 </div>
+
+                <div class="col-md-1 text-center">
+                    <button type="submit" class="submit btn btn-outline-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
             </div>
         </form>
+
 
         <!-- Danh sách sản phẩm (load động) -->
         <div id="product-list"></div>
@@ -863,6 +890,20 @@
 
         showItems(); // Hiển thị ban đầu
     });
+
+    document.getElementById("filterForm").addEventListener("submit", function (e) {
+        e.preventDefault(); // Không reload trang
+
+        const formData = new FormData(this);
+        const params = new URLSearchParams(formData).toString();
+
+        fetch(`/home/tools?${params}`)
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById("toolContainer").innerHTML = html;
+            });
+    });
+
 </script>
 
 </body>
