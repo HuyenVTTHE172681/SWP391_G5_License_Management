@@ -1,6 +1,7 @@
 package swp391.fa25.lms.repository;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,15 +14,9 @@ import java.util.List;
 @Repository
 public interface ToolRepository extends JpaRepository<Tool, Long> {
 
-    List<Tool> findAllByToolNameContainingIgnoreCaseAndCategory_CategoryId(
-            String toolName, Long categoryId, Sort sort);
-
-    List<Tool> findAllByToolNameContainingIgnoreCase(String toolName, Sort sort);
 
     List<Tool> findAll(Sort sort);
-
-    List<Tool> findAllByCategory_CategoryId(Long categoryId, Sort sort);
-
+    List<Tool> findAll(Specification<Tool> spec);
     Tool findByToolId(long toolId);
     List<Tool> findByStatus(Tool.Status status);
 
@@ -37,4 +32,5 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
                                        @Param("status") Tool.Status status);
 
     List<Tool> findByToolNameContainingIgnoreCase(String keyword);
+    List<Tool> findByStatusNot(Tool.Status status);
 }

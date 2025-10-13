@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tool Detail - Moderator</title>
+    <link rel="stylesheet" th:href="@{/css/toolDetailMod.css}">
+</head>
+<body>
+
+<div class="container">
+    <h1>🧰 Tool Detail</h1>
+
+    <div class="tool-card">
+        <!-- Hình ảnh tool -->
+        <div class="tool-image">
+            <img th:src="@{${tool.image}}" alt="Tool Image">
+        </div>
+
+        <!-- Thông tin tool -->
+        <div class="tool-info">
+            <h2 class="tool-name" th:text="${tool.toolName}"></h2>
+            <p class="desc" th:text="${tool.description}"></p>
+
+            <div class="meta">
+                <p><strong>Category:</strong>
+                    <span th:text="${tool.category != null ? tool.category.categoryName : 'N/A'}"></span>
+                </p>
+
+                <p><strong>Seller:</strong>
+                    <span th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></span>
+                </p>
+
+                <p><strong>Upload Date:</strong>
+                    <span th:text="${#temporals.format(tool.createdAt, 'dd-MM-yyyy HH:mm')}"></span>
+                </p>
+
+                <p><strong>Status:</strong>
+                    <span class="badge"
+                          th:classappend="${tool.status}"
+                          th:text="${tool.status}"></span>
+                </p>
+
+                <p><strong>Notes:</strong>
+                    <span th:text="${tool.note != null ? tool.note : 'none'}"></span>
+                </p>
+            </div>
+
+            <!-- Danh sách file đính kèm -->
+            <div class="files-section">
+                <h3>📎 File đính kèm</h3>
+
+                <ul class="file-list" th:if="${toolFiles != null and !#lists.isEmpty(toolFiles)}">
+                    <li th:each="file : ${toolFiles}">
+                        <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
+                            <span th:text="${file.filePath}"></span>
+                        </a>
+                        <span class="file-type" th:text="'(' + ${file.fileType} + ')'"></span>
+                    </li>
+                </ul>
+
+                <p th:if="${toolFiles == null or #lists.isEmpty(toolFiles)}" class="no-file">
+                    Không có file đính kèm.
+                </p>
+            </div>
+
+            <!-- Nút hành động -->
+            <div class="action-buttons" th:if="${tool.status.name() == 'PENDING'}">
+                <form th:action="@{'/moderator/tool/' + ${tool.toolId} + '/approve'}" method="post">
+                    <button type="submit" class="btn-approve">Approve</button>
+                </form>
+
+                <button type="button" class="btn-reject" onclick="toggleReject()">Reject</button>
+            </div>
+
+                <!-- Form reject -->
+                <form id="rejectForm"
+                      th:action="@{'/moderator/tool/' + ${tool.toolId} + '/reject'}"
+                      method="post"
+                      class="reject-form hidden">
+                    <input type="text" name="reason" placeholder="Reason..." required>
+                    <div class="reject-actions">
+                        <button type="submit" class="btn-confirm">Submit</button>
+                        <button type="button" class="btn-cancel" onclick="toggleReject()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Quay lại -->
+            <a th:href="@{/moderator/uploadRequest}" class="back-link">← Back</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleReject() {
+        document.getElementById('rejectForm').classList.toggle('hidden');
+    }
+</script>
+
+</body>
+</html>
