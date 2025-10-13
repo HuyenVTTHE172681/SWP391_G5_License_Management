@@ -192,11 +192,35 @@
             <label class="form-label">Updated At</label>
             <input type="date" name="updatedAt" class="form-input">
         </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Pricing Options</label>
+            <div id="licenseContainer">
+                <div class="d-flex gap-2 mb-2">
+                    <input type="number" name="licenseDays" min="1" placeholder="Số ngày" required>
+                    <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" required>
+
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addLicenseRow()">+ Add another</button>
+        </div>
 
         <!-- Submit -->
         <div class="form-actions">
             <button type="submit" class="submit-btn">Save Tool</button>
         </div>
+
+        <script>
+            function addLicenseRow() {
+                const c = document.getElementById('licenseContainer');
+                c.insertAdjacentHTML('beforeend', `
+        <div class="d-flex gap-2 mb-2">
+            <input type="number" name="licenseDays" class="form-control" placeholder="Duration (days)">
+            <input type="number" name="licensePrices" class="form-control" placeholder="Price (VND)">
+        </div>
+    `);
+            }
+        </script>
+
 
     </form>
 </section>

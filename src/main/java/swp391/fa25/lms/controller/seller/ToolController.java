@@ -1,46 +1,41 @@
 package swp391.fa25.lms.controller.seller;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
-
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import swp391.fa25.lms.model.License;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.repository.CategoryRepo;
+import swp391.fa25.lms.repository.LicenseRepo;
 import swp391.fa25.lms.repository.ToolFileRepo;
+import swp391.fa25.lms.repository.ToolRepo;
 import swp391.fa25.lms.service.CategoryService;
 import swp391.fa25.lms.service.ToolService;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/seller/tools")
 public class ToolController {
+    @Autowired private ToolRepo toolRepo;
+    @Autowired private CategoryRepo categoryRepo;
+    @Autowired private CategoryService categoryService;
+    @Autowired private ToolService toolService;
+    @Autowired private ToolFileRepo toolFileRepo;
     @Autowired
-    private CategoryRepo categoryRepo;
-
-    @Autowired
-    private CategoryService categoryService;
-
-
-    @Autowired
-    private ToolService toolService;
-
-    @Autowired
-    private ToolFileRepo toolFileRepo;
+    private LicenseRepo licenseRepo;
 
     @InitBinder("tool")
     public void disallow(WebDataBinder b) {
@@ -48,10 +43,68 @@ public class ToolController {
     }
 
     @GetMapping
-    public String listTools(Model model, Principal principal) {
+    public String listTools(Model model, Principal principal,
+                            @RequestParam(required = false) String keyword,
+                            @RequestParam(required = false) Long categoryId,
+                            @RequestParam(required = false) Double min,
+                            @RequestParam(required = false) Double max,
+                            @RequestParam(required = false, defaultValue = "newest") String sort
+                            ) {
         Account seller = getCurrentSeller(principal);
         List<Tool> tools = toolService.getToolsBySeller(seller);
+        if (keyword != null && !keyword.isBlank()) {
+            String kw = keyword.toLowerCase();
+            tools = tools.stream()
+                    .filter(t -> t.getToolName().toLowerCase().contains(kw))
+                    .collect(Collectors.toList());
+        }
+
+        // 🧭 Lọc theo category
+        if (categoryId != null && categoryId > 0) {
+            tools = tools.stream()
+                    .filter(t -> t.getCategory() != null && t.getCategory().getCategoryId().equals(categoryId))
+                    .collect(Collectors.toList());
+        }
+
+        // 💰 Lọc theo giá license
+        if (min != null || max != null) {
+            double minVal = (min != null) ? min : 0;
+            double maxVal = (max != null) ? max : Double.MAX_VALUE;
+
+            tools = tools.stream().filter(t -> {
+                var licenses = licenseRepo.findByToolToolId(t.getToolId());
+                double lowestPrice = licenses.stream()
+                        .mapToDouble(License::getPrice)
+                        .min().orElse(Double.MAX_VALUE);
+                return lowestPrice >= minVal && lowestPrice <= maxVal;
+            }).collect(Collectors.toList());
+        }
+
+        // ⏱ Sắp xếp
+        switch (sort.toLowerCase()) {
+            case "price_asc":
+                tools.sort(Comparator.comparingDouble(t ->
+                        licenseRepo.findByToolToolId(t.getToolId())
+                                .stream().mapToDouble(License::getPrice).min().orElse(Double.MAX_VALUE)));
+                break;
+            case "price_desc":
+                tools.sort(Comparator.comparingDouble((Tool t) ->
+                        licenseRepo.findByToolToolId(t.getToolId())
+                                .stream().mapToDouble(License::getPrice).min().orElse(Double.MAX_VALUE)).reversed());
+                break;
+            default: // newest
+                tools.sort(Comparator.comparing(Tool::getCreatedAt).reversed());
+                break;
+        }
+
+        // 🪄 Đưa dữ liệu ra view
         model.addAttribute("tools", tools);
+        model.addAttribute("categories", categoryRepo.findAll());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("min", min);
+        model.addAttribute("max", max);
+        model.addAttribute("sort", sort);
         return "seller/tool-list";
     }
 
@@ -59,7 +112,7 @@ public class ToolController {
     public String showAddForm(Model model) throws IOException {
         model.addAttribute("tool", new Tool());
         model.addAttribute("categories", categoryService.getAllCategories());
-        // ✅ Load danh sách ảnh có sẵn trong static/images
+
         Path imageDir = Path.of(new ClassPathResource("static/images").getURI());
         List<String> imageFiles = Files.list(imageDir)
                 .filter(Files::isRegularFile)
@@ -73,38 +126,45 @@ public class ToolController {
     @PostMapping("/add")
     public String add(@ModelAttribute("tool") Tool tool,
                       @RequestParam(value = "selectedImage", required = false) String selectedImage,
+                      @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
+                      @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
                       Principal principal) throws Exception {
 
-        // ✅ Xử lý category
         if (tool.getCategory() != null && tool.getCategory().getCategoryId() != null) {
-            Long catId = tool.getCategory().getCategoryId();
-            categoryRepo.findById(catId).ifPresent(tool::setCategory);
+            categoryRepo.findById(tool.getCategory().getCategoryId()).ifPresent(tool::setCategory);
         } else {
             tool.setCategory(null);
         }
 
-        // ✅ Giả lập seller (tạm thời)
         Account seller = getCurrentSeller(principal);
 
-        // ✅ Nếu user chọn ảnh có sẵn, gán vào tool
         if (selectedImage != null && !selectedImage.isBlank()) {
             tool.setImage(selectedImage);
         }
 
-        // ✅ Thiết lập các giá trị mặc định
         tool.setCreatedAt(LocalDateTime.now());
         tool.setUpdatedAt(LocalDateTime.now());
         tool.setStatus(Tool.Status.PENDING);
 
-        // ✅ Lưu tool vào database
-        toolService.addTool(tool, seller);
+        Tool savedTool = toolService.addTool(tool, seller);
+        if (licenseDays != null && licensePrices != null) {
+            for (int i = 0; i < licenseDays.size(); i++) {
+                Integer days = licenseDays.get(i);
+                Double price = licensePrices.get(i);
+                if (days == null || price == null || days <= 0 || price < 0) continue;
+                License license = new License();
+                license.setTool(savedTool);
+                license.setDurationDays(days);
+                license.setPrice(price);
+                license.setCreatedAt(LocalDateTime.now());
+                licenseRepo.save(license);
+            }
+        }
 
-        // ✅ Quay lại danh sách tool
         return "redirect:/seller/tools";
     }
 
-
-    // TODO: thay bằng user thực tế khi có login
+    // giả lập seller
     private Account getCurrentSeller(Principal principal) {
         Account a = new Account();
         a.setAccountId(1L);
@@ -115,54 +175,65 @@ public class ToolController {
     public String showEditForm(@PathVariable Long id, Model model) throws Exception {
         Tool tool = toolService.getToolById(id);
 
-        // ✅ Lấy danh sách ảnh trong static/imagine
         Path imageDir = Path.of(new ClassPathResource("static/images").getURI());
         List<String> imageFiles = Files.list(imageDir)
                 .filter(Files::isRegularFile)
                 .map(path -> path.getFileName().toString())
                 .collect(Collectors.toList());
 
-
         model.addAttribute("tool", tool);
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("imageFiles", imageFiles);
         return "seller/tool-edit";
     }
-
-
+    @Transactional
     @PostMapping("/edit/{id}")
-    public String updateTool(
-            @PathVariable Long id,
-            @ModelAttribute Tool tool,
-            @RequestParam(value = "selectedImage", required = false) String selectedImage,
-            Principal principal) throws Exception {
+    public String updateTool(@PathVariable Long id,
+                             @ModelAttribute Tool tool,
+                             @RequestParam(value = "selectedImage", required = false) String selectedImage,
+                             @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
+                             @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
+                             Principal principal) throws Exception {
 
         Tool existingTool = toolService.getToolById(id);
-        if (existingTool == null) {
-            throw new RuntimeException("Tool not found");
-        }
+        if (existingTool == null) throw new RuntimeException("Tool not found");
 
-        Account seller = getCurrentSeller(principal);
         existingTool.setToolName(tool.getToolName());
         existingTool.setDescription(tool.getDescription());
         existingTool.setStatus(tool.getStatus());
-        existingTool.setUpdatedAt(tool.getUpdatedAt() != null ? tool.getUpdatedAt() : java.time.LocalDateTime.now());
+        existingTool.setUpdatedAt(LocalDateTime.now());
 
         if (tool.getCategory() != null && tool.getCategory().getCategoryId() != null) {
-            Long catId = tool.getCategory().getCategoryId();
-            categoryRepo.findById(catId).ifPresent(existingTool::setCategory);
+            categoryRepo.findById(tool.getCategory().getCategoryId()).ifPresent(existingTool::setCategory);
         }
 
-        // ✅ Đây là phần quan trọng: nếu user chọn ảnh mới, cập nhật lại đường dẫn
         if (selectedImage != null && !selectedImage.isBlank()) {
             existingTool.setImage(selectedImage);
         }
 
-        toolService.save(existingTool);
+        // ✅ Cập nhật Tool trước
+        Tool savedTool = toolService.save(existingTool);
 
+        // ✅ Xóa toàn bộ license cũ (để cập nhật lại danh sách)
+        licenseRepo.deleteAll(licenseRepo.findByToolToolId(savedTool.getToolId()));
+
+        // ✅ Lưu lại license mới
+        if (licenseDays != null && licensePrices != null) {
+            for (int i = 0; i < licenseDays.size(); i++) {
+                Integer days = licenseDays.get(i);
+                Double price = licensePrices.get(i);
+                if (days == null || price == null) continue;
+
+                License newLicense = new License();
+                newLicense.setTool(savedTool);
+                newLicense.setDurationDays(days);
+                newLicense.setPrice(price);
+                newLicense.setCreatedAt(LocalDateTime.now());
+                licenseRepo.save(newLicense);
+            }
+        }
         return "redirect:/seller/tools";
     }
-
 
     @GetMapping("/delete/{id}")
     public String deleteTool(@PathVariable Long id, Principal principal) {
@@ -170,4 +241,59 @@ public class ToolController {
         toolService.deleteTool(id, seller);
         return "redirect:/seller/tools";
     }
+
+    // ✅ API JSON cho Ajax (frontend gọi fetch)
+    @GetMapping("/api")
+    @ResponseBody
+    public List<Tool> getToolsJson(
+            Principal principal,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false, defaultValue = "newest") String sort
+    ) {
+        Account seller = getCurrentSeller(principal);
+        List<Tool> tools = toolService.getToolsBySeller(seller);
+
+        // ✅ lọc theo từ khóa
+        if (q != null && !q.isBlank())
+            tools = tools.stream()
+                    .filter(t -> t.getToolName().toLowerCase().contains(q.toLowerCase()))
+                    .collect(Collectors.toList());
+
+        // ✅ lọc category
+        if (categoryId != null)
+            tools = tools.stream()
+                    .filter(t -> t.getCategory() != null && t.getCategory().getCategoryId().equals(categoryId))
+                    .collect(Collectors.toList());
+
+        // ✅ lọc giá
+        if (minPrice != null || maxPrice != null) {
+            double min = (minPrice != null) ? minPrice : 0;
+            double max = (maxPrice != null) ? maxPrice : Double.MAX_VALUE;
+
+            tools = tools.stream()
+                    .filter(t -> licenseRepo.findByToolToolId(t.getToolId())
+                            .stream().anyMatch(l -> l.getPrice() >= min && l.getPrice() <= max))
+                    .collect(Collectors.toList());
+        }
+
+        // ✅ sắp xếp
+        sort = sort.replace(",", "_").toLowerCase();
+
+        Comparator<Tool> byCreated = Comparator.comparing(Tool::getCreatedAt).reversed();
+        Comparator<Tool> byPrice = Comparator.comparingDouble(t ->
+                licenseRepo.findByToolToolId(t.getToolId())
+                        .stream().mapToDouble(License::getPrice)
+                        .min().orElse(Double.MAX_VALUE));
+
+        if ("price_asc".equalsIgnoreCase(sort)) tools.sort(byPrice);
+        else if ("price_desc".equalsIgnoreCase(sort)) tools.sort(byPrice.reversed());
+        else tools.sort(byCreated);
+
+        return tools;
+    }
+
+
 }

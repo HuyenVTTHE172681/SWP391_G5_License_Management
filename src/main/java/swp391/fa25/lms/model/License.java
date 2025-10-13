@@ -1,5 +1,6 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +15,7 @@ public class License {
 
     @ManyToOne
     @JoinColumn(name = "tool_id")
+    @JsonBackReference(value = "tool-licenses")
     private Tool tool;
 
     private Integer durationDays;

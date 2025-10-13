@@ -1,5 +1,6 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,6 +49,7 @@ public class Account {
     private List<Favorite> favorites;
 
     @OneToMany(mappedBy = "seller")
+    @JsonBackReference(value = "tool-seller")
     private List<Tool> tools;
 
     public Long getAccountId() {

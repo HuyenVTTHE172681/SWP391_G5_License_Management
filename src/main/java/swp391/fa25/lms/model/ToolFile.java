@@ -1,5 +1,6 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -13,6 +14,7 @@ public class ToolFile {
 
     @ManyToOne
     @JoinColumn(name = "tool_id")
+    @JsonBackReference(value = "tool-files")
     private Tool tool;
 
     private String filePath;

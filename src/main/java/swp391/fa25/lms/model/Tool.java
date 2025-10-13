@@ -1,11 +1,14 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "Tool")
+@JsonIgnoreProperties({"seller", "toolFiles"})
 public class Tool {
 
     @Id
@@ -21,20 +24,24 @@ public class Tool {
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
+    @JsonManagedReference(value = "tool-seller")
     private Account seller;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
+    @JsonManagedReference(value = "tool-category")
     private Category category;
 
     @Enumerated(EnumType.STRING)
     private Status status;
     public enum Status { PENDING, APPROVED, REJECTED }
 
-    @OneToMany(mappedBy = "tool")
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ToolFile> files;
 
-    @OneToMany(mappedBy = "tool")
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
+    @JsonManagedReference(value = "tool-licenses")
     private List<License> licenses;
 
     private LocalDateTime createdAt;
