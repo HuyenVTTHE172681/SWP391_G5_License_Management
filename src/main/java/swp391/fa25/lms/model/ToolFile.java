@@ -2,6 +2,8 @@ package swp391.fa25.lms.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,6 +19,8 @@ public class ToolFile {
     @JsonBackReference(value = "tool-files")
     private Tool tool;
 
+    @NotBlank(message = "File path cannot be blank")
+    @Column(nullable = false)
     private String filePath;
 
     @Enumerated(EnumType.STRING)

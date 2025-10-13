@@ -2,6 +2,8 @@ package swp391.fa25.lms.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,6 +14,10 @@ public class License {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long licenseId;
+
+    @NotBlank(message = "License name cannot be blank")
+    @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
+    private String name;
 
     @ManyToOne
     @JoinColumn(name = "tool_id")
@@ -27,12 +33,33 @@ public class License {
 
     private LocalDateTime createdAt;
 
+    public License() {
+    }
+
+    public License(Long licenseId, String name, Tool tool, Integer durationDays, Double price, List<CustomerOrder> customerOrders, LocalDateTime createdAt) {
+        this.licenseId = licenseId;
+        this.name = name;
+        this.tool = tool;
+        this.durationDays = durationDays;
+        this.price = price;
+        this.customerOrders = customerOrders;
+        this.createdAt = createdAt;
+    }
+
     public Long getLicenseId() {
         return licenseId;
     }
 
     public void setLicenseId(Long licenseId) {
         this.licenseId = licenseId;
+    }
+
+    public @NotBlank(message = "License name cannot be blank") String getName() {
+        return name;
+    }
+
+    public void setName(@NotBlank(message = "License name cannot be blank") String name) {
+        this.name = name;
     }
 
     public Tool getTool() {

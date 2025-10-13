@@ -3,6 +3,9 @@ package swp391.fa25.lms.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,10 +19,16 @@ public class Tool {
     @Column(name = "tool_id")
     private Long toolId;
 
+    @NotBlank(message = "Tool name cannot be blank")
+    @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
     private String toolName;
+
+    @NotBlank(message = "Image cannot be blank")
+    @Column(nullable = false)
     private String image;
 
-    @Column(columnDefinition = "TEXT")
+    @NotBlank(message = "Description cannot be blank")
+    @Column(columnDefinition = "NVARCHAR(100)", nullable = false)
     private String description;
 
     @ManyToOne
@@ -27,6 +36,7 @@ public class Tool {
     @JsonManagedReference(value = "tool-seller")
     private Account seller;
 
+    @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
     @JsonManagedReference(value = "tool-category")
@@ -47,6 +57,23 @@ public class Tool {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    public Tool() {
+    }
+
+    public Tool(Long toolId, String toolName, String image, String description, Account seller, Category category, Status status, List<ToolFile> files, List<License> licenses, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.toolId = toolId;
+        this.toolName = toolName;
+        this.image = image;
+        this.description = description;
+        this.seller = seller;
+        this.category = category;
+        this.status = status;
+        this.files = files;
+        this.licenses = licenses;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     public Long getToolId() {
         return toolId;
     }
@@ -55,27 +82,27 @@ public class Tool {
         this.toolId = toolId;
     }
 
-    public String getToolName() {
+    public @NotBlank(message = "Tool name cannot be blank") String getToolName() {
         return toolName;
     }
 
-    public void setToolName(String toolName) {
+    public void setToolName(@NotBlank(message = "Tool name cannot be blank") String toolName) {
         this.toolName = toolName;
     }
 
-    public String getImage() {
+    public @NotBlank(message = "Image cannot be blank") String getImage() {
         return image;
     }
 
-    public void setImage(String image) {
+    public void setImage(@NotBlank(message = "Image cannot be blank") String image) {
         this.image = image;
     }
 
-    public String getDescription() {
+    public @NotBlank(message = "Description cannot be blank") String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(@NotBlank(message = "Description cannot be blank") String description) {
         this.description = description;
     }
 
@@ -87,11 +114,11 @@ public class Tool {
         this.seller = seller;
     }
 
-    public Category getCategory() {
+    public @NotNull(message = "Category cannot be null") Category getCategory() {
         return category;
     }
 
-    public void setCategory(Category category) {
+    public void setCategory(@NotNull(message = "Category cannot be null") Category category) {
         this.category = category;
     }
 
@@ -133,5 +160,27 @@ public class Tool {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @Transient
+    private Double averageRating;
+
+    @Transient
+    private Long totalReviews;
+
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public Long getTotalReviews() {
+        return totalReviews;
+    }
+
+    public void setTotalReviews(Long totalReviews) {
+        this.totalReviews = totalReviews;
     }
 }
