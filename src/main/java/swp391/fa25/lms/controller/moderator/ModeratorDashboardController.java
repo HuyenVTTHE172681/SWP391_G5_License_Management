@@ -30,6 +30,11 @@ public class ModeratorDashboardController {
     @Autowired
     private CategoryService categoryService;
 
+    @GetMapping({"", "/"})
+    public String moderatorDashboard(Model model) {
+        model.addAttribute("activePage", "dashboard");
+        return "moderator/dashboard";
+    }
     // View tool uploaded
     @GetMapping("/history")
     public String displayHistoryUploadedRequest(
