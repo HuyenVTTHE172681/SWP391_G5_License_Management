@@ -14,8 +14,8 @@ import swp391.fa25.lms.repository.CategoryRepo;
 import swp391.fa25.lms.repository.LicenseRepo;
 import swp391.fa25.lms.repository.ToolFileRepo;
 import swp391.fa25.lms.repository.ToolRepo;
-import swp391.fa25.lms.service.CategoryService;
-import swp391.fa25.lms.service.ToolService;
+import swp391.fa25.lms.service.seller.CategoryService;
+import swp391.fa25.lms.service.seller.ToolService;
 
 import java.io.IOException;
 import java.nio.file.Files;

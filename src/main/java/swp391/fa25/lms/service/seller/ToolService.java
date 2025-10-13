@@ -1,4 +1,4 @@
-package swp391.fa25.lms.service;
+package swp391.fa25.lms.service.seller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
