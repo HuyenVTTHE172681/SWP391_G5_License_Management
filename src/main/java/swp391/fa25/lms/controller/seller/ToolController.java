@@ -1,23 +1,16 @@
 package swp391.fa25.lms.controller.seller;
 
-import org.springframework.ui.Model;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import swp391.fa25.lms.model.Category;
-import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.repository.CategoryRepo;
-import swp391.fa25.lms.repository.ToolRepo;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import swp391.fa25.lms.repository.CategoryRepository;
+import swp391.fa25.lms.repository.ToolRepository;
+import swp391.fa25.lms.repository.ToolRepository;
 
 @Controller
 public class ToolController {
     @Autowired
-    private ToolRepo toolRepo;
+    private ToolRepository toolRepo;
 
     @Autowired
-    private CategoryRepo categoryRepo;
+    private CategoryRepository categoryRepo;
 }

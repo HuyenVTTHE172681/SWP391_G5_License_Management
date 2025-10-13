@@ -8,32 +8,39 @@
 </head>
 <body>
 <div id="toolList" th:fragment="toolList">
-    <div class="row g-4">
-        <div class="col-md-4" th:each="tool : ${tools}">
-            <a th:href="@{'/tools/' + ${tool.toolId}}" class="product-card">
-                <div class="product-image">
-                    <div class="favorite-icon" onclick="toggleFavorite(event, this)">
-                        <i class="far fa-heart"></i>
+    <th:block th:if="${#lists.isEmpty(tools)}">
+        <div class="col-12 text-center py-4 text-muted">
+            <h5>Không có sản phẩm phù hợp</h5>
+        </div>
+    </th:block>
+    <th:block th:each="tool : ${tools}">
+        <div class="row g-4">
+            <div class="col-md-4" th:each="tool : ${tools}">
+                <a th:href="@{'/tools/' + ${tool.toolId}}" class="product-card">
+                    <div class="product-image">
+                        <div class="favorite-icon" onclick="toggleFavorite(event, this)">
+                            <i class="far fa-heart"></i>
+                        </div>
+                        <img th:src="${tool.image != null ? tool.image : '/placeholder.svg?height=250&width=350'}" alt="Product">
                     </div>
-                    <img th:src="${tool.image != null ? tool.image : '/placeholder.svg?height=250&width=350'}" alt="Product">
-                </div>
-                <div class="product-info">
-                    <h3 class="product-name" th:text="${tool.toolName}"></h3>
-                    <div class="product-rating">
-                        <div class="stars">
+                    <div class="product-info">
+                        <h3 class="product-name" th:text="${tool.toolName}"></h3>
+                        <div class="product-rating">
+                            <div class="stars">
                             <span th:each="i : ${#numbers.sequence(1,5)}">
             <i th:classappend="${i <= tool.averageRating} ? 'fas fa-star text-warning' :
                                 (${i - tool.averageRating < 1} ? 'fas fa-star-half-alt text-warning' : 'far fa-star text-warning')"></i>
         </span>
+                            </div>
+                            <span class="review-count" th:text="${tool.totalReviews + ' reviews'}"></span>
                         </div>
-                        <span class="review-count" th:text="${tool.totalReviews + ' reviews'}"></span>
+                        <span th:text="'👤 ' + ${tool.seller.fullName}"></span>
+                        <p class="product-meta" th:text="${tool.description}"></p>
                     </div>
-                    <span th:text="'👤 ' + ${tool.seller.fullName}"></span>
-                    <p class="product-meta" th:text="${tool.description}"></p>
-                </div>
-            </a>
+                </a>
+            </div>
         </div>
-    </div>
+    </th:block>
 
     <!-- Pagination -->
     <div class="pagination-wrapper mt-4" th:if="${totalPages > 1}">

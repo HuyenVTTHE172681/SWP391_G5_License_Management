@@ -1,11 +1,11 @@
-package swp391.fa25.lms.service;
+package swp391.fa25.lms.service.used;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.repository.FeedBackRepo;
-import swp391.fa25.lms.repository.ToolRepo;
+import swp391.fa25.lms.repository.FeedbackRepository;
+import swp391.fa25.lms.repository.ToolRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,10 +13,10 @@ import java.util.List;
 @Service
 public class ToolService {
     @Autowired
-    private ToolRepo toolRepo;
+    private ToolRepository toolRepo;
 
     @Autowired
-    private FeedBackRepo feedbackRepo;
+    private FeedbackRepository feedbackRepo;
 
     public Page<Tool> searchAndFilterTools(String keyword, Long categoryId, String dateFilter, int page, int size) {
         // Lấy toàn bộ tools hoặc lấy theo tên

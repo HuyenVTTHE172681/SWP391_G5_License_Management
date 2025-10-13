@@ -9,6 +9,13 @@ import org.springframework.stereotype.Repository;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.Tool;
 
+import java.util.List;
+
+@Repository
+public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
+    public List<Feedback> findByTool(Tool tool);
+    Page<Feedback> findByTool(Tool tool, Pageable pageable);
+    long countByTool(Tool tool);
 @Repository
 public interface FeedBackRepo extends JpaRepository<Feedback, Long> {
     // Tinh AVG rating

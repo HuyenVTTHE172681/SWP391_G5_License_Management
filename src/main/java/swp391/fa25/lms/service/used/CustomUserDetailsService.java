@@ -1,4 +1,4 @@
-package swp391.fa25.lms.service;
+package swp391.fa25.lms.service.used;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -6,14 +6,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.config.CustomerUserDetail;
 import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.repository.AccountRepo;
+import swp391.fa25.lms.repository.AccountRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final AccountRepo accountRepo;
+    private final AccountRepository accountRepo;
 
-    public CustomUserDetailsService(AccountRepo accountRepo) {
+    public CustomUserDetailsService(AccountRepository accountRepo) {
         this.accountRepo = accountRepo;
     }
 
