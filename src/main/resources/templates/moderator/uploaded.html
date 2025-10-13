@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Request</title>
+    <link rel="stylesheet" th:href="@{/css/uploadedModeratorHistory.css}">
+</head>
+<body>
+
+<h1>Uploaded Requests</h1>
+
+<!-- Bộ lọc tìm kiếm -->
+<form class="filter-form" th:action="@{/moderator/history}" method="get" onsubmit="return validateDateRanges()">
+    <!-- Hàng 1: Seller + Category + Status -->
+    <div class="filter-group three-col">
+        <div>
+            <label>Seller ID:</label>
+            <input type="number" name="sellerId" th:value="${sellerId}">
+        </div>
+        <div>
+            <label>Category:</label>
+            <select name="categoryId">
+                <option value="">-- Tất cả danh mục --</option>
+                <option th:each="c : ${categories}"
+                        th:value="${c.categoryId}"
+                        th:text="${c.categoryName}"
+                        th:selected="${categoryId == c.categoryId}">
+                </option>
+            </select>
+        </div>
+        <div>
+            <label>Trạng thái:</label>
+            <select name="status">
+                <option value="">-- Tất cả trạng thái --</option>
+                <option value="APPROVED" th:selected="${status == 'APPROVED'}">Approved</option>
+                <option value="REJECTED" th:selected="${status == 'REJECTED'}">Rejected</option>
+                <option value="PUBLISHED" th:selected="${status == 'PUBLISHED'}">Published</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Hàng 2: Upload từ / đến -->
+    <div class="filter-group two-col">
+        <div>
+            <label>Upload từ:</label>
+            <input type="datetime-local" id="uploadFrom" name="uploadFrom"
+                   th:value="${uploadFrom != null ? #temporals.format(uploadFrom, 'yyyy-MM-dd''T''HH:mm') : ''}"
+                   onchange="setMinUploadTo()">
+        </div>
+        <div>
+            <label>Upload đến:</label>
+            <input type="datetime-local" id="uploadTo" name="uploadTo"
+                   th:value="${uploadTo != null ? #temporals.format(uploadTo, 'yyyy-MM-dd''T''HH:mm') : ''}">
+        </div>
+    </div>
+
+    <!-- Hàng 3: Approved từ / đến -->
+    <div class="filter-group two-col">
+        <div>
+            <label>Ngày duyệt từ:</label>
+            <input type="datetime-local" id="approvedFrom" name="approvedFrom"
+                   th:value="${approvedFrom != null ? #temporals.format(approvedFrom, 'yyyy-MM-dd''T''HH:mm') : ''}"
+                   onchange="setMinApprovedTo()">
+        </div>
+        <div>
+            <label>Ngày duyệt đến:</label>
+            <input type="datetime-local" id="approvedTo" name="approvedTo"
+                   th:value="${approvedTo != null ? #temporals.format(approvedTo, 'yyyy-MM-dd''T''HH:mm') : ''}">
+        </div>
+    </div>
+
+    <button type="submit">🔍 Lọc kết quả</button>
+</form>
+
+<!-- Bảng danh sách tool -->
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tên Tool</th>
+        <th>Người đăng</th>
+        <th>Danh mục</th>
+        <th>Ngày upload</th>
+        <th>Trạng thái</th>
+        <th>Hành động</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="tool : ${toolList}">
+        <td th:text="${tool.toolId}"></td>
+        <td th:text="${tool.toolName}"></td>
+        <td th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></td>
+        <td th:text="${tool.category != null ? tool.category.categoryName : 'N/A'}"></td>
+        <td th:text="${#temporals.format(tool.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+        <td class="status" th:classappend="${tool.status}">
+            <span class="status-badge" th:text="${tool.status}"></span>
+        </td>
+        <td>
+            <a class="btn-view" th:href="@{'/moderator/tool/' + ${tool.toolId}}">👁 View Detail</a>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(toolList)}">
+        <td colspan="7" style="text-align:center; color:gray;">Không có tool nào được tìm thấy.</td>
+    </tr>
+    </tbody>
+</table>
+
+<!-- Script kiểm tra ngày -->
+<script>
+    function setMinUploadTo() {
+        const from = document.getElementById("uploadFrom").value;
+        document.getElementById("uploadTo").min = from;
+    }
+
+    function setMinApprovedTo() {
+        const from = document.getElementById("approvedFrom").value;
+        document.getElementById("approvedTo").min = from;
+    }
+
+    function validateDateRanges() {
+        const uploadFrom = new Date(document.getElementById("uploadFrom").value);
+        const uploadTo = new Date(document.getElementById("uploadTo").value);
+        const approvedFrom = new Date(document.getElementById("approvedFrom").value);
+        const approvedTo = new Date(document.getElementById("approvedTo").value);
+
+        if (uploadFrom && uploadTo && uploadFrom > uploadTo) {
+            alert("Upload from date should be before upload to date");
+            return false;
+        }
+        if (approvedFrom && approvedTo && approvedFrom > approvedTo) {
+            alert("Approve from date should be before approve to date");
+            return false;
+        }
+        return true;
+    }
+</script>
+
+</body>
+</html>

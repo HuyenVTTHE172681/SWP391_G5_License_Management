@@ -1,0 +1,174 @@
+/* ===== Base ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: #f4f6f9;
+    color: #222;
+    padding: 30px;
+}
+
+/* ===== Header ===== */
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    font-size: 28px;
+    color: #2c3e50;
+}
+
+.header .subtitle {
+    color: #666;
+    font-size: 15px;
+}
+
+/* ===== Filter Form ===== */
+.filter-section {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    padding: 20px 25px;
+    margin-bottom: 30px;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    align-items: end;
+}
+
+.filter-form label {
+    font-weight: 500;
+    color: #34495e;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.filter-form input,
+.filter-form select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fafafa;
+    transition: border-color 0.2s ease;
+}
+
+.filter-form input:focus,
+.filter-form select:focus {
+    border-color: #3498db;
+    background-color: #fff;
+}
+
+.button-area {
+    display: flex;
+    align-items: flex-end;
+}
+
+.filter-form button {
+    background: #3498db;
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.filter-form button:hover {
+    background: #2c80c6;
+}
+
+/* ===== Table ===== */
+.table-section table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+thead {
+    background: #3498db;
+    color: #fff;
+}
+
+thead th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+}
+
+tbody td {
+    padding: 12px;
+    border-bottom: 1px solid #ececec;
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+tbody tr:hover {
+    background: #f9fbff;
+}
+
+/* Empty row */
+tbody .empty {
+    text-align: center;
+    color: #777;
+    font-style: italic;
+    padding: 20px 0;
+}
+
+/* ===== Status Badge ===== */
+.badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.badge.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* ===== View Detail Button ===== */
+.btn-view {
+    background-color: #3498db;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+    display: inline-block;
+}
+
+.btn-view:hover {
+    background-color: #217dbb;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-form button {
+        width: 100%;
+    }
+
+    table {
+        font-size: 13px;
+    }
+}
