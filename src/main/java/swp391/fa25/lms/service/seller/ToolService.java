@@ -4,19 +4,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.repository.ToolFileRepo;
-import swp391.fa25.lms.repository.ToolRepo;
+import swp391.fa25.lms.repository.ToolFileRepository;
+import swp391.fa25.lms.repository.ToolRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 
-@Service
+@Service("seller")
 public class ToolService {
     @Autowired
-    private  ToolFileRepo toolFileRepository;;
+    private ToolFileRepository toolFileRepository;;
     @Autowired
-    private ToolRepo toolRepo;
+    private ToolRepository toolRepo;
 
     public Tool addTool(Tool tool, Account seller) {
         tool.setSeller(seller);

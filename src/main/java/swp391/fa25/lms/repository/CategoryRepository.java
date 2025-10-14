@@ -1,12 +1,9 @@
 package swp391.fa25.lms.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.model.Tool;
+import org.springframework.stereotype.Repository;
+import swp391.fa25.lms.model.Category;
 
-import java.util.List;
-
-public interface ToolRepo extends JpaRepository<Tool, Long> {
-    List<Tool> findBySeller(Account seller);
-    List<Tool> findByToolNameContainingIgnoreCase(String keyword);
+@Repository
+public interface CategoryRepository extends JpaRepository<Category, Long> {
 }

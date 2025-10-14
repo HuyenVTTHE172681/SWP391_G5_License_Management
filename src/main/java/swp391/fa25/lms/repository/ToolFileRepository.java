@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import swp391.fa25.lms.model.ToolFile;
 
-public interface ToolFileRepo  extends JpaRepository<ToolFile, Long> {
+public interface ToolFileRepository extends JpaRepository<ToolFile, Long> {
     @Modifying
     @Transactional
     @Query("DELETE FROM ToolFile tf WHERE tf.tool.toolId = :toolId")

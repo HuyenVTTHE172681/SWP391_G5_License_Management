@@ -1,22 +1,27 @@
 package swp391.fa25.lms.controller.seller;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import swp391.fa25.lms.config.CustomerUserDetail;
 import swp391.fa25.lms.model.License;
+import swp391.fa25.lms.model.Role;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.repository.CategoryRepo;
-import swp391.fa25.lms.repository.LicenseRepo;
-import swp391.fa25.lms.repository.ToolFileRepo;
-import swp391.fa25.lms.repository.ToolRepo;
+import swp391.fa25.lms.repository.CategoryRepository;
+import swp391.fa25.lms.repository.LicenseToolRepository;
+import swp391.fa25.lms.repository.ToolFileRepository;
+import swp391.fa25.lms.repository.ToolRepository;
 import swp391.fa25.lms.service.seller.CategoryService;
 import swp391.fa25.lms.service.seller.ToolService;
+import swp391.fa25.lms.service.used.AccountService;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,13 +35,17 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/seller/tools")
 public class ToolController {
-    @Autowired private ToolRepo toolRepo;
-    @Autowired private CategoryRepo categoryRepo;
-    @Autowired private CategoryService categoryService;
-    @Autowired private ToolService toolService;
-    @Autowired private ToolFileRepo toolFileRepo;
+
+    @Autowired private CategoryRepository categoryRepo;
+    @Autowired @Qualifier("seller1")
+    private CategoryService categoryService;
+    @Autowired @Qualifier("seller")
+    private ToolService toolService;
+
     @Autowired
-    private LicenseRepo licenseRepo;
+    private LicenseToolRepository licenseRepo;
+    @Autowired
+    private AccountService accountService;
 
     @InitBinder("tool")
     public void disallow(WebDataBinder b) {
@@ -157,6 +166,7 @@ public class ToolController {
                 license.setTool(savedTool);
                 license.setDurationDays(days);
                 license.setPrice(price);
+                license.setName("License " + license.getDurationDays() + " days");
                 license.setCreatedAt(LocalDateTime.now());
                 licenseRepo.save(license);
             }
@@ -165,12 +175,31 @@ public class ToolController {
         return "redirect:/seller/tools";
     }
 
-    // giả lập seller
     private Account getCurrentSeller(Principal principal) {
-        Account a = new Account();
-        a.setAccountId(1L);
-        return a;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("Bạn chưa đăng nhập");
+        }
+
+        Object principalObj = authentication.getPrincipal();
+
+        if (principalObj instanceof CustomerUserDetail userDetails) {
+            Account account = userDetails.getAccount();
+
+            if (account == null) {
+                throw new RuntimeException("Không lấy được thông tin tài khoản từ userDetails");
+            }
+
+            if (account.getRole() == null || account.getRole().getRoleName() != Role.RoleName.SELLER) {
+                throw new RuntimeException("Tài khoản không phải là seller");
+            }
+
+            return account;
+        }
+
+        throw new RuntimeException("Không thể xác định người dùng hiện tại");
     }
+
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) throws Exception {
@@ -185,6 +214,9 @@ public class ToolController {
         model.addAttribute("tool", tool);
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("imageFiles", imageFiles);
+        model.addAttribute("statuses", Tool.Status.values());
+
+
         return "seller/tool-edit";
     }
     @Transactional
@@ -223,12 +255,13 @@ public class ToolController {
             for (int i = 0; i < licenseDays.size(); i++) {
                 Integer days = licenseDays.get(i);
                 Double price = licensePrices.get(i);
-                if (days == null || price == null) continue;
+                if (days == null || price == null || days <= 0 || price < 0) continue;
 
                 License newLicense = new License();
                 newLicense.setTool(savedTool);
                 newLicense.setDurationDays(days);
                 newLicense.setPrice(price);
+                newLicense.setName("License " + newLicense.getDurationDays() + " days");
                 newLicense.setCreatedAt(LocalDateTime.now());
                 licenseRepo.save(newLicense);
             }

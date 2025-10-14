@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
 
 import java.util.List;
@@ -37,4 +38,5 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
                                        @Param("status") Tool.Status status);
 
     List<Tool> findByToolNameContainingIgnoreCase(String keyword);
+    List<Tool> findBySeller(Account seller);
 }

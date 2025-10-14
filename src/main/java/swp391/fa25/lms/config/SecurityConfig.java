@@ -64,7 +64,7 @@ public class SecurityConfig {
                             String role = account.getRole().getRoleName().name();
                             switch (role) {
                                 case "ADMIN" -> res.sendRedirect("/admin/accounts");
-                                case "SELLER" -> res.sendRedirect("/seller/dashboard");
+                                case "SELLER" -> res.sendRedirect("/seller/tools");
                                 case "MOD" -> res.sendRedirect("/mod/dashboard");
                                 default -> res.sendRedirect("/home");
                             }

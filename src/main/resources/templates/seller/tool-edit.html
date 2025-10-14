@@ -178,21 +178,15 @@
 
         <!-- Status -->
         <div class="form-group">
-            <label class="form-label">Status</label>
-            <select name="status" class="form-select" required>
-                <option value="PENDING"
-                        th:selected="${tool.status == T(swp391.fa25.lms.model.Tool.Status).PENDING}">
-                    Pending
-                </option>
-                <option value="APPROVED"
-                        th:selected="${tool.status == T(swp391.fa25.lms.model.Tool.Status).APPROVED}">
-                    Approved
-                </option>
-                <option value="REJECTED"
-                        th:selected="${tool.status == T(swp391.fa25.lms.model.Tool.Status).REJECTED}">
-                    Rejected
+            <label for="status" class="form-label">Status</label>
+            <select id="status" th:field="*{status}" class="form-select">
+                <option th:each="s : ${statuses}"
+                        th:value="${s}"
+                        th:text="${s}"
+                        th:selected="${s == tool.status}">
                 </option>
             </select>
+
         </div>
 
         <!-- Updated At -->
