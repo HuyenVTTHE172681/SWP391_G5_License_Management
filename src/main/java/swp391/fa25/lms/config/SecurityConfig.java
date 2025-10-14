@@ -53,7 +53,6 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-
                 // ✅ Cấu hình logout
                 .logout(logout -> logout
                         .logoutUrl("/logout")
