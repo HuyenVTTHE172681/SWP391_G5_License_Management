@@ -1,4 +1,4 @@
-package swp391.fa25.lms.service;
+package swp391.fa25.lms.service.used;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,25 +8,27 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Role;
-import swp391.fa25.lms.repository.AccountRepo;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import swp391.fa25.lms.repository.RoleRepo;
+import swp391.fa25.lms.repository.AccountRepository;
+import swp391.fa25.lms.repository.RoleRepository;
+import swp391.fa25.lms.util.JwtService;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
 public class AccountService {
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
-    private final AccountRepo accountRepo;
+    private final AccountRepository accountRepo;
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final RoleRepo roleRepo;
+    private final RoleRepository roleRepository;
 
     @Value("${app.verification.token.expiry:15}") // mặc định 15 phút
     private int tokenExpiryMinutes;
@@ -39,15 +41,16 @@ public class AccountService {
             "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
     );
 
-    public AccountService(AccountRepo accountRepo, PasswordEncoder passwordEncoder,
-                          JavaMailSender mailSender, JwtService jwtService, RoleRepo roleRepo) {
+    public AccountService(AccountRepository accountRepo, PasswordEncoder passwordEncoder,
+                          JavaMailSender mailSender, JwtService jwtService, RoleRepository roleRepository) {
         this.accountRepo = accountRepo;
         this.passwordEncoder = passwordEncoder;
         this.mailSender = mailSender;
         this.jwtService = jwtService;
-        this.roleRepo = roleRepo;
+        this.roleRepository = roleRepository;
     }
 
+    // Register account
     public Account registerAccount(Account account) {
         // 1. Check format email
         if (account.getEmail() == null || !EMAIL_REGEX.matcher(account.getEmail()).matches()) {
@@ -63,7 +66,7 @@ public class AccountService {
         account.setCreatedAt(LocalDateTime.now());
         account.setUpdatedAt(LocalDateTime.now());
         account.setStatus(Account.AccountStatus.ACTIVE);
-        Role customerRole = roleRepo.findByRoleName(Role.RoleName.CUSTOMER)
+        Role customerRole = roleRepository.findByRoleName(Role.RoleName.CUSTOMER)
                 .orElseThrow(() -> new RuntimeException("Default role CUSTOMER not found"));
         account.setRole(customerRole);
         account.setRole(customerRole);
@@ -82,6 +85,7 @@ public class AccountService {
         return saved;
     }
 
+    // Send email verification account after register success
     private void sendVerificationEmail(Account account) {
         try {
             String subject = "[LMS - Register New Account] Please Verify Your Email";
@@ -108,6 +112,7 @@ public class AccountService {
         }
     }
 
+    // Verify account
     public Account verifyAccount(String token) {
         Account account = accountRepo.findByVerificationToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
@@ -124,6 +129,7 @@ public class AccountService {
         return account;
     }
 
+    // Login
     public Map<String, String> login(String email, String password) {
         Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email not found"));
@@ -167,10 +173,80 @@ public class AccountService {
         return account;
     }
 
-    public Account viewProfile(String email){
+    // Generate token reset password and send email
+    public void generateResetPasswordToken(String email) {
+        Account account = accountRepo.findByEmail(email).orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống."));
+
+        String token = UUID.randomUUID().toString();
+        account.setVerificationToken(token);
+        account.setTokenExpiry(LocalDateTime.now().plusMinutes(tokenExpiryMinutes));
+
+        accountRepo.save(account);
+        sendResetPasswordEmail(account);
+    }
+
+    // Send email reset password
+    public void sendResetPasswordEmail(Account account) {
+        try {
+            String subject = "[LMS] Reset Your Password";
+            String resetUrl = baseUrl + "/reset-password/" + account.getVerificationToken();
+
+            String body = "<p>Xin chào <b>" + account.getFullName() + "</b>,</p>"
+                    + "<p>Bạn đã yêu cầu đặt lại mật khẩu. Hãy nhấn vào liên kết bên dưới:</p>"
+                    + "<p><a href=\"" + resetUrl + "\" style=\"display:inline-block;padding:10px 15px;"
+                    + "background-color:#007bff;color:#fff;text-decoration:none;border-radius:5px;\">"
+                    + "Đặt lại mật khẩu</a></p>"
+                    + "<p>Liên kết sẽ hết hạn trong " + tokenExpiryMinutes + " phút.</p>";
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(account.getEmail());
+            helper.setSubject(subject);
+            helper.setText(body, true);
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            logger.error("Send reset email failed", e);
+            throw new RuntimeException("Không thể gửi email đặt lại mật khẩu.");
+        }
+    }
+
+    // Reset password
+    public void resetPassword(String token, String newPassword, String confirmPassword) {
+        Account account = accountRepo.findByVerificationToken(token)
+                .orElseThrow(() -> new RuntimeException("Token không hợp lệ hoặc đã hết hạn."));
+
+        if (account.getTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token đã hết hạn, vui lòng yêu cầu lại.");
+        }
+
+        // Validate password
+        StringBuilder error = new StringBuilder();
+        if (newPassword.length() < 8) error.append("Mật khẩu phải có ít nhất 8 ký tự. ");
+        if (!newPassword.matches(".*[A-Z].*")) error.append("Phải có ít nhất 1 chữ in hoa. ");
+        if (!newPassword.matches(".*[a-z].*")) error.append("Phải có ít nhất 1 chữ thường. ");
+        if (!newPassword.matches(".*\\d.*")) error.append("Phải có ít nhất 1 số. ");
+        if (!newPassword.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) error.append("Phải có ít nhất 1 ký tự đặc biệt. ");
+
+        if (error.length() > 0) throw new RuntimeException(error.toString().trim());
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new RuntimeException("Mật khẩu xác nhận không khớp.");
+        }
+
+        // Encode và lưu
+        account.setPassword(passwordEncoder.encode(newPassword));
+        account.setVerificationToken(null);
+        account.setTokenExpiry(null);
+
+        accountRepo.save(account);
+    }
+
+    public Account viewProfile(String email) {
         Account account = accountRepo.findByEmail(email).orElseThrow(null);
 
-        if(account == null){
+        if (account == null) {
             throw new RuntimeException("Không tìm thấy tài khoản email: " + email);
         }
 
@@ -180,7 +256,7 @@ public class AccountService {
 
     public Account updateProfile(String email, Account updatedAccount) {
         Account existing = accountRepo.findByEmail(email).orElseThrow(null);
-        if(existing == null){
+        if (existing == null) {
             throw new RuntimeException("Không tìm thấy tài khoản email: " + email);
         }
 
@@ -239,4 +315,24 @@ public class AccountService {
         accountRepo.save(account);
     }
 
+    public Account registerSeller(String email) {
+
+        // B1: Tìm tài khoản theo email nếu không có trả về exception
+        Account account = accountRepo.findByEmail(email).orElseThrow(() -> new RuntimeException("Account not found"));
+
+        // B2: Kiểm tra điều kiện là nếu account đó đã là seller rồi thì in ra exception
+        if (account.getRole().getRoleName() == Role.RoleName.SELLER) {
+            throw new RuntimeException("Seller is already registered");
+        }
+
+        // B3: Tạo 1 đối tượng Role tên là seller bằng cách tìm nó trong database nếu ko có thì trả về exception
+        Role sellerRole = roleRepository.findByRoleName(Role.RoleName.SELLER).
+                orElseThrow(() -> new RuntimeException("Role not found"));
+
+        // B4: Xét account đó từ customer/admin/mod/manager sang làm seller ngoại trừ thằng seller
+        account.setRole(sellerRole);
+
+        // B5: Save account đó
+        return accountRepo.save(account);
+    }
 }
