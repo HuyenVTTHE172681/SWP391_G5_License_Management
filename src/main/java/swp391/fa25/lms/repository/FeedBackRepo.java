@@ -12,11 +12,6 @@ import swp391.fa25.lms.model.Tool;
 import java.util.List;
 
 @Repository
-public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
-    public List<Feedback> findByTool(Tool tool);
-    Page<Feedback> findByTool(Tool tool, Pageable pageable);
-    long countByTool(Tool tool);
-@Repository
 public interface FeedBackRepo extends JpaRepository<Feedback, Long> {
     // Tinh AVG rating
     @Query("SELECT AVG(f.rating) FROM Feedback f WHERE f.tool.toolId = :toolId")

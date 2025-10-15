@@ -25,7 +25,7 @@ public class RoleDataInitializer implements CommandLineRunner {
     @Autowired
     private ToolRepository toolRepo;
     @Autowired
-    private FeedbackRepository feedbackRepo;
+    private FeedBackRepo feedbackRepo;
     @Autowired
     private FavoriteRepository favoriteRepository;
     @Autowired
