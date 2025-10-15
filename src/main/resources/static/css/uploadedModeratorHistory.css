@@ -1,0 +1,266 @@
+/* ========== RESET & LAYOUT CHUNG ========== */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+}
+
+.dashboard-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+    width: 240px;
+    background-color: #1e293b;
+    color: white;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h2 {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.menu a {
+    color: #cbd5e1;
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+}
+
+.menu a:hover {
+    background-color: #334155;
+    color: #fff;
+}
+
+.menu a.active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+/* ========== MAIN CONTENT ========== */
+.main-content {
+    flex: 1;
+    padding: 30px 40px;
+    overflow-y: auto;
+}
+
+.main-content h1 {
+    font-size: 26px;
+    color: #1e293b;
+    margin-bottom: 24px;
+}
+
+/* ========== FILTER FORM ========== */
+.filter-form {
+    background: white;
+    padding: 24px 28px;
+    border-radius: 10px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+    margin-bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* giảm khoảng cách giữa các hàng */
+}
+
+/* ===== Cấu trúc từng hàng ===== */
+.filter-group {
+    display: grid;
+    align-items: end;
+}
+
+/* Hàng 1: 3 cột — giãn rộng ngang hơn */
+.filter-group.three-col {
+    grid-template-columns: 1.1fr 1.1fr 0.9fr; /* giãn đều hơn giữa các field */
+    gap: 28px; /* tăng khoảng cách giữa các field cùng hàng */
+}
+
+/* Hàng 2–3: 2 cột */
+.filter-group.two-col,
+.filter-group.approve-two-col {
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+}
+
+/* Label & input */
+.filter-form label {
+    display: block;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+/* Giảm chiều dài input để hợp lý và thẩm mỹ hơn */
+.filter-form input,
+.filter-form select {
+    width: 90%; /* thu ngắn còn 90% chiều cột */
+    padding: 7px 9px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background-color: #f9fafb;
+    font-size: 14px;
+    transition: all 0.2s ease-in-out;
+}
+
+.filter-form input:focus,
+.filter-form select:focus {
+    border-color: #3b82f6;
+    background-color: white;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+}
+
+/* Nút lọc */
+.filter-form button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    align-self: flex-end;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.filter-form button:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.filter-form button:active {
+    transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .filter-group.three-col {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-group.three-col,
+    .filter-group.two-col,
+    .filter-group.approve-two-col {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-form input,
+    .filter-form select {
+        width: 100%;
+    }
+
+    .filter-form button {
+        width: 100%;
+    }
+}
+
+/* ========== TABLE ========== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+thead {
+    background-color: #f1f5f9;
+}
+
+th, td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+}
+
+th {
+    font-weight: 600;
+    color: #334155;
+}
+
+td {
+    color: #475569;
+    font-size: 14px;
+}
+
+tr:hover td {
+    background-color: #f9fafb;
+}
+
+
+/* ========== STATUS BADGE ========== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-badge.APPROVED {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.REJECTED {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge.PUBLISHED {
+    background-color: #e0f2fe;
+    color: #075985;
+}
+
+/* ========== BUTTON ========== */
+.btn-view {
+    background-color: #2563eb;
+    color: white;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-view:hover {
+    background-color: #1d4ed8;
+}
+
+/* ========== EMPTY STATE ========== */
+.empty {
+    text-align: center;
+    color: #94a3b8;
+    font-style: italic;
+    padding: 14px;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+    .main-content {
+        padding: 20px;
+    }
+}

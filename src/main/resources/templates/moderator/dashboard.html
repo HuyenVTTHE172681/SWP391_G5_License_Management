@@ -2,79 +2,51 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Moderator Dashboard - Upload Request</title>
-    <link rel="stylesheet" th:href="@{/css/moderator-dashboard.css}">
+    <title>Moderator Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/modDashboard.css}">
 </head>
 <body>
 
 <div class="dashboard-container">
-    <!-- 🧭 Sidebar -->
+    <!-- Sidebar -->
     <aside class="sidebar">
-        <h2>Moderator Dashboard</h2>
-        <nav>
-            <ul>
-                <li><a th:href="@{/moderator/upload-request}" class="active">Upload Request</a></li>
-                <li><a th:href="@{/moderator/feedback-reports}">Feedback Reports</a></li>
-                <li><a th:href="@{/moderator/tool-reports}">Tool Reports</a></li>
-            </ul>
+        <h2>Moderator Panel</h2>
+        <nav class="menu">
+            <a th:href="@{/moderator/}" class="active">🏠 Dashboard</a>
+            <a th:href="@{/moderator/uploadRequest}">📤 Upload Requests</a>
+            <a th:href="@{/moderator/feedback}">💬 Feedback Reports</a>
+            <a th:href="@{/moderator/reports}">📊 Tool Reports</a>
+            <a th:href="@{/moderator/history}">📁 Uploaded Tools</a>
         </nav>
     </aside>
 
-    <!-- 📋 Main Content -->
+    <!-- Main content -->
     <main class="main-content">
-        <h1>Upload Request</h1>
+        <h1>Welcome, Moderator 👋</h1>
+        <p>Chọn một chức năng ở thanh bên trái để bắt đầu quản lý.</p>
 
-        <!-- 🔍 Search + Filter -->
-        <form class="filter-bar" method="get" th:action="@{/moderator/upload-request}">
-            <input type="text" name="toolName" placeholder="Search by Name..." th:value="${toolName}">
-            <select name="categoryId">
-                <option value="">Category</option>
-                <option th:each="c : ${categories}"
-                        th:value="${c.categoryId}"
-                        th:text="${c.categoryName}"
-                        th:selected="${categoryId == c.categoryId}"></option>
-            </select>
-            <select name="status">
-                <option value="">Status</option>
-                <option value="PENDING" th:selected="${status == 'PENDING'}">Pending</option>
-                <option value="APPROVED" th:selected="${status == 'APPROVED'}">Approved</option>
-                <option value="REJECTED" th:selected="${status == 'REJECTED'}">Rejected</option>
-            </select>
-            <button type="submit">Filter</button>
-        </form>
-
-        <!-- 🧾 Tool Table -->
-        <table class="tool-table">
-            <thead>
-            <tr>
-                <th>Tool's Name</th>
-                <th>Seller</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="tool : ${toolList}">
-                <td th:text="${tool.toolName}">Example Tool</td>
-                <td th:text="${tool.seller != null ? tool.seller.fullName : 'Unknown Seller'}">John Doe</td>
-                <td th:text="${tool.category != null ? tool.category.categoryName : 'Unknown'}">Security</td>
-                <td th:text="${tool.status}">PENDING</td>
-                <td class="actions">
-                    <div th:if="${tool.status != null and tool.status.name() == 'PENDING'}">
-                        <form th:action="@{/moderator/approve/{id}(id=${tool.toolId})}" method="post"
-                              style="display:inline;">
-                            <button type="submit" class="btn-approve">Approve</button>
-                        </form>
-                        <form th:action="@{/moderator/reject/{id}(id=${tool.toolId})}" method="post"
-                              style="display:inline;">
-                            <button type="submit" class="btn-reject">Reject</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
+                <h3>Upload Requests</h3>
+                <p>Xem các tool đang chờ phê duyệt.</p>
+                <a th:href="@{/moderator/uploadRequest}" class="btn-view">Go</a>
+            </div>
+            <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
+                <h3>Feedback Reports</h3>
+                <p>Quản lý các phản hồi từ người dùng.</p>
+                <a th:href="@{/moderator/feedback}" class="btn-view">Go</a>
+            </div>
+            <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
+                <h3>Tool Reports</h3>
+                <p>Xem các báo cáo công cụ vi phạm.</p>
+                <a th:href="@{/moderator/reports}" class="btn-view">Go</a>
+            </div>
+            <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
+                <h3>Uploaded Tools</h3>
+                <p>Theo dõi lịch sử duyệt hoặc từ chối tool.</p>
+                <a th:href="@{/moderator/history}" class="btn-view">Go</a>
+            </div>
+        </div>
     </main>
 </div>
 
