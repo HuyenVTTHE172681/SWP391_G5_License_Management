@@ -30,38 +30,30 @@ public class RegisterController {
     public String handleRegister(@Valid @ModelAttribute("account") Account account,
                                  BindingResult result,
                                  @RequestParam("confirmPassword") String confirmPassword,
-                                 Model model,
-                                 RedirectAttributes redirectAttributes) {
+                                 Model model) {
 
         //  Lỗi xác nhận mật khẩu
-        if (!account.getPassword().equals(confirmPassword)) {
-            result.rejectValue("password", "error.password", "Mật khẩu không khớp.");
+        if (!account.getPassword().equals(account.getConfirmPassword())) {
+            result.rejectValue("confirmPassword", "error.confirmPassword", "Mật khẩu không khớp.");
         }
 
-        //  Lỗi binding cơ bản
-        if (result.hasErrors()) {
+        boolean success = accountService.registerAccount(account, result);
+
+        //  Nếu có lỗi ở lại trang đăng ký
+        if (result.hasErrors() || !success) {
             model.addAttribute("showAlert", true);
             model.addAttribute("alertType", "danger");
             model.addAttribute("alertMessage", "Vui lòng sửa các lỗi bên dưới và thử lại.");
             return "public/register";
         }
 
-        try {
-            accountService.registerAccount(account);
+        // Nếu thành công hiển thị alert rồi chuyển sang verify
+        model.addAttribute("showAlert", true);
+        model.addAttribute("alertType", "success");
+        model.addAttribute("alertMessage", "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã xác minh.");
+        model.addAttribute("redirectUrl", "/verify");
+        return "public/register";
 
-            model.addAttribute("showAlert", true);
-            model.addAttribute("alertType", "success");
-            model.addAttribute("alertMessage", "Đăng ký thành công! Vui lòng kiểm tra email mã xác minh đã được gửi tới email của bạn.");
-
-            // Redirect toi page verify code
-            return "redirect:/verify";
-
-        } catch (RuntimeException e) {
-            model.addAttribute("showAlert", true);
-            model.addAttribute("alertType", "danger");
-            model.addAttribute("alertMessage", e.getMessage());
-            return "public/register";
-        }
     }
 
     // Hiển thị form nhập mã code
@@ -77,12 +69,10 @@ public class RegisterController {
         try {
             accountService.verifyCode(code);
             model.addAttribute("verified", true);
-            model.addAttribute("message", "Xác minh thành công! Bạn có thể đăng nhập ngay.");
-
-            return "public/login";
+            model.addAttribute("successMessage", "Xác minh thành công! Bạn có thể đăng nhập ngay.");
+            model.addAttribute("redirectUrl", "/login");
         } catch (RuntimeException e) {
-            model.addAttribute("verified", false);
-            model.addAttribute("message", e.getMessage());
+            model.addAttribute("errorMessage", e.getMessage());
         }
         return "public/verify-code";
     }

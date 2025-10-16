@@ -51,6 +51,14 @@
         </div>
     </div>
 
+    <script th:inline="javascript">
+        const redirectUrl = /*[[${redirectUrl}]]*/ null;
 
+        if (redirectUrl) {
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 5000);
+        }
+    </script>
 </body>
 </html>

@@ -54,6 +54,9 @@ public class Account {
     @Column(name = "code_expiry")
     private LocalDateTime codeExpiry;
 
+    @Transient  // Không lưu vào database
+    private String confirmPassword;
+
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
@@ -258,5 +261,13 @@ public class Account {
 
     public void setTools(List<Tool> tools) {
         this.tools = tools;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
     }
 }

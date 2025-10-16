@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Role;
 import jakarta.mail.internet.MimeMessage;
@@ -16,10 +17,7 @@ import swp391.fa25.lms.repository.RoleRepository;
 import swp391.fa25.lms.util.JwtService;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @Service
@@ -31,7 +29,7 @@ public class AccountService {
     private final JwtService jwtService;
     private final RoleRepository roleRepository;
 
-    @Value("${app.verification.token.expiry:15}") // mặc định 15 phút
+    @Value("2") // mặc định 15 phút
     private int tokenExpiryMinutes;
 
     @Value("${app.base-url:http://localhost:7070}") // mặc định chạy local
@@ -40,6 +38,10 @@ public class AccountService {
     // Regex kiểm tra format email
     private static final Pattern EMAIL_REGEX = Pattern.compile(
             "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+    );
+
+    private static final Pattern PASS_REGEX = Pattern.compile("" +
+            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$"
     );
 
     public AccountService(AccountRepository accountRepo, PasswordEncoder passwordEncoder,
@@ -52,7 +54,7 @@ public class AccountService {
     }
 
     /**
-     * Đăng ký tài khoản
+     * ====================== Đăng ký tài khoản
      * - Validate tất cả fields (không để trống, định dạng, độ dài, ...)
      * - Kiểm tra email chưa được verified trước đó
      * - Mã hóa mật khẩu
@@ -61,41 +63,43 @@ public class AccountService {
      * - Lưu DB và gửi email
      * @param account
      */
-    public void registerAccount(Account account) {
+    public boolean registerAccount(Account account,  BindingResult result) {
         // Trim toàn bộ
         account.setEmail(account.getEmail().trim());
         account.setFullName(account.getFullName().trim());
         account.setPhone(account.getPhone().trim());
 
-        // 1 Validate full name
-        if (account.getFullName().isEmpty())
-            throw new RuntimeException("Họ và tên không được để trống.");
-        if (account.getFullName().length() < 5 || account.getFullName().length() > 20)
-            throw new RuntimeException("Họ và tên phải từ 5–20 ký tự.");
-        if (!account.getFullName().matches("^[\\p{L}\\s]+$"))
-            throw new RuntimeException("Họ và tên chỉ được chứa chữ cái và khoảng trắng.");
+        // Kiểm tra email đã tồn tại chưa
+        Optional<Account> existingOpt = accountRepo.findByEmail(account.getEmail());
 
-        // 2 Validate phone
-        if (!account.getPhone().matches("^0[0-9]{9,10}$"))
-            throw new RuntimeException("Số điện thoại không hợp lệ. Phải bắt đầu bằng 0 và có tối đa 11 số.");
+        if (existingOpt.isPresent()) {
+            Account existing = existingOpt.get();
 
-        // 3 Validate email
-        if (account.getEmail().isEmpty())
-            throw new RuntimeException("Email không được để trống.");
-        if (account.getEmail().contains(" "))
-            throw new RuntimeException("Email không được chứa khoảng trắng.");
-        if (!account.getEmail().matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))
-            throw new RuntimeException("Email không hợp lệ.");
-        if (account.getEmail().length() > 50)
-            throw new RuntimeException("Email không được vượt quá 50 ký tự.");
-        if (accountRepo.existsByEmailAndVerifiedTrue(account.getEmail()))
-            throw new RuntimeException("Email này đã được đăng ký.");
+            // Nếu đã ACTIVE -> không cho đăng ký lại
+            if (existing.getStatus() == Account.AccountStatus.ACTIVE && Boolean.TRUE.equals(existing.getVerified())) {
+                result.rejectValue("email", "error.email", "Email này đã được đăng ký và kích hoạt.");
+                return false;
+            }
 
-        // 4 Validate mật khẩu
-        if (account.getPassword() == null || account.getPassword().isEmpty())
-            throw new RuntimeException("Mật khẩu không được để trống.");
-        if (!account.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$"))
-            throw new RuntimeException("Mật khẩu phải có ít nhất 8 ký tự, bao gồm 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.");
+            // Nếu DEACTIVE -> xóa tài khoản cũ để cho phép đăng ký lại
+            if (existing.getStatus() == Account.AccountStatus.DEACTIVATED || !existing.getVerified()) {
+                accountRepo.delete(existing); // Xóa record cũ (vì chưa xác minh)
+            }
+        }
+
+        //  Validate mật khẩu
+        if (account.getPassword().contains(" ")) {
+            result.rejectValue("password", "error.password", "Mật khẩu không được chứa khoảng trắng.");
+        } else if (!account.getPassword()
+                .matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$")) {
+            result.rejectValue("password", "error.password",
+                    "Mật khẩu phải có ít nhất 8 ký tự, bao gồm 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.");
+        }
+
+        // Nếu có lỗi validate thì dừng lại
+        if (result.hasErrors()) {
+            return false;
+        }
 
         // Mã hóa mật khẩu
         account.setPassword(passwordEncoder.encode(account.getPassword()));
@@ -118,6 +122,8 @@ public class AccountService {
 
         // Gui email
         sendVerificationCode(account, code);
+
+        return true;
     }
 
     // Gửi mã xác minh sau khi dang ky thanh cong
@@ -142,10 +148,10 @@ public class AccountService {
         }
     }
 
-    // Verify Code
+    // Verify Code sau khi dang ky thanh cong
     public void verifyCode( String code) {
         Account acc = accountRepo.findByVerificationCode(code)
-                .orElseThrow(() -> new RuntimeException("Email không tồn tại."));
+                .orElseThrow(() -> new RuntimeException("Mã xác thực không đúng."));
 
         if (Boolean.TRUE.equals(acc.getVerified()))
             throw new RuntimeException("Tài khoản đã được xác minh trước đó.");
@@ -167,7 +173,7 @@ public class AccountService {
     }
 
     /**
-     * Xác thực tài khoản cho LOGIN
+     * ====================== Xác thực tài khoản cho LOGIN
      * - Validate input (email, password)
      * - Check email tồn tại
      * - Check password
@@ -212,6 +218,45 @@ public class AccountService {
         return account;
     }
 
+    /**
+     * ====================== Đặt lại mật khẩu RESET PASSWORD
+     *
+     */
+
+    public void resetPassword(String token, String newPassword, String confirmPassword) {
+        Account account = accountRepo.findByVerificationToken(token)
+                .orElseThrow(() -> new RuntimeException("Link không hợp lệ hoặc đã hết hạn."));
+
+        // Check token có hết hạn không
+        if (account.getTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token đã hết hạn, vui lòng yêu cầu lại.");
+        }
+
+        //  Validate mật khẩu
+        if (!newPassword.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$")) {
+            throw new RuntimeException("Mật khẩu phải có ít nhất 8 ký tự, bao gồm 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.");
+        }
+
+        // Check confirmPassword
+        if (!newPassword.equals(confirmPassword)) {
+            throw new RuntimeException("Mật khẩu xác nhận không khớp.");
+        }
+
+        // Cập nhật mật khẩu
+        account.setPassword(passwordEncoder.encode(newPassword));
+        account.setVerificationToken(null);
+        account.setTokenExpiry(null);
+
+        accountRepo.save(account);
+    }
+
+    // Kiểm tra token hợp lệ (tồn tại và chưa hết hạn)
+    public boolean isValidResetToken(String token) {
+        return accountRepo.findByVerificationToken(token)
+                .filter(acc -> acc.getTokenExpiry() != null && acc.getTokenExpiry().isAfter(LocalDateTime.now()))
+                .isPresent();
+    }
+
     // Generate token reset password and send email
     public void generateResetPasswordToken(String email) {
         Account account = accountRepo.findByEmail(email) .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống."));
@@ -251,36 +296,6 @@ public class AccountService {
         }
     }
 
-    // Reset password
-    public void resetPassword(String token, String newPassword, String confirmPassword) {
-        Account account = accountRepo.findByVerificationToken(token)
-                .orElseThrow(() -> new RuntimeException("Token không hợp lệ hoặc đã hết hạn."));
-
-        if (account.getTokenExpiry().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token đã hết hạn, vui lòng yêu cầu lại.");
-        }
-
-        // Validate password
-        StringBuilder error = new StringBuilder();
-        if(newPassword.length() < 8) error.append("Mật khẩu phải có ít nhất 8 ký tự. ");
-        if (!newPassword.matches(".*[A-Z].*")) error.append("Phải có ít nhất 1 chữ in hoa. ");
-        if (!newPassword.matches(".*[a-z].*")) error.append("Phải có ít nhất 1 chữ thường. ");
-        if (!newPassword.matches(".*\\d.*")) error.append("Phải có ít nhất 1 số. ");
-        if (!newPassword.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) error.append("Phải có ít nhất 1 ký tự đặc biệt. ");
-
-        if (error.length() > 0) throw new RuntimeException(error.toString().trim());
-
-        if (!newPassword.equals(confirmPassword)) {
-            throw new RuntimeException("Mật khẩu xác nhận không khớp.");
-        }
-
-        // Encode và lưu
-        account.setPassword(passwordEncoder.encode(newPassword));
-        account.setVerificationToken(null);
-        account.setTokenExpiry(null);
-
-        accountRepo.save(account);
-    }
 
     // View Profile
     public Account viewProfile(String email){
@@ -300,38 +315,7 @@ public class AccountService {
         return accountRepo.save(existing);
     }
 
-    public void sendResetPasswordEmail(String email) {
-        Account account = accountRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email not found"));
 
-        // Tạo token reset
-        String token = UUID.randomUUID().toString();
-        account.setVerificationToken(token);
-        account.setTokenExpiry(LocalDateTime.now().plusMinutes(tokenExpiryMinutes));
-        accountRepo.save(account);
-
-        // Gửi mail reset
-        try {
-            String subject = "[LMS] Reset Your Password";
-            String resetUrl = baseUrl + "/reset-password?token=" + token;
-
-            String body = "<p>Hello <b>" + account.getFullName() + "</b>,</p>"
-                    + "<p>We received a request to reset your password. Click below to reset it:</p>"
-                    + "<p><a href=\"" + resetUrl + "\" style=\"display:inline-block;padding:10px 15px;"
-                    + "background-color:#007bff;color:#fff;text-decoration:none;border-radius:5px;\">"
-                    + "Reset Password</a></p>"
-                    + "<p>This link will expire in " + tokenExpiryMinutes + " minutes.</p>";
-
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(email);
-            helper.setSubject(subject);
-            helper.setText(body, true);
-            mailSender.send(message);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to send reset password email");
-        }
-    }
 
     public void resetPassword(String token, String newPassword) {
         Account account = accountRepo.findByVerificationToken(token)
