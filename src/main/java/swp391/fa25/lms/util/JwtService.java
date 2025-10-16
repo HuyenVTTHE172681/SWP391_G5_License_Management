@@ -1,4 +1,4 @@
-package swp391.fa25.lms.service;
+package swp391.fa25.lms.util;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

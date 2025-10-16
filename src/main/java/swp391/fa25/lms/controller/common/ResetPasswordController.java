@@ -6,7 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.repository.AccountRepo;
+import swp391.fa25.lms.repository.AccountRepository;
 
 import java.util.Optional;
 
@@ -14,10 +14,10 @@ import java.util.Optional;
 @RequestMapping("/profile")
 public class ResetPasswordController {
 
-    private final AccountRepo accountRepository;
+    private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public ResetPasswordController(AccountRepo accountRepository, PasswordEncoder passwordEncoder) {
+    public ResetPasswordController(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
     }

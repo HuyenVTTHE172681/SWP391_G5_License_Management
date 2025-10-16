@@ -17,19 +17,19 @@ public class RoleDataInitializer implements CommandLineRunner {
     private static final String FIXED_ADMIN_EMAIL = "admin@gmail.com";
 
     @Autowired
-    private RoleRepo roleRepo;
+    private RoleRepository roleRepository;
     @Autowired
-    private CategoryRepo categoryRepo;
+    private CategoryRepository categoryRepo;
     @Autowired
-    private AccountRepo accountRepo;
+    private AccountRepository accountRepo;
     @Autowired
-    private ToolRepo toolRepo;
+    private ToolRepository toolRepo;
     @Autowired
-    private FeedBackRepo feedbackRepo;
+    private FeedbackRepository feedbackRepo;
     @Autowired
-    private FavoriteRepo favoriteRepo;
+    private FavoriteRepository favoriteRepository;
     @Autowired
-    private LicenseToolRepo licenseRepo;
+    private LicenseToolRepository licenseRepo;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -37,7 +37,7 @@ public class RoleDataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // ============ ROLE ============
         // Kiểm tra DB xem đã có role chưa
-        if(roleRepo.count() == 0) {
+        if(roleRepository.count() == 0) {
             // Tạo các role mặc định
             Role guest = new Role();
             guest.setRoleId(1);
@@ -70,7 +70,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             admin.setNote("Quản trị viên");
 
             // Lưu tất cả vào DB
-            roleRepo.saveAll(Arrays.asList(guest, customer, seller, mod, manager, admin));
+            roleRepository.saveAll(Arrays.asList(guest, customer, seller, mod, manager, admin));
 
             System.out.println("Default roles have been initialized.");
         } else {
@@ -108,9 +108,9 @@ public class RoleDataInitializer implements CommandLineRunner {
 
         // ============ ACCOUNT ============
         if (accountRepo.count() == 0)  {
-            Role sellerRole = roleRepo.findByRoleName(RoleName.SELLER).get();
-            Role customerRole = roleRepo.findByRoleName(RoleName.CUSTOMER).get();
-            Role adminRole = roleRepo.findByRoleName(RoleName.ADMIN).get();
+            Role sellerRole = roleRepository.findByRoleName(RoleName.SELLER).get();
+            Role customerRole = roleRepository.findByRoleName(RoleName.CUSTOMER).get();
+            Role adminRole = roleRepository.findByRoleName(RoleName.ADMIN).get();
 
             Account seller1 = new Account();
             seller1.setEmail("seller1@example.com");
@@ -299,7 +299,7 @@ public class RoleDataInitializer implements CommandLineRunner {
         }
 
         // ============ FAVORITE ============
-        if (favoriteRepo.count() == 0) {
+        if (favoriteRepository.count() == 0) {
             Account customer = accountRepo.findByEmail("customer1@example.com")
                     .orElseThrow(() -> new RuntimeException("Customer 1 not found"));
             List<Tool> tools = toolRepo.findAll();
@@ -312,7 +312,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             fav2.setAccount(customer);
             fav2.setTool(tools.get(1));
 
-            favoriteRepo.saveAll(Arrays.asList(fav1, fav2));
+            favoriteRepository.saveAll(Arrays.asList(fav1, fav2));
         } else {
             System.out.println("Favorite already exist, skipping initialization.");
         }

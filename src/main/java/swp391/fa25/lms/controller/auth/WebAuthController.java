@@ -13,7 +13,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.service.AccountService;
+import swp391.fa25.lms.service.used.AccountService;
+
 import java.util.List;
 
 @Controller
@@ -104,61 +105,61 @@ public class WebAuthController {
     }
 
 
-//    @PostMapping("/login")
-//    public String doLogin(@RequestParam String email,
-//                          @RequestParam String password,
-//                          HttpServletRequest request,
-//                          RedirectAttributes redirectAttributes) {
-//        logger.info("Login attempt for email={}", email);
-//        logger.info("Login attempt for email={} password={}", email, password);
-//
-//        try {
-//            // Check -> trả về Account
-//            Account account = accountService.loginForWeb(email, password);
-//
-//            UsernamePasswordAuthenticationToken auth =
-//                    new UsernamePasswordAuthenticationToken(account.getEmail(), null, List.of());
-//            SecurityContextHolder.getContext().setAuthentication(auth);
-//
-//            // Hiển thị password phiên bản "masked".
-//            request.getSession().setAttribute("loggedInAccount", account);
-//            request.getSession().setAttribute("maskedPassword", "********");
-//
-//            // Redirect theo role
-//            String redirect;
-//            if (account.getRole() != null && account.getRole().getRoleName() != null) {
-//                switch (account.getRole().getRoleName()) {
-//                    case CUSTOMER:
-//                        redirect = "redirect:/home";
-//                        break;
-//                    case SELLER:
-//                        redirect = "redirect:/seller/dashboard";
-//                        break;
-//                    case MOD:
-//                        redirect = "redirect:/mod/dashboard";
-//                        break;
-//                    case ADMIN:
-//                        redirect = "redirect:/admin/accounts";
-//                        break;
-//                    default:
-//                        redirect = "redirect:/home";
-//                }
-//            } else {
-//                redirect = "redirect:/home";
-//            }
-//
-//            logger.info("Login success for email={}, redirect={}", email, redirect);
-//            return redirect;
-//        } catch (RuntimeException ex) {
-//            // Gửi message về form login (sử dụng flash để giữ message qua redirect)
-//            redirectAttributes.addFlashAttribute("showAlert", true);
-//            redirectAttributes.addFlashAttribute("alertType", "danger");
-//            redirectAttributes.addFlashAttribute("alertMessage", ex.getMessage());
-//            redirectAttributes.addFlashAttribute("email", email);
-//            logger.warn("Login failed for email={} : {}", email, ex.getMessage());
-//            return "redirect:/login";
-//        }
-//    }
+    @PostMapping("/login")
+    public String doLogin(@RequestParam String email,
+                          @RequestParam String password,
+                          HttpServletRequest request,
+                          RedirectAttributes redirectAttributes) {
+        logger.info("Login attempt for email={}", email);
+        logger.info("Login attempt for email={} password={}", email, password);
+
+        try {
+            // Check -> trả về Account
+            Account account = accountService.loginForWeb(email, password);
+
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(account.getEmail(), null, List.of());
+            SecurityContextHolder.getContext().setAuthentication(auth);
+
+            // Hiển thị password phiên bản "masked".
+            request.getSession().setAttribute("loggedInAccount", account);
+            request.getSession().setAttribute("maskedPassword", "********");
+
+            // Redirect theo role
+            String redirect;
+            if (account.getRole() != null && account.getRole().getRoleName() != null) {
+                switch (account.getRole().getRoleName()) {
+                    case CUSTOMER:
+                        redirect = "redirect:/home";
+                        break;
+                    case SELLER:
+                        redirect = "redirect:/seller/dashboard";
+                        break;
+                    case MOD:
+                        redirect = "redirect:/moderator/dashboard";
+                        break;
+                    case ADMIN:
+                        redirect = "redirect:/admin/accounts";
+                        break;
+                    default:
+                        redirect = "redirect:/home";
+                }
+            } else {
+                redirect = "redirect:/home";
+            }
+
+            logger.info("Login success for email={}, redirect={}", email, redirect);
+            return redirect;
+        } catch (RuntimeException ex) {
+            // Gửi message về form login (sử dụng flash để giữ message qua redirect)
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "danger");
+            redirectAttributes.addFlashAttribute("alertMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("email", email);
+            logger.warn("Login failed for email={} : {}", email, ex.getMessage());
+            return "redirect:/login";
+        }
+    }
 
     // Enter email to reset password
     @GetMapping("/forgot-password")

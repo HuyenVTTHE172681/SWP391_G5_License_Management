@@ -39,7 +39,7 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED }
+    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED }
 
     @OneToMany(mappedBy = "tool")
     private List<ToolFile> files;
@@ -49,7 +49,16 @@ public class Tool {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    @Column(columnDefinition = "NVARCHAR(255)")
+    private String note;
 
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
     public Tool() {
     }
 

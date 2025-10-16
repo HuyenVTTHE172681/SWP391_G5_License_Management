@@ -9,9 +9,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Feedback;
-import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.repository.FeedBackRepo;
-import swp391.fa25.lms.repository.ToolRepo;
+import swp391.fa25.lms.repository.FeedbackRepository;
+import swp391.fa25.lms.repository.ToolRepository;
 
 import java.util.Optional;
 
@@ -19,10 +18,10 @@ import java.util.Optional;
 @RequestMapping("/feedback")
 public class FeedbackController {
 
-    private final ToolRepo toolRepo;
-    private final FeedBackRepo feedbackRepo;
+    private final ToolRepository toolRepo;
+    private final FeedbackRepository feedbackRepo;
 
-    public FeedbackController(ToolRepo toolRepo, FeedBackRepo feedbackRepo) {
+    public FeedbackController(ToolRepository toolRepo, FeedbackRepository feedbackRepo) {
         this.toolRepo = toolRepo;
         this.feedbackRepo = feedbackRepo;
     }
