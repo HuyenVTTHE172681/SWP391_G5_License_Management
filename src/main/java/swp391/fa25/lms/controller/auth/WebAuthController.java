@@ -1,6 +1,7 @@
 package swp391.fa25.lms.controller.auth;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import swp391.fa25.lms.config.CustomerUserDetail;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.service.used.AccountService;
 
@@ -24,140 +26,69 @@ public class WebAuthController {
     @Autowired
     private AccountService accountService;
 
-    @GetMapping("/register")
-    public String showRegisterForm(Model model) {
-        if (!model.containsAttribute("account")) {
-            model.addAttribute("account", new Account());
-        }
-        return "public/register";
-    }
-
-    @PostMapping("/register")
-    public String register(@Valid @ModelAttribute("account") Account account,
-                           BindingResult result,
-                           @RequestParam("confirmPassword") String confirmPassword,
-                           RedirectAttributes redirectAttributes,
-                           Model model) {
-        // Check password confirmation
-        if (!account.getPassword().equals(confirmPassword)) {
-            result.rejectValue("password", "error.password", "Mật khẩu không khớp.");
-        }
-
-        // Check lỗi validation từ model
-        if (result.hasErrors()) {
-            model.addAttribute("showAlert", true);
-            model.addAttribute("alertType", "danger");
-            model.addAttribute("alertMessage", "Vui lòng sửa các lỗi bên dưới và thử lại.");
-            return "public/register";
-        }
-
-        // Additional client-side validation for phone (since model only has pattern, not notBlank)
-        if (account.getPhone() == null || account.getPhone().trim().isEmpty()) {
-            result.rejectValue("phone", "error.phone", "Bắt buộc phải nhập số điện thoại");
-            model.addAttribute("showAlert", true);
-            model.addAttribute("alertType", "danger");
-            model.addAttribute("alertMessage", "Bắt buộc phải nhập số điện thoại.");
-            return "public/register";
-        }
-
-        try {
-            accountService.registerAccount(account);
-            //  Gán thông báo
-            model.addAttribute("showAlert", true);
-            model.addAttribute("alertType", "success");
-            model.addAttribute("alertMessage", "Đăng ký thành công! Vui lòng kiểm tra email để xác minh tài khoản của bạn.");
-
-            // Reset account trống
-            model.addAttribute("account", new Account());
-
-            return "public/register";
-        } catch (RuntimeException e) {
-            model.addAttribute("showAlert", true);
-            model.addAttribute("alertType", "danger");
-            model.addAttribute("alertMessage", e.getMessage());
-            return "public/register";
-        }
-    }
-
-    @GetMapping("/verify-email/{token}")
-    public String verifyEmail(@PathVariable("token") String token, Model model) {
-        try {
-            Account account = accountService.verifyAccount(token);
-
-            model.addAttribute("verified", true);
-            model.addAttribute("message", "Xác minh email thành công! Bây giờ bạn có thể đăng nhập.");
-            model.addAttribute("redirectUrl", "/login");
-
-        } catch (RuntimeException e) {
-            model.addAttribute("verified", false);
-            model.addAttribute("message", e.getMessage());
-        }
-        return "public/verify-result";
-    }
-
-    // Hien thi form login
+    // Hiển thị form login
     @GetMapping("/login")
-    public String showLoginForm(Model model) {
-        if (!model.containsAttribute("email")) {
-            model.addAttribute("email", "");
-        }
+    public String showLoginForm(Model model,  @RequestParam(value = "error", required = false) String error) {
+        // Model attributes để view show lỗi
+        if (!model.containsAttribute("email")) model.addAttribute("email", "");
+        if (!model.containsAttribute("emailError")) model.addAttribute("emailError", "");
+        if (!model.containsAttribute("passwordError")) model.addAttribute("passwordError", "");
+        if (error != null) model.addAttribute("alertMessage", "Lỗi đăng nhập");
+
         return "public/login";
     }
 
-
+    /**
+     * Xử lý POST /login
+     * AccountService: Handle validate + kiểm tra DB + mật khẩu
+     */
     @PostMapping("/login")
     public String doLogin(@RequestParam String email,
                           @RequestParam String password,
                           HttpServletRequest request,
-                          RedirectAttributes redirectAttributes) {
-        logger.info("Login attempt for email={}", email);
-        logger.info("Login attempt for email={} password={}", email, password);
-
+                          RedirectAttributes redirectAttributes,
+                          Model model) {
         try {
-            // Check -> trả về Account
-            Account account = accountService.loginForWeb(email, password);
+            // Gọi service để check — nếu có lỗi, service sẽ ném exception cụ thể
+            Account account = accountService.login(email, password);
 
+            // Xác thực thành công, tạo UserDetails và set Authentication vào SecurityContext
+            CustomerUserDetail userDetails = new CustomerUserDetail(account);
             UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(account.getEmail(), null, List.of());
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-            // Hiển thị password phiên bản "masked".
-            request.getSession().setAttribute("loggedInAccount", account);
-            request.getSession().setAttribute("maskedPassword", "********");
+            // Lưu account vào session nếu cần dùng ở view
+            HttpSession session = request.getSession(true);
+            session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+            session.setAttribute("loggedInAccount", account);
 
             // Redirect theo role
-            String redirect;
-            if (account.getRole() != null && account.getRole().getRoleName() != null) {
-                switch (account.getRole().getRoleName()) {
-                    case CUSTOMER:
-                        redirect = "redirect:/home";
-                        break;
-                    case SELLER:
-                        redirect = "redirect:/seller/dashboard";
-                        break;
-                    case MOD:
-                        redirect = "redirect:/moderator/dashboard";
-                        break;
-                    case ADMIN:
-                        redirect = "redirect:/admin/accounts";
-                        break;
-                    default:
-                        redirect = "redirect:/home";
-                }
-            } else {
-                redirect = "redirect:/home";
-            }
-
-            logger.info("Login success for email={}, redirect={}", email, redirect);
-            return redirect;
+            String roleName = account.getRole() != null ? account.getRole().getRoleName().name() : "CUSTOMER";
+            return switch (roleName) {
+                case "ADMIN" -> "redirect:/admin/accounts";
+                case "SELLER" -> "redirect:/seller/tools";
+                case "MOD" -> "redirect:/moderator/";
+                case "MANAGER" -> "redirect:/manager/dashboard";
+                default -> "redirect:/home";
+            };
         } catch (RuntimeException ex) {
-            // Gửi message về form login (sử dụng flash để giữ message qua redirect)
-            redirectAttributes.addFlashAttribute("showAlert", true);
-            redirectAttributes.addFlashAttribute("alertType", "danger");
-            redirectAttributes.addFlashAttribute("alertMessage", ex.getMessage());
-            redirectAttributes.addFlashAttribute("email", email);
-            logger.warn("Login failed for email={} : {}", email, ex.getMessage());
-            return "redirect:/login";
+            String msg = ex.getMessage() != null ? ex.getMessage() : "Có lỗi xảy ra. Vui lòng thử lại.";
+            model.addAttribute("email", email);
+
+            // Hiển thị lỗi tương ứng với input
+            if (msg.toLowerCase().contains("email") || msg.toLowerCase().contains("xác minh") || msg.toLowerCase().contains("vô hiệu")) {
+                model.addAttribute("emailError", msg);
+                model.addAttribute("passwordError", "");
+            } else if (msg.toLowerCase().contains("mật khẩu")) {
+                model.addAttribute("emailError", "");
+                model.addAttribute("passwordError", msg);
+            }  else {
+                // Lỗi hệ thống khác
+                model.addAttribute("emailError", "Lỗi: " + msg);
+                model.addAttribute("passwordError", "");
+            }
+            return "public/login";
         }
     }
 

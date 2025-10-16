@@ -1,5 +1,6 @@
 package swp391.fa25.lms.service.used;
 
+import org.apache.coyote.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import swp391.fa25.lms.util.JwtService;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -49,53 +51,82 @@ public class AccountService {
         this.roleRepository = roleRepository;
     }
 
-    // Register account
-    public Account registerAccount(Account account) {
-        // 1. Check format email
-        if (account.getEmail() == null || !EMAIL_REGEX.matcher(account.getEmail()).matches()) {
-            throw new RuntimeException("Invalid email format!");
-        }
-        // 2. Check email đã tồn tại trong DB
-        if (accountRepo.findByEmail(account.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists!");
-        }
-        // 3. Encode password
+    /**
+     * Đăng ký tài khoản
+     * - Validate tất cả fields (không để trống, định dạng, độ dài, ...)
+     * - Kiểm tra email chưa được verified trước đó
+     * - Mã hóa mật khẩu
+     * - Sinh mã xác minh 6 chữ số, set expiry (tokenExpiryMinutes)
+     * - Gán default role = CUSTOMER, status = DEACTIVATED, verified = false
+     * - Lưu DB và gửi email
+     * @param account
+     */
+    public void registerAccount(Account account) {
+        // Trim toàn bộ
+        account.setEmail(account.getEmail().trim());
+        account.setFullName(account.getFullName().trim());
+        account.setPhone(account.getPhone().trim());
+
+        // 1 Validate full name
+        if (account.getFullName().isEmpty())
+            throw new RuntimeException("Họ và tên không được để trống.");
+        if (account.getFullName().length() < 5 || account.getFullName().length() > 20)
+            throw new RuntimeException("Họ và tên phải từ 5–20 ký tự.");
+        if (!account.getFullName().matches("^[\\p{L}\\s]+$"))
+            throw new RuntimeException("Họ và tên chỉ được chứa chữ cái và khoảng trắng.");
+
+        // 2 Validate phone
+        if (!account.getPhone().matches("^0[0-9]{9,10}$"))
+            throw new RuntimeException("Số điện thoại không hợp lệ. Phải bắt đầu bằng 0 và có tối đa 11 số.");
+
+        // 3 Validate email
+        if (account.getEmail().isEmpty())
+            throw new RuntimeException("Email không được để trống.");
+        if (account.getEmail().contains(" "))
+            throw new RuntimeException("Email không được chứa khoảng trắng.");
+        if (!account.getEmail().matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))
+            throw new RuntimeException("Email không hợp lệ.");
+        if (account.getEmail().length() > 50)
+            throw new RuntimeException("Email không được vượt quá 50 ký tự.");
+        if (accountRepo.existsByEmailAndVerifiedTrue(account.getEmail()))
+            throw new RuntimeException("Email này đã được đăng ký.");
+
+        // 4 Validate mật khẩu
+        if (account.getPassword() == null || account.getPassword().isEmpty())
+            throw new RuntimeException("Mật khẩu không được để trống.");
+        if (!account.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$"))
+            throw new RuntimeException("Mật khẩu phải có ít nhất 8 ký tự, bao gồm 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.");
+
+        // Mã hóa mật khẩu
         account.setPassword(passwordEncoder.encode(account.getPassword()));
 
-        account.setCreatedAt(LocalDateTime.now());
-        account.setUpdatedAt(LocalDateTime.now());
-        account.setStatus(Account.AccountStatus.ACTIVE);
-        Role customerRole = roleRepository.findByRoleName(Role.RoleName.CUSTOMER)
-                .orElseThrow(() -> new RuntimeException("Default role CUSTOMER not found"));
-        account.setRole(customerRole);
-        account.setRole(customerRole);
+        // Sinh mã xác thực 6 chữ số
+        String code = String.format("%06d", new Random().nextInt(999999));
+        account.setVerificationCode(code);
+        account.setCodeExpiry(LocalDateTime.now().plusMinutes(tokenExpiryMinutes));
 
-        // 4. Tạo token verify
-        String token = UUID.randomUUID().toString();
-        account.setVerificationToken(token);
-        account.setTokenExpiry(LocalDateTime.now().plusMinutes(tokenExpiryMinutes));
+        // Cac fields default
+        account.setStatus(Account.AccountStatus.DEACTIVATED);
         account.setVerified(false);
+        account.setCreatedAt(LocalDateTime.now());
+        Role role = roleRepository.findByRoleName(Role.RoleName.CUSTOMER)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy role CUSTOMER"));
+        account.setRole(role);
 
-        Account saved = accountRepo.save(account);
+        // Luu Db
+        accountRepo.save(account);
 
-        // 5. Gửi email xác thực
-        sendVerificationEmail(saved);
-
-        return saved;
+        // Gui email
+        sendVerificationCode(account, code);
     }
 
-    // Send email verification account after register success
-    private void sendVerificationEmail(Account account) {
+    // Gửi mã xác minh sau khi dang ky thanh cong
+    private void sendVerificationCode(Account account, String code) {
         try {
-            String subject = "[LMS - Register New Account] Please Verify Your Email";
-            String verifyUrl = baseUrl + "/verify-email/" + account.getVerificationToken();
-
-            String body = "<p>Hello <b>" + account.getFullName() + "</b>,</p>"
-                    + "<p>Please verify your email address by clicking the link below:</p>"
-                    + "<p><a href=\"" + verifyUrl + "\" style=\"display:inline-block;padding:10px 15px;"
-                    + "background-color:#4CAF50;color:#fff;text-decoration:none;border-radius:5px;\">"
-                    + "Verify Email</a></p>"
-                    + "<p>This link will expire in " + tokenExpiryMinutes + " minutes.</p>";
+            String subject = "[LMS] Xác minh tài khoản";
+            String body = "<p>Xin chào <b>" + account.getFullName() + "</b>,</p>"
+                    + "<p>Mã xác minh của bạn là: <b>" + code + "</b></p>"
+                    + "<p>Mã này có hiệu lực trong " + tokenExpiryMinutes + " phút.</p>";
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -107,67 +138,76 @@ public class AccountService {
             mailSender.send(message);
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send verification email");
+            throw new RuntimeException("Không thể gửi email xác minh. Vui lòng thử lại sau.");
         }
     }
 
-    // Verify account
-    public Account verifyAccount(String token) {
-        Account account = accountRepo.findByVerificationToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+    // Verify Code
+    public void verifyCode( String code) {
+        Account acc = accountRepo.findByVerificationCode(code)
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại."));
 
-        if (account.getTokenExpiry() == null || account.getTokenExpiry().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token confirmation has expired. Please request a new verification email.");
-        }
+        if (Boolean.TRUE.equals(acc.getVerified()))
+            throw new RuntimeException("Tài khoản đã được xác minh trước đó.");
 
-        account.setVerified(true);
-        account.setVerificationToken(null);
-        account.setTokenExpiry(null);
+        if (acc.getCodeExpiry().isBefore(LocalDateTime.now()))
+            throw new RuntimeException("Mã xác thực đã hết hạn.");
 
-        accountRepo.save(account);
-        return account;
+        if (acc.getVerificationCode() == null || !acc.getVerificationCode().equals(code))
+            throw new RuntimeException("Mã xác thực không đúng.");
+
+        // Cập nhật trạng thái
+        acc.setVerified(true);
+        acc.setVerificationCode(null);
+        acc.setCodeExpiry(null);
+        acc.setStatus(Account.AccountStatus.ACTIVE);
+        acc.setUpdatedAt(LocalDateTime.now());
+
+        accountRepo.save(acc);
     }
 
-    // Login
-    public Map<String, String> login(String email, String password) {
+    /**
+     * Xác thực tài khoản cho LOGIN
+     * - Validate input (email, password)
+     * - Check email tồn tại
+     * - Check password
+     * - Check trạng thái tài khoản (verified, active)
+     *
+     * @param email email người dùng nhập
+     * @param password
+     * @return
+     */
+    public Account login(String email, String password) {
+
+        // 1 Validate input email
+        if(email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("Email không được để trống");
+        }
+        if (!EMAIL_REGEX.matcher(email).matches()) {
+            throw new RuntimeException("Định dạng email không hợp lệ");
+        }
         Account account = accountRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email not found"));
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống"));
 
+        // 2 Validate input password
+        if (password == null || password.trim().isEmpty()) {
+            throw new RuntimeException("Mật khẩu không được để trống");
+        }
         if (!passwordEncoder.matches(password, account.getPassword())) {
-            throw new RuntimeException("Invalid password");
+            throw new RuntimeException("Mật khẩu không đúng");
         }
 
-        if (!account.getVerified()) {
-            throw new RuntimeException("Account not verified");
+        //  3 Kiểm tra trạng thái tài khoản
+        if (account.getStatus() == Account.AccountStatus.DEACTIVATED) {
+            throw new RuntimeException("Tài khoản đã bị vô hiệu hóa");
+        }
+        if (!Boolean.TRUE.equals(account.getVerified())) {
+            throw new RuntimeException("Tài khoản chưa xác minh email");
         }
 
-        if (account.getStatus() != Account.AccountStatus.ACTIVE) {
-            throw new RuntimeException("Account not ACTIVE");
-        }
-
-        Map<String, String> tokens = new HashMap<>();
-        tokens.put("accessToken", jwtService.generateAccessToken(account));
-        tokens.put("refreshToken", jwtService.generateRefreshToken(account));
-
-        return tokens;
-    }
-
-    // Dành cho web login (không sinh JWT)
-    public Account loginForWeb(String email, String password) {
-        Account account = accountRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email not found"));
-
-        if (!passwordEncoder.matches(password, account.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
-
-        if (!account.getVerified()) {
-            throw new RuntimeException("Account not verified");
-        }
-
-        if (account.getStatus() != Account.AccountStatus.ACTIVE) {
-            throw new RuntimeException("Account not ACTIVE");
-        }
+//        Map<String, String> tokens = new HashMap<>();
+//        tokens.put("accessToken", jwtService.generateAccessToken(account));
+//        tokens.put("refreshToken", jwtService.generateRefreshToken(account));
 
         return account;
     }
@@ -242,22 +282,16 @@ public class AccountService {
         accountRepo.save(account);
     }
 
+    // View Profile
     public Account viewProfile(String email){
-        Account account = accountRepo.findByEmail(email).orElseThrow(null);
-
-        if(account == null){
-            throw new RuntimeException("Không tìm thấy tài khoản email: " + email);
-        }
-
-        return account;
+        return accountRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản email: " + email));
     }
 
 
     public Account updateProfile(String email, Account updatedAccount) {
-        Account existing = accountRepo.findByEmail(email).orElseThrow(null);
-        if(existing == null){
-            throw new RuntimeException("Không tìm thấy tài khoản email: " + email);
-        }
+        Account existing = accountRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản email: " + email));
 
         existing.setFullName(updatedAccount.getFullName());
         existing.setPhone(updatedAccount.getPhone());

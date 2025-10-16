@@ -83,7 +83,21 @@
     <div class="profile-item">
         <b>Status:</b> <span th:text="${account.status}"></span>
     </div>
-    <a th:href="@{/profile/edit}" class="btn btn-warning mt-3 w-100 fw-semibold">Edit Profile</a>
+
+    <!-- Thêm phần riêng cho từng role -->
+    <div th:if="${account.role == 'SELLER'}">
+        <b>Shop Name:</b> <span th:text="${account.shopName}">My Shop</span>
+    </div>
+
+    <div th:if="${account.role == 'MODERATOR'}">
+        <b>Level:</b> <span th:text="${account.level}">Gold</span>
+    </div>
+
+    <div th:if="${account.role == 'ADMIN'}">
+        <b>Privileges:</b> <span>System Management</span>
+    </div>
+
+    <a th:href="@{/profile/edit}" class="btn btn-warning mt-3 w-100">Edit Profile</a>
 
     <hr>
 
@@ -91,7 +105,16 @@
         Chào mừng bạn đã quay trở lại! Ở đây bạn có thể xem được thông tin tài khoản và cập nhật tài khoản của bạn.
     </p>
 
-    <a th:href="@{/home}" class="back-button">Back to Home</a>
+    <!-- Nút Back to Home linh động theo role -->
+    <a th:href="${account.role.roleName.name() == 'SELLER'} ? @{/seller/tools}
+         : (${account.role.roleName.name() == 'MOD'} ? @{/moderator/}
+         : (${account.role.roleName.name() == 'ADMIN'} ? @{/admin/accounts}
+         : (${account.role.roleName.name() == 'MANAGER'} ? @{/manager/dashboard}
+         : @{/home})))"
+       class="back-button">
+        Back to Home
+    </a>
+
 </div>
 
 <!-- Bootstrap JS -->

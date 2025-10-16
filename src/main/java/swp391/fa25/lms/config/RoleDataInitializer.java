@@ -111,6 +111,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             Role sellerRole = roleRepository.findByRoleName(RoleName.SELLER).get();
             Role customerRole = roleRepository.findByRoleName(RoleName.CUSTOMER).get();
             Role adminRole = roleRepository.findByRoleName(RoleName.ADMIN).get();
+            Role modRole = roleRepository.findByRoleName(RoleName.MOD).get();
 
             Account seller1 = new Account();
             seller1.setEmail("seller1@example.com");
@@ -147,9 +148,17 @@ public class RoleDataInitializer implements CommandLineRunner {
             admin.setCreatedAt(LocalDateTime.now());
             admin.setRole(adminRole);
             admin.setVerified(true);
-            admin.setVerificationToken(null);
 
-            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin));
+            Account mod1 = new Account();
+            mod1.setEmail("moderator1@example.com");
+            mod1.setPassword(passwordEncoder.encode("123456"));
+            mod1.setVerified(true);
+            mod1.setFullName("Moderator đây");
+            mod1.setStatus(Account.AccountStatus.ACTIVE);
+            mod1.setCreatedAt(LocalDateTime.now().minusDays(10));
+            mod1.setRole(modRole);
+
+            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin, mod1));
         } else {
             System.out.println("Account already exist, skipping initialization.");
         }

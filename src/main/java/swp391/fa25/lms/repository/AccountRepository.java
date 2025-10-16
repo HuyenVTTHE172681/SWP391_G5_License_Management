@@ -12,4 +12,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByVerificationToken(String token);
     Page<Account> findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
             String email, String fullName, Pageable pageable);
+    boolean existsByEmailAndVerifiedTrue(String email);
+    Optional<Account> findByVerificationCode(String code);
 }
