@@ -1,81 +1,109 @@
 package swp391.fa25.lms.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import swp391.fa25.lms.service.CustomUserDetailsService;
+import swp391.fa25.lms.model.Account;
+import swp391.fa25.lms.service.used.CustomUserDetailsService;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
     private CustomUserDetailsService customUserDetailsService;
+
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService) {
+        this.customUserDetailsService = customUserDetailsService;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                // ✅ Tắt CSRF (chỉ nên dùng trong dev)
-                .csrf(csrf -> csrf.disable())
-
-                // ✅ Cấu hình quyền truy cập
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/register", "/verify-email/**", "/login",
-                                "/home", "/css/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/profile/**").authenticated()
-                        .anyRequest().authenticated()
-                )
-
-                // ✅ Cấu hình form login
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/perform_login")
-                        .usernameParameter("email")
-                        .passwordParameter("password")
-                        .defaultSuccessUrl("/home", true) // ✅ đổi từ /profile thành /home
-                        .failureUrl("/login?error=true")
-                        .permitAll()
-                )
-
-                // ✅ Cấu hình logout
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout=true")
-                        .invalidateHttpSession(true)
-                        .clearAuthentication(true)
-                        .permitAll()
-                )
-
-                // ✅ Gắn service của bạn để load user
-                .userDetailsService(customUserDetailsService);
-
-        return http.build();
-    }
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(csrf -> csrf.disable())
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers(
+//                                "/",
+//                                "/home",
+//                                "/home/**",
+//                                "/register",
+//                                "/verify-email/**",
+//                                "/forgot-password",
+//                                "/reset-password/**",
+//                                "/css/**",
+//                                "/js/**",
+//                                "/images/**",
+//                                "/assets/**").permitAll()
+//                        .requestMatchers("/admin/**").hasRole("ADMIN")
+//                        .requestMatchers("/seller/**").hasRole("SELLER")
+//                        .requestMatchers("/mod/**").hasRole("MOD")
+//                        .anyRequest().authenticated()
+//                )
+//                .formLogin(form -> form
+//                        .loginPage("/login")
+//                        .loginProcessingUrl("/login")
+//                        .usernameParameter("email")
+//                        .passwordParameter("password")
+//                        .successHandler((req, res, auth) -> {
+//                            CustomerUserDetail userDetails = (CustomerUserDetail) auth.getPrincipal();
+//                            Account account = userDetails.getAccount();
+//                            req.getSession().setAttribute("loggedInAccount", account);
+//
+//                            String role = account.getRole().getRoleName().name();
+//                            switch (role) {
+//                                case "ADMIN" -> res.sendRedirect("/admin/accounts");
+//                                case "SELLER" -> res.sendRedirect("/seller/dashboard");
+//                                case "MOD" -> res.sendRedirect("/moderator/dashboard");
+//                                default -> res.sendRedirect("/home");
+//                            }
+//                        })
+//                        .failureUrl("/login?error=true")
+//                        .permitAll()
+//                )
+//                .logout(logout -> logout
+//                        .logoutUrl("/logout")
+//                        .logoutSuccessUrl("/login?logout")
+//                        .permitAll()
+//                );
+//
+//        return http.build();
+//    }
+//@Bean
+//public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//    http
+//            // ✅ Tắt xác thực CSRF để tránh lỗi POST form
+//            .csrf(csrf -> csrf.disable())
+//
+//            // ✅ Cho phép tất cả request không cần đăng nhập
+//            .authorizeHttpRequests(auth -> auth
+//                    .anyRequest().permitAll()
+//            )
+//
+//            // ✅ Tắt hoàn toàn form login và logout
+//            .formLogin(form -> form.disable())
+//            .logout(logout -> logout.disable());
+//
+//    return http.build();
+//}
 
     private void writeJsonError(HttpServletResponse response, String message, int status) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(status);
-
         Map<String, Object> error = new HashMap<>();
         error.put("error", message);
         error.put("status", status);
-
         new ObjectMapper().writeValue(response.getOutputStream(), error);
     }
 }
