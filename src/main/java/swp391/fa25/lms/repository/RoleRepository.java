@@ -7,6 +7,7 @@ import swp391.fa25.lms.model.Role.RoleName;
 import java.util.Optional;
 
 @Repository
-public interface RoleRepo extends JpaRepository<Role, Integer> {
+public interface RoleRepository extends JpaRepository<Role, Integer> {
     Optional<Role> findByRoleName(RoleName roleName);
+    boolean existsByRoleName(Role.RoleName roleName);
 }
