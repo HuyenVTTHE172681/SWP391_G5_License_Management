@@ -67,21 +67,21 @@
 </head>
 <body>
 <div class="container">
-    <h2>Edit Profile</h2>
+    <h2>Sửa hồ sơ</h2>
     <form th:action="@{/profile/edit}" th:object="${account}" method="post">
-        <label>Full Name</label>
-        <input type="text" th:field="*{fullName}" required>
+        <label>Tên đăng nhập</label>
+        <input type="text" th:field="*{fullName}" required placeholder="Vui lòng nhập tên">
 
-        <label>Phone</label>
-        <input type="text" th:field="*{phone}" placeholder="Enter your phone">
+        <label>Số điện thoại</label>
+        <input type="text" th:field="*{phone}" placeholder="Vui lòng nhập số điện thoại">
 
-        <label>Address</label>
-        <textarea th:field="*{address}" rows="3" placeholder="Enter your address"></textarea>
+        <label>Địa chỉ</label>
+        <textarea th:field="*{address}" rows="3" placeholder="Vui lòng nhập địa chí"></textarea>
 
         <div class="btn-group">
-            <button type="submit">Save Changes</button>
+            <button type="submit">Lưu</button>
             <a th:href="@{/profile}">
-                <button type="button" class="btn-cancel">Cancel</button>
+                <button type="button" class="btn-cancel">Hủy</button>
             </a>
         </div>
     </form>
