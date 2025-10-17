@@ -2,15 +2,13 @@ package swp391.fa25.lms.controller.common;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.repository.AccountRepo;
-import swp391.fa25.lms.service.AccountService;
+import swp391.fa25.lms.service.used.AccountService;
 
 @Controller
 
@@ -20,7 +18,7 @@ public class ProfileController {
 
     @GetMapping("/profile")
     public String viewProfile(Authentication authentication, Model model) {
-        String email = authentication.getName(); // lấy email (username) của user đang đăng nhập
+        String email = authentication.getName();
         Account account = accountService.viewProfile(email);
         model.addAttribute("account", account);
 

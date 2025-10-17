@@ -13,7 +13,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.service.AccountService;
+import swp391.fa25.lms.service.used.AccountService;
+
 import java.util.List;
 
 @Controller
@@ -103,6 +104,7 @@ public class WebAuthController {
         return "public/login";
     }
 
+
     @PostMapping("/login")
     public String doLogin(@RequestParam String email,
                           @RequestParam String password,
@@ -114,6 +116,10 @@ public class WebAuthController {
         try {
             // Check -> trả về Account
             Account account = accountService.loginForWeb(email, password);
+
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(account.getEmail(), null, List.of());
+            SecurityContextHolder.getContext().setAuthentication(auth);
 
             // Hiển thị password phiên bản "masked".
             request.getSession().setAttribute("loggedInAccount", account);
@@ -130,7 +136,10 @@ public class WebAuthController {
                         redirect = "redirect:/seller/dashboard";
                         break;
                     case MOD:
-                        redirect = "redirect:/mod/dashboard";
+                        redirect = "redirect:/moderator/dashboard";
+                        break;
+                    case ADMIN:
+                        redirect = "redirect:/admin/accounts";
                         break;
                     default:
                         redirect = "redirect:/home";
@@ -141,7 +150,6 @@ public class WebAuthController {
 
             logger.info("Login success for email={}, redirect={}", email, redirect);
             return redirect;
-
         } catch (RuntimeException ex) {
             // Gửi message về form login (sử dụng flash để giữ message qua redirect)
             redirectAttributes.addFlashAttribute("showAlert", true);
@@ -153,5 +161,51 @@ public class WebAuthController {
         }
     }
 
+    // Enter email to reset password
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordForm() {
+        return "public/forgot-password";
+    }
 
+    @PostMapping("/forgot-password")
+    public String processForgotPassword(@RequestParam("email") String email,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            accountService.generateResetPasswordToken(email);
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "success");
+            redirectAttributes.addFlashAttribute("alertMessage", "Một email khôi phục mật khẩu đã được gửi đến " + email);
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "danger");
+            redirectAttributes.addFlashAttribute("alertMessage", e.getMessage());
+        }
+        return "redirect:/forgot-password";
+    }
+
+    // Reset password
+    @GetMapping("/reset-password/{token}")
+    public String showResetPasswordForm(@PathVariable("token") String token, Model model) {
+        model.addAttribute("token", token);
+        return "public/reset-password";
+    }
+
+    @PostMapping("/reset-password")
+    public String handleResetPassword(@RequestParam("token") String token,
+                                      @RequestParam("newPassword") String newPassword,
+                                      @RequestParam("confirmPassword") String confirmPassword,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            accountService.resetPassword(token, newPassword, confirmPassword);
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "success");
+            redirectAttributes.addFlashAttribute("alertMessage", "Đặt lại mật khẩu thành công! Hãy đăng nhập lại.");
+            return "redirect:/login";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "danger");
+            redirectAttributes.addFlashAttribute("alertMessage", e.getMessage());
+            return "redirect:/reset-password/" + token;
+        }
+    }
 }
