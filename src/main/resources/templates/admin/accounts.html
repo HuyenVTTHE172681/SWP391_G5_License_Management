@@ -22,11 +22,19 @@
         .title{ margin:0; font-weight:800; letter-spacing:.2px; line-height:1.1; font-size: clamp(26px, 3vw, 32px); color: var(--text); text-shadow: 0 1px 2px rgba(15,23,42,.06); }
         .subtitle{ margin:6px 0 0; color:var(--muted); font-size:13px }
 
-        /* Add: userbar + logout button */
+        /* Tabs (đồng bộ với adminhome.html) */
+        .tabs{ display:flex; gap:8px; margin:16px 0 22px; }
+        .tab{
+            display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border);
+            background:#fff; border-radius:10px; text-decoration:none; color:#0f172a; font-weight:600; font-size:14px;
+        }
+        .tab.active{ background:#eef2ff; border-color:#bfdbfe; color:#1e40af }
+
+        /* Userbar + logout button */
         .userbar{ display:flex; align-items:center; gap:10px }
         .hello{ color:var(--muted); font-size:13px }
         .btn{
-            appearance:none; border:1px solid var(--border); background:#f8fafc; color:var(--text);
+            appearance:none; border:1px solid var(--border); background:#f8fafc; color:#var(--text);
             padding:8px 12px; border-radius:10px; cursor:pointer; text-decoration:none; font-size:13px;
             transition: transform .05s ease, background .2s ease, border-color .2s ease; margin-right:6px;
         }
@@ -79,7 +87,7 @@
         .pager{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; border-top:1px solid var(--border); background:#fff }
         .pagination{ display:flex; gap:6px; flex-wrap:wrap; list-style:none; padding:0; margin:0 }
         .pagination a, .pagination span{
-            display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:8px; text-decoration:none; color:var(--text); background:#f8fafc;
+            display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:8px; text-decoration:none; color:#var(--text); background:#f8fafc;
         }
         .pagination .active{ background:#eef2ff; border-color:#bfdbfe; font-weight:600 }
         .pagination .disabled{ opacity:.5; pointer-events:none }
@@ -108,6 +116,12 @@
             </form>
         </div>
         <!-- /User area -->
+    </div>
+
+
+    <div class="tabs">
+        <a class="tab" th:classappend="${page}=='home' ? 'active'" th:href="@{/admin/adminhome}">Home</a>
+        <a class="tab" th:classappend="${page}=='accounts' ? 'active'" th:href="@{/admin/accounts}">Accounts</a>
     </div>
 
     <p th:if="${msg}" class="flash" th:text="${msg}">Message</p>
