@@ -7,7 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "Tool")
@@ -36,11 +38,17 @@ public class Tool {
     @JsonManagedReference(value = "tool-seller")
     private Account seller;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "tool_login_methods", joinColumns = @JoinColumn(name = "tool_id"))
+    @Column(name = "login_method")
+    private Set<String> loginMethods = new HashSet<>();
+
     @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
     @JsonManagedReference(value = "tool-category")
     private Category category;
+
 
     @Enumerated(EnumType.STRING)
     private Status status;
@@ -74,6 +82,13 @@ public class Tool {
         this.updatedAt = updatedAt;
     }
 
+    public Set<String> getLoginMethods() {
+        return loginMethods;
+    }
+
+    public void setLoginMethods(Set<String> loginMethods) {
+        this.loginMethods = loginMethods;
+    }
     public Long getToolId() {
         return toolId;
     }

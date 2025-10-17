@@ -165,7 +165,6 @@
                                         th:value="${r}"
                                         th:text="${r}"
                                         th:selected="${a.role != null and a.role.roleName == r}"
-                                        th:attr="disabled=${r.name() == 'ADMIN' and !#strings.equalsIgnoreCase(a.email, fixedEmail)}">
                                 </option>
                             </select>
 

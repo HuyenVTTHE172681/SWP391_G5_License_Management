@@ -10,18 +10,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.config.CustomerUserDetail;
-import swp391.fa25.lms.model.License;
-import swp391.fa25.lms.model.Role;
-import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.repository.CategoryRepository;
-import swp391.fa25.lms.repository.LicenseToolRepository;
-import swp391.fa25.lms.repository.ToolFileRepository;
-import swp391.fa25.lms.repository.ToolRepository;
+import swp391.fa25.lms.model.*;
+import swp391.fa25.lms.repository.*;
 import swp391.fa25.lms.service.seller.CategoryService;
 import swp391.fa25.lms.service.seller.ToolService;
-import swp391.fa25.lms.service.used.AccountService;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,6 +23,7 @@ import java.nio.file.Path;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,11 +36,9 @@ public class ToolController {
     private CategoryService categoryService;
     @Autowired @Qualifier("seller")
     private ToolService toolService;
-
     @Autowired
     private LicenseToolRepository licenseRepo;
-    @Autowired
-    private AccountService accountService;
+
 
     @InitBinder("tool")
     public void disallow(WebDataBinder b) {
@@ -138,6 +131,9 @@ public class ToolController {
                       @RequestParam(value = "selectedImage", required = false) String selectedImage,
                       @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
                       @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
+                      @RequestParam(value = "loginMethods", required = false) List<String> loginMethods,
+                      @RequestParam(value = "redirectTokenPage", required = false) Boolean redirectTokenPage,
+                      RedirectAttributes redirectAttributes,
                       Principal principal) throws Exception {
 
         if (tool.getCategory() != null && tool.getCategory().getCategoryId() != null) {
@@ -156,6 +152,12 @@ public class ToolController {
         tool.setUpdatedAt(LocalDateTime.now());
         tool.setStatus(Tool.Status.PENDING);
 
+        if (loginMethods != null && !loginMethods.isEmpty()) {
+            tool.setLoginMethods(new HashSet<>(loginMethods));
+        } else {
+            tool.setLoginMethods(new HashSet<>()); // tránh null
+        }
+
         Tool savedTool = toolService.addTool(tool, seller);
         if (licenseDays != null && licensePrices != null) {
             for (int i = 0; i < licenseDays.size(); i++) {
@@ -171,7 +173,11 @@ public class ToolController {
                 licenseRepo.save(license);
             }
         }
-
+        if (tool.getLoginMethods().contains("TOKEN") || Boolean.TRUE.equals(redirectTokenPage)) {
+            redirectAttributes.addAttribute("toolId", savedTool.getToolId());
+            return "redirect:/seller/tokens/manage";
+        }
+        redirectAttributes.addFlashAttribute("message", "Thêm tool thành công!");
         return "redirect:/seller/tools";
     }
 
@@ -216,7 +222,6 @@ public class ToolController {
         model.addAttribute("imageFiles", imageFiles);
         model.addAttribute("statuses", Tool.Status.values());
 
-
         return "seller/tool-edit";
     }
     @Transactional
@@ -234,7 +239,6 @@ public class ToolController {
         existingTool.setToolName(tool.getToolName());
         existingTool.setDescription(tool.getDescription());
         existingTool.setStatus(tool.getStatus());
-        existingTool.setUpdatedAt(LocalDateTime.now());
 
         if (tool.getCategory() != null && tool.getCategory().getCategoryId() != null) {
             categoryRepo.findById(tool.getCategory().getCategoryId()).ifPresent(existingTool::setCategory);
@@ -244,13 +248,8 @@ public class ToolController {
             existingTool.setImage(selectedImage);
         }
 
-        // ✅ Cập nhật Tool trước
         Tool savedTool = toolService.save(existingTool);
 
-        // ✅ Xóa toàn bộ license cũ (để cập nhật lại danh sách)
-        licenseRepo.deleteAll(licenseRepo.findByToolToolId(savedTool.getToolId()));
-
-        // ✅ Lưu lại license mới
         if (licenseDays != null && licensePrices != null) {
             for (int i = 0; i < licenseDays.size(); i++) {
                 Integer days = licenseDays.get(i);
@@ -328,6 +327,4 @@ public class ToolController {
 
         return tools;
     }
-
-
 }

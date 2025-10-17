@@ -176,33 +176,14 @@
                       th:text="${tool.description}"></textarea>
         </div>
 
-        <!-- Status -->
-        <div class="form-group">
-            <label for="status" class="form-label">Status</label>
-            <select id="status" th:field="*{status}" class="form-select">
-                <option th:each="s : ${statuses}"
-                        th:value="${s}"
-                        th:text="${s}"
-                        th:selected="${s == tool.status}">
-                </option>
-            </select>
-
-        </div>
-
-        <!-- Updated At -->
-        <div class="form-group">
-            <label class="form-label">Updated At</label>
-            <input type="date" name="updatedAt"
-                   th:value="${tool.updatedAt != null ? #temporals.format(tool.updatedAt, 'yyyy-MM-dd') : ''}"
-                   class="form-input">
-        </div>
         <div class="mb-3">
             <label class="form-label fw-semibold">Pricing Options</label>
             <div id="licenseContainer">
                 <div class="d-flex gap-2 mb-2">
-                    <input type="number" name="licenseDays" min="1" placeholder="Số ngày" required>
-                    <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" required>
-
+                    <div th:each="license : ${tool.licenses}">
+                        <input type="text" th:value="${license.durationDays}" placeholder="Số ngày">
+                        <input type="text" th:value="${license.price}" placeholder="Giá (VND)">
+                    </div>
                 </div>
             </div>
             <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addLicenseRow()">+ Add another</button>

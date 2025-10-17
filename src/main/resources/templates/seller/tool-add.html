@@ -137,7 +137,7 @@
             <input type="text" name="toolName" required class="form-input">
         </div>
 
-        <!-- Image -->
+
         <div class="form-group">
             <label class="form-label">Select Image</label>
             <select name="selectedImage" class="form-select" required>
@@ -154,7 +154,6 @@
             <input type="file" name="file" class="form-input">
         </div>
 
-        <!-- Category -->
         <div class="form-group">
             <label class="form-label">Category</label>
             <select th:field="*{category.categoryId}" required>
@@ -171,17 +170,20 @@
             <label class="form-label">Description</label>
             <textarea name="description" rows="4" class="form-textarea"></textarea>
         </div>
-
-        <!-- Status -->
-        <div class="form-group">
-            <label class="form-label">Status</label>
-            <select name="status" class="form-select">
-                <option value="available">Available</option>
-                <option value="unavailable">Unavailable</option>
-            </select>
+        <label class="form-label fw-semibold">Tool Login Method</label>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="loginMethods" value="USER_PASSWORD"
+                   th:checked="${tool.loginMethods   != null and tool.loginMethods.contains('USER_PASSWORD')}">
+            <label class="form-check-label">User & Password</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="loginMethods" value="TOKEN"
+                   th:checked="${tool.loginMethods != null and tool.loginMethods.contains('TOKEN')}">
+            <label class="form-check-label">Token (Key-based)</label>
         </div>
 
-        <!-- Created At -->
+
+
         <div class="form-group">
             <label class="form-label">Created At</label>
             <input type="date" name="createdAt" class="form-input">
@@ -206,7 +208,7 @@
 
         <!-- Submit -->
         <div class="form-actions">
-            <button type="submit" class="submit-btn">Save Tool</button>
+            <button type="submit" id="saveToolBtn" class="submit-btn">Save Tool</button>
         </div>
 
         <script>
@@ -221,6 +223,22 @@
             }
         </script>
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const form = document.querySelector("form"); // form hiện tại
+                const loginSelect = document.querySelector("select[name='loginMethod']");
+                const saveBtn = document.getElementById("saveToolBtn");
+
+                form.addEventListener("submit", function(e) {
+                    const selected = loginSelect ? loginSelect.value : "USER_PASSWORD";
+                    if (selected === "TOKEN") {
+                        // Nếu chọn TOKEN, gắn thêm query để backend redirect đúng
+                        const action = form.getAttribute("action");
+                        form.setAttribute("action", action + "?redirectTokenPage=true");
+                    }
+                });
+            });
+        </script>
 
     </form>
 </section>
