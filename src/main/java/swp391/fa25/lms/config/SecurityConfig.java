@@ -33,7 +33,10 @@ public class SecurityConfig {
 //    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 //        http
 //                .csrf(csrf -> csrf.disable())
+//                // Tắt formLogin mặc định
+//                .formLogin(form -> form.disable())
 //                .authorizeHttpRequests(auth -> auth
+//                        // Các đường dẫn public
 //                        .requestMatchers(
 //                                "/",
 //                                "/home",
@@ -46,57 +49,39 @@ public class SecurityConfig {
 //                                "/js/**",
 //                                "/images/**",
 //                                "/assets/**").permitAll()
+//                        // Phân quyền theo role
 //                        .requestMatchers("/admin/**").hasRole("ADMIN")
 //                        .requestMatchers("/seller/**").hasRole("SELLER")
-//                        .requestMatchers("/mod/**").hasRole("MOD")
+//                        .requestMatchers("/moderator/**").hasRole("MOD")
+//                        .requestMatchers("/manager/**").hasRole("MANAGER")
 //                        .anyRequest().authenticated()
-//                )
-//                .formLogin(form -> form
-//                        .loginPage("/login")
-//                        .loginProcessingUrl("/login")
-//                        .usernameParameter("email")
-//                        .passwordParameter("password")
-//                        .successHandler((req, res, auth) -> {
-//                            CustomerUserDetail userDetails = (CustomerUserDetail) auth.getPrincipal();
-//                            Account account = userDetails.getAccount();
-//                            req.getSession().setAttribute("loggedInAccount", account);
-//
-//                            String role = account.getRole().getRoleName().name();
-//                            switch (role) {
-//                                case "ADMIN" -> res.sendRedirect("/admin/accounts");
-//                                case "SELLER" -> res.sendRedirect("/seller/dashboard");
-//                                case "MOD" -> res.sendRedirect("/moderator/dashboard");
-//                                default -> res.sendRedirect("/home");
-//                            }
-//                        })
-//                        .failureUrl("/login?error=true")
-//                        .permitAll()
 //                )
 //                .logout(logout -> logout
 //                        .logoutUrl("/logout")
-//                        .logoutSuccessUrl("/login?logout")
+//                        .logoutSuccessUrl("/logout")
 //                        .permitAll()
 //                );
 //
 //        return http.build();
 //    }
-//@Bean
-//public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//    http
-//            // ✅ Tắt xác thực CSRF để tránh lỗi POST form
-//            .csrf(csrf -> csrf.disable())
-//
-//            // ✅ Cho phép tất cả request không cần đăng nhập
-//            .authorizeHttpRequests(auth -> auth
-//                    .anyRequest().permitAll()
-//            )
-//
-//            // ✅ Tắt hoàn toàn form login và logout
-//            .formLogin(form -> form.disable())
-//            .logout(logout -> logout.disable());
-//
-//    return http.build();
-//}
+
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+            // Tắt xác thực CSRF để tránh lỗi POST form
+            .csrf(csrf -> csrf.disable())
+            .formLogin(form -> form.disable())
+            // Cho phép tất cả request không cần đăng nhập
+            .authorizeHttpRequests(auth -> auth
+                    .anyRequest().permitAll()
+            )
+
+            // Tắt hoàn toàn form login và logout
+            .formLogin(form -> form.disable())
+            .logout(logout -> logout.disable());
+
+    return http.build();
+}
 
     private void writeJsonError(HttpServletResponse response, String message, int status) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
