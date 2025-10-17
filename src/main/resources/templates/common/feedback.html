@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Feedback • ' + ${tool.toolName}">Feedback</title>
+
+    <!-- Bootstrap 3 (giữ như bạn đang dùng) -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+
+    <style>
+        /* Palette nhẹ nhàng */
+        :root{
+            --bg:#f7fafc; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0;
+            --accent:#2563eb; --accent-soft:#eff6ff; --star-on:#f59e0b; --star-off:#e2e8f0;
+        }
+        body{
+            background:
+                    radial-gradient(1200px 600px at 20% -10%, #c7d2fe2a, transparent 60%),
+                    radial-gradient(1000px 500px at 110% 10%, #bbf7d02a, transparent 60%),
+                    var(--bg);
+            color:var(--text);
+            padding-top: 24px;
+        }
+        .page{
+            max-width: 980px; margin: 0 auto;
+        }
+        .header{
+            background: linear-gradient(180deg, #ffffff, #fbfdff);
+            border:1px solid var(--border);
+            border-radius:14px;
+            padding:18px 20px;
+            box-shadow: 0 10px 24px rgba(2,6,23,.06);
+            margin-bottom:16px;
+        }
+        .title{
+            margin:0 0 6px; font-weight:800; letter-spacing:.2px;
+        }
+        .sub{
+            margin:0; color:var(--muted)
+        }
+
+        /* Khối điểm trung bình */
+        .rating-summary{
+            display:flex; align-items:center; gap:14px; margin-top:10px;
+        }
+        .rating-number{
+            font-size:34px; font-weight:800; line-height:1;
+        }
+        .stars .on{ color:var(--star-on) }
+        .stars .off{ color:var(--star-off) }
+        .stars .star{ font-size:18px }
+
+        /* Card review */
+        .card{
+            background: var(--card);
+            border:1px solid var(--border);
+            border-radius:12px;
+            padding:14px 16px;
+            box-shadow: 0 6px 16px rgba(2,6,23,.04);
+            margin-bottom:12px;
+        }
+        .review-head{
+            display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:8px;
+        }
+        .author{ font-weight:600 }
+        .muted{ color:var(--muted) }
+
+        /* Empty state */
+        .empty{
+            background: var(--accent-soft);
+            border:1px dashed #bfdbfe;
+            color:#1e40af;
+            border-radius:12px;
+            padding:18px;
+            text-align:center;
+        }
+
+        /* Pagination đẹp hơn */
+        .pagination > li > a,
+        .pagination > li > span{
+            border-radius:8px !important;
+            border-color: var(--border);
+            color:#1f2937;
+        }
+        .pagination > .active > a,
+        .pagination > .active > span{
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px){
+            .rating-number{ font-size:28px }
+            .stars .star{ font-size:16px }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Header -->
+    <div class="header" th:with="avg=${avgRating != null ? avgRating : 0}, rounded=${T(java.lang.Math).round(avg)}">
+        <h2 class="title" th:text="${tool.toolName}">Tên tool</h2>
+        <p class="sub">
+            Điểm trung bình:
+            <strong th:text="${#numbers.formatDecimal(avg,1,1)}">0.0</strong>/5 ·
+            <span th:text="${totalReviews}">0</span> đánh giá
+        </p>
+
+        <div class="rating-summary">
+            <div class="rating-number" th:text="${#numbers.formatDecimal(avg,1,1)}">4.5</div>
+            <div class="stars">
+        <span class="star"
+              th:each="i : ${#numbers.sequence(1,5)}"
+              th:classappend="${i <= rounded} ? 'on' : 'off'">★</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${fbPage.totalElements == 0}" class="empty">
+        Chưa có feedback nào cho tool này.
+    </div>
+
+    <!-- List -->
+    <div th:if="${fbPage.totalElements > 0}">
+        <div th:each="fb : ${fbPage.content}" class="card"
+             th:with="r=${fb.rating != null ? fb.rating : 0}">
+            <div class="review-head">
+                <div class="stars">
+          <span class="star"
+                th:each="i : ${#numbers.sequence(1,5)}"
+                th:classappend="${i <= r} ? 'on' : 'off'">★</span>
+                    <strong th:text="' ' + ${r} + '/5'"> 4/5</strong>
+                </div>
+                <div class="muted"
+                     th:text="${#temporals.format(fb.createdAt, 'dd/MM/yyyy HH:mm')}">01/10/2025 12:00</div>
+            </div>
+
+            <div class="muted" style="margin-bottom:6px">
+                <span class="author" th:text="${fb.account != null ? fb.account.fullName : 'Người dùng'}">User</span>
+            </div>
+
+            <p style="margin:0" th:text="${fb.comment}">Nội dung nhận xét…</p>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${fbPage.totalPages > 1}" aria-label="Pagination" class="text-center">
+            <ul class="pagination">
+
+                <!-- Prev -->
+                <li th:classappend="${fbPage.first} ? 'disabled'">
+                    <span th:if="${fbPage.first}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></span>
+                    <a th:unless="${fbPage.first}"
+                       th:href="@{/feedback/tool/{id}(id=${tool.toolId}, page=${fbPage.number - 1}, size=${pageSize})}"
+                       aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+                </li>
+
+                <!-- Pages -->
+                <li th:each="p : ${#numbers.sequence(0, fbPage.totalPages - 1)}"
+                    th:classappend="${p == fbPage.number} ? 'active'">
+                    <a th:if="${p != fbPage.number}"
+                       th:text="${p + 1}"
+                       th:href="@{/feedback/tool/{id}(id=${tool.toolId}, page=${p}, size=${pageSize})}">1</a>
+                    <span th:if="${p == fbPage.number}" th:text="${p + 1}">1</span>
+                </li>
+
+                <!-- Next -->
+                <li th:classappend="${fbPage.last} ? 'disabled'">
+                    <span th:if="${fbPage.last}" aria-label="Next"><span aria-hidden="true">&raquo;</span></span>
+                    <a th:unless="${fbPage.last}"
+                       th:href="@{/feedback/tool/{id}(id=${tool.toolId}, page=${fbPage.number + 1}, size=${pageSize})}"
+                       aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+                </li>
+
+            </ul>
+        </nav>
+    </div>
+
+</div>
+</body>
+</html>
