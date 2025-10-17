@@ -16,6 +16,32 @@ public class ForgotPasswordController {
     private AccountService accountService;
 
     /**
+     * Hiển thị form forgot password để nhập email
+     * @return
+     */
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordForm() {
+        return "public/forgot-password";
+    }
+
+    // Xử lý gen token cho form đặt lại mật khẩu
+    @PostMapping("/forgot-password")
+    public String processForgotPassword(@RequestParam("email") String email,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            accountService.generateResetPasswordToken(email);
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "success");
+            redirectAttributes.addFlashAttribute("alertMessage", "Một email khôi phục mật khẩu đã được gửi đến " + email);
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("showAlert", true);
+            redirectAttributes.addFlashAttribute("alertType", "danger");
+            redirectAttributes.addFlashAttribute("alertMessage", e.getMessage());
+        }
+        return "redirect:/forgot-password";
+    }
+
+    /**
      * Hiển thị form đặt lại mật khẩu
      * Nếu token hết hạn hoặc sai redirect về /forgot-password
      */
@@ -41,14 +67,15 @@ public class ForgotPasswordController {
     /**
      * Xử lý đặt lại mật khẩu
      * Nếu lỗi validate hiển thị thông báo lỗi redirect :/reset-password/" + token
+     * Nếu đang đặt lại mật khẩu token hết hạn redirect về forgot-password
      * Nếu đặt lại mật khẩu thành công redirect về login
      */
     @PostMapping("/reset-password")
     public String handleResetPassword(@RequestParam("token") String token,
                                       @RequestParam("newPassword") String newPassword,
                                       @RequestParam("confirmPassword") String confirmPassword,
+                                      Model model,
                                       RedirectAttributes redirectAttributes) {
-
         try {
             accountService.resetPassword(token, newPassword, confirmPassword);
 
@@ -62,19 +89,30 @@ public class ForgotPasswordController {
         } catch (RuntimeException e) {
             String message = e.getMessage();
 
-            // Xác định lỗi ở ô nào
-            if (message.contains("xác nhận")) {
-                redirectAttributes.addFlashAttribute("confirmPasswordError", message);
-            } else {
-                redirectAttributes.addFlashAttribute("newPasswordError", message);
+            // Token hết hạn trong quá trình đặt lại mật khẩu
+            if (message.contains("Token đã hết hạn")) {
+                redirectAttributes.addFlashAttribute("showAlert", true);
+                redirectAttributes.addFlashAttribute("alertType", "danger");
+                redirectAttributes.addFlashAttribute("alertMessage",
+                        "Liên kết đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại.");
+                return "redirect:/forgot-password";
             }
 
-            redirectAttributes.addFlashAttribute("showAlert", true);
-            redirectAttributes.addFlashAttribute("alertType", "danger");
-            redirectAttributes.addFlashAttribute("alertMessage", message);
+            // Lỗi validate
+            if (message.contains("xác nhận")) {
+                model.addAttribute("confirmPasswordError", message);
+                model.addAttribute("newPasswordError", "");
+            } else {
+                model.addAttribute("newPasswordError", message);
+                model.addAttribute("confirmPasswordError", "");
+            }
 
-            // Quay lại form
-            return "redirect:/reset-password/" + token;
+            model.addAttribute("token", token);
+            model.addAttribute("showAlert", true);
+            model.addAttribute("alertType", "danger");
+            model.addAttribute("alertMessage", "Vui lòng sửa các lỗi bên dưới và thử lại.");
+
+            return "public/reset-password";
         }
     }
 

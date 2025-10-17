@@ -228,18 +228,27 @@ public class AccountService {
                 .orElseThrow(() -> new RuntimeException("Link không hợp lệ hoặc đã hết hạn."));
 
         // Check token có hết hạn không
-        if (account.getTokenExpiry().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token đã hết hạn, vui lòng yêu cầu lại.");
+        if (account.getTokenExpiry().isBefore(LocalDateTime.now()) || account.getTokenExpiry() == null) {
+            account.setVerificationToken(null);
+            account.setTokenExpiry(null);
+            accountRepo.save(account);
+
+            throw new RuntimeException("Token đã hết hạn, vui lòng yêu cầu lại đặt lại mật khẩu.");
         }
 
         //  Validate mật khẩu
         if (!newPassword.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$")) {
             throw new RuntimeException("Mật khẩu phải có ít nhất 8 ký tự, bao gồm 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.");
+        } else if(newPassword.contains(" ")) {
+            throw new RuntimeException("Mật khẩu không được chứa khoảng trắng.");
         }
+
 
         // Check confirmPassword
         if (!newPassword.equals(confirmPassword)) {
             throw new RuntimeException("Mật khẩu xác nhận không khớp.");
+        } else if (confirmPassword == null || confirmPassword.isBlank()) {
+            throw new RuntimeException("Vui lòng xác nhận mật khẩu.");
         }
 
         // Cập nhật mật khẩu
@@ -272,7 +281,7 @@ public class AccountService {
     // Send email reset password
     public void sendResetPasswordEmail(Account account) {
         try {
-            String subject = "[LMS] Reset Your Password";
+            String subject = "[LMS] Đặt lại mật khẩu";
             String resetUrl = baseUrl + "/reset-password/" + account.getVerificationToken();
 
             String body = "<p>Xin chào <b>" + account.getFullName() + "</b>,</p>"
