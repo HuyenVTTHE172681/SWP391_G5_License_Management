@@ -22,7 +22,7 @@
 <div class="container d-flex justify-content-center">
     <div class="card p-4 col-md-6 text-center">
 
-        <!-- ✅ Khi verify thành công -->
+        <!-- Khi verify thành công -->
         <div th:if="${verified}">
             <h3 class="text-success mb-3">✅ Email Verification Successful!</h3>
             <p class="fw-semibold mb-3">You can now log in.</p>
@@ -30,7 +30,7 @@
             <a th:href="${redirectUrl}" class="btn btn-success btn-custom mt-3">Go to Login Now</a>
         </div>
 
-        <!-- ❌ Khi verify thất bại -->
+        <!-- Khi verify thất bại -->
         <div th:if="${!verified}">
             <h3 class="text-danger mb-3">❌ Verification Failed</h3>
             <p class="fw-semibold mb-3" th:text="${message}"></p>
@@ -38,7 +38,7 @@
     </div>
 </div>
 
-<!-- ✅ Script tự động đếm ngược và chuyển hướng -->
+<!-- Script tự động đếm ngược và chuyển hướng -->
 <script th:if="${verified}">
     let seconds = 3;
     const countdown = document.getElementById("countdown");

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Requests</title>
+    <link rel="stylesheet" th:href="@{/css/requestDashboard.css}">
+</head>
+
+<body>
+<div class="dashboard-container">
+    <!-- 🧭 Sidebar -->
+    <aside class="sidebar">
+        <h2>Moderator Panel</h2>
+        <nav class="menu">
+            <a th:href="@{/moderator/}">🏠 Dashboard</a>
+            <a th:href="@{/moderator/uploadRequest}" class="active">📤 Upload Requests</a>
+            <a th:href="@{/moderator/feedback}">💬 Feedback Reports</a>
+            <a th:href="@{/moderator/reports}">📊 Tool Reports</a>
+            <a th:href="@{/moderator/history}">📁 Uploaded Tools</a>
+        </nav>
+    </aside>
+
+    <!-- 📄 Nội dung chính -->
+    <main class="main-content">
+        <header class="header">
+            <h1>📋 Upload Requests</h1>
+            <p class="subtitle">Danh sách tool đang chờ phê duyệt</p>
+        </header>
+
+        <!-- Bộ lọc -->
+        <section class="filter-section">
+            <form class="filter-form" th:action="@{/moderator/uploadRequest}" method="get" onsubmit="return validateDateRange()">
+                <div class="filter-grid">
+                    <div>
+                        <label>Seller ID:</label>
+                        <input type="number" name="sellerId" placeholder="Nhập ID..." th:value="${sellerId}">
+                    </div>
+                    <div>
+                        <label>Category:</label>
+                        <select name="categoryId">
+                            <option value="">-- Tất cả danh mục --</option>
+                            <option th:each="c : ${categories}"
+                                    th:value="${c.categoryId}"
+                                    th:text="${c.categoryName}"
+                                    th:selected="${categoryId == c.categoryId}">
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Upload từ:</label>
+                        <input type="datetime-local" id="uploadFrom" name="uploadFrom"
+                               th:value="${uploadFrom != null ? #temporals.format(uploadFrom, 'yyyy-MM-dd''T''HH:mm') : ''}"
+                               onchange="setMinUploadTo()">
+                    </div>
+                    <div>
+                        <label>Upload đến:</label>
+                        <input type="datetime-local" id="uploadTo" name="uploadTo"
+                               th:value="${uploadTo != null ? #temporals.format(uploadTo, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                    </div>
+                    <div class="button-area">
+                        <button type="submit">Lọc kết quả</button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Bảng danh sách -->
+        <section class="table-section">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên Tool</th>
+                    <th>Người đăng</th>
+                    <th>Danh mục</th>
+                    <th>Ngày upload</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="tool : ${toolList}">
+                    <td th:text="${tool.toolId}"></td>
+                    <td th:text="${tool.toolName}"></td>
+                    <td th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></td>
+                    <td th:text="${tool.category != null ? tool.category.categoryName : 'N/A'}"></td>
+                    <td th:text="${#temporals.format(tool.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+                    <td><span class="badge pending" th:text="${tool.status}"></span></td>
+                    <td>
+                        <a class="btn-view" th:href="@{'/moderator/tool/' + ${tool.toolId}}">👁 View Detail</a>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(toolList)}">
+                    <td colspan="7" class="empty">Không có tool nào đang chờ duyệt.</td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+<script>
+    function setMinUploadTo() {
+        const from = document.getElementById("uploadFrom").value;
+        document.getElementById("uploadTo").min = from;
+    }
+
+    function validateDateRange() {
+        const from = new Date(document.getElementById("uploadFrom").value);
+        const to = new Date(document.getElementById("uploadTo").value);
+        if (from && to && from > to) {
+            alert("⚠️ Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
+            return false;
+        }
+        return true;
+    }
+</script>
+</body>
+</html>
