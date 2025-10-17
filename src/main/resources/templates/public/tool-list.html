@@ -13,7 +13,6 @@
             <h5>Không có sản phẩm phù hợp</h5>
         </div>
     </th:block>
-    <th:block th:each="tool : ${tools}">
         <div class="row g-4">
             <div class="col-md-4" th:each="tool : ${tools}">
                 <a th:href="@{'/tools/' + ${tool.toolId}}" class="product-card">
@@ -40,7 +39,6 @@
                 </a>
             </div>
         </div>
-    </th:block>
 
     <!-- Pagination -->
     <div class="pagination-wrapper mt-4" th:if="${totalPages > 1}">

@@ -38,16 +38,6 @@ public class HomePageController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Account account = (Account) request.getSession().getAttribute("loggedInAccount");
 
-        if (auth != null && auth.getPrincipal() instanceof CustomerUserDetail userDetail) {
-            // ✅ Lấy thông tin tài khoản từ UserDetails
-            account = userDetail.getAccount();
-            model.addAttribute("account", account);
-            model.addAttribute("maskedPassword", "********");
-        } else {
-            // Trường hợp chưa đăng nhập
-            model.addAttribute("account", null);
-        }
-
         // Add vao model
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("account", account);
@@ -83,4 +73,10 @@ public class HomePageController {
         request.getSession().invalidate();
         return "redirect:/login";
     }
+
+//    @GetMapping("/logout-success")
+//    public String logoutSuccess(Model model) {
+//        model.addAttribute("message", "Bạn đã đăng xuất thành công");
+//        return "public/login";
+//    }
 }
