@@ -62,7 +62,7 @@
                class="fw-semibold text-center"></p>
 
             <!-- FORM LOGIN -->
-            <form id="loginForm" th:action="@{/perform_login}" method="post">
+            <form id="loginForm" th:action="@{/login}" method="post">
             <!-- Email -->
                 <div class="mb-3">
                     <label class="form-label required">Email</label>
@@ -83,6 +83,13 @@
                         </button>
                     </div>
                     <div id="error-message" class="error-message"></div>
+                </div>
+
+                <!-- Forgot password link -->
+                <div class="text-end mb-3">
+                    <a th:href="@{/forgot-password}" class="text-decoration-none small text-muted">
+                        Quên mật khẩu?
+                    </a>
                 </div>
 
                 <!-- Button -->
