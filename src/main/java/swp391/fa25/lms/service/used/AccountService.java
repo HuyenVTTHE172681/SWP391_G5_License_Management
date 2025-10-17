@@ -354,4 +354,25 @@ public class AccountService {
         account.setRole(sellerRole);
         return accountRepo.save(account);
     }
+
+    public Account registerFirstSeller(String email){
+       Account account = accountRepo.findByEmail(email).orElseGet(() ->{
+            Account newAcc = new Account();
+            newAcc.setEmail(email);
+            return newAcc;
+       });
+        if(account.getRole().getRoleName() == Role.RoleName.SELLER){
+            throw new RuntimeException("This account is be already seller");
+        }else if(account.getRole().getRoleName() == Role.RoleName.CUSTOMER){
+            throw new RuntimeException("This account is be already customer");
+        }else if(account.getRole().getRoleName() == Role.RoleName.ADMIN){
+            throw new RuntimeException("This account is be already admin");
+        }else if(account.getRole().getRoleName() == Role.RoleName.MANAGER){
+            throw new RuntimeException("This account is be already manager");
+        }
+        Role sellerRole = roleRepository.findByRoleName(Role.RoleName.SELLER).
+                orElseThrow(() ->new RuntimeException("Role not found"));
+        account.setRole(sellerRole);
+        return accountRepo.save(account);
+    }
 }
