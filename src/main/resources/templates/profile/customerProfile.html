@@ -66,24 +66,38 @@
 <body>
 
 <div class="profile-card">
-    <h2>Customer Profile</h2>
+    <h2>Hồ sơ khách</h2>
 
     <div class="profile-item">
-        <b>Full Name:</b> <span th:text="${account.fullName}"></span>
+        <b>Tên đăng nhập:</b> <span th:text="${account.fullName}"></span>
     </div>
     <div class="profile-item">
         <b>Email:</b> <span th:text="${account.email}"></span>
     </div>
     <div class="profile-item">
-        <b>Phone:</b> <span th:text="${account.phone}"></span>
+        <b>Số điện thoại:</b> <span th:text="${account.phone}"></span>
     </div>
     <div class="profile-item">
-        <b>Address:</b> <span th:text="${account.address}"></span>
+        <b>Địa chỉ:</b> <span th:text="${account.address}"></span>
     </div>
     <div class="profile-item">
-        <b>Status:</b> <span th:text="${account.status}"></span>
+        <b>Trạng thái:</b> <span th:text="${account.status}"></span>
     </div>
-    <a th:href="@{/profile/edit}" class="btn btn-warning mt-3 w-100 fw-semibold">Edit Profile</a>
+
+    <!-- Thêm phần riêng cho từng role -->
+    <div th:if="${account.role == 'SELLER'}">
+        <b>Shop Name:</b> <span th:text="${account.shopName}">My Shop</span>
+    </div>
+
+    <div th:if="${account.role == 'MODERATOR'}">
+        <b>Level:</b> <span th:text="${account.level}">Gold</span>
+    </div>
+
+    <div th:if="${account.role == 'ADMIN'}">
+        <b>Privileges:</b> <span>System Management</span>
+    </div>
+
+    <a th:href="@{/profile/edit}" class="btn btn-warning mt-3 w-100">Sửa hồ sơ</a>
 
     <hr>
 
@@ -91,7 +105,15 @@
         Chào mừng bạn đã quay trở lại! Ở đây bạn có thể xem được thông tin tài khoản và cập nhật tài khoản của bạn.
     </p>
 
-    <a th:href="@{/home}" class="back-button">Back to Home</a>
+    <!-- Nút Back to Home linh động theo role -->
+    <div th:switch="${account.role.roleName}">
+        <a th:case="'SELLER'" th:href="@{/seller/tools}" class="back-button">Quay trở lại trang chủ</a>
+        <a th:case="'MOD'" th:href="@{/moderator/}" class="back-button">Quay trở lại trang chủ</a>
+        <a th:case="'ADMIN'" th:href="@{/admin/accounts}" class="back-button">Quay trở lại trang chủ</a>
+        <a th:case="'MANAGER'" th:href="@{/manager/dashboard}" class="back-button">Quay trở lại trang chủ</a>
+        <a th:case="*" th:href="@{/home}" class="back-button">Quay trở lại trang chủ</a>
+    </div>
+
 </div>
 
 <!-- Bootstrap JS -->
