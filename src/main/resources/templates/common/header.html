@@ -9,8 +9,8 @@
     <link th:href="@{/css/home.css}" rel="stylesheet">
 </head>
 <body>
-<!-- Top bar -->
-<div th:fragment="header">
+<div th:fragment="header" class="sticky-top bg-white shadow-sm">
+    <!-- Top bar -->
     <div class="navbar-top py-2 px-4 d-flex justify-content-between align-items-center top-bar">
         <div>
             <i class="bi bi-envelope me-2"></i> support247@gmail.com
@@ -21,7 +21,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="#">Tool Market</a>
+            <a class="navbar-brand" href="/home">Tool Market</a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -47,7 +47,6 @@
                 <div class="d-flex align-items-center">
                     <a href="#" class="wishlist-icon">
                         <i class="far fa-heart"></i>
-                        <span class="wishlist-badge">12</span>
                     </a>
                     <!-- Nếu chưa đăng nhập -->
                     <a th:if="${account == null}" th:href="@{/login}" class="btn-login text-decoration-none fw-bolder">
