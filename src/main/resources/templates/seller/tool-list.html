@@ -63,6 +63,14 @@
             border-radius: 6px;
             cursor: pointer;
         }
+        .quantity-tag {
+            background-color: #e0e7ff;
+            color: #1e3a8a;
+            border-radius: 10px;
+            font-size: 13px;
+            padding: 2px 8px;
+            font-weight: 600;
+        }
         footer {
             background: #f8f9fa;
             padding: 25px 0;
@@ -73,7 +81,6 @@
             color: #ffd700;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
         }
-
     </style>
 </head>
 <body>
@@ -100,7 +107,6 @@
         </div>
     </div>
 </nav>
-
 
 <!-- 🌄 Hero -->
 <section class="hero">
@@ -157,7 +163,7 @@
             </div>
         </div>
 
-        <!-- TOOL GRID -->
+        <!-- 🧱 TOOL GRID -->
         <div class="row g-4" id="toolsContainer"></div>
         <div id="pagination" class="d-flex justify-content-center mt-4 gap-2"></div>
     </div>
@@ -191,7 +197,6 @@
         const res = await fetch('/seller/tools/api?' + params.toString());
         const tools = await res.json();
 
-        // Giả lập phân trang phía client (vì backend trả List chứ không phải Page)
         const totalPages = Math.ceil(tools.length / pageSize);
         const start = page * pageSize;
         const pagedTools = tools.slice(start, start + pageSize);
@@ -214,15 +219,17 @@
                 ? tool.licenses.map(l => `${l.durationDays} ngày: ${l.price.toLocaleString()}₫`).join('<br>')
                 : 'No license yet';
 
-
             container.insertAdjacentHTML('beforeend', `
                 <div class="col-md-4">
                     <div class="tool-card">
                         <img src="${imagePath}" alt="tool image">
                         <div class="card-body">
-                            <h5>${tool.toolName}</h5>
-                            <p>${categoryName}</p>
-                            <p>${tool.updatedAt}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5>${tool.toolName}</h5>
+                                <span class="quantity-tag">quantity: ${tool.quantity ?? 0}</span>
+                            </div>
+                            <p class="text-muted small mb-1">${categoryName}</p>
+                            <p class="text-secondary small mb-2">Updated: ${tool.updatedAt || ''}</p>
                             <p class="fw-semibold text-primary" style="white-space: pre-line">${price}</p>
                             <div class="d-flex justify-content-between mt-3">
                                 <a href="/seller/tools/edit/${tool.toolId}" class="btn btn-sm btn-outline-primary">Edit</a>

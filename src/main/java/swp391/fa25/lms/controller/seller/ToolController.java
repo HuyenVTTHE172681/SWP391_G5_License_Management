@@ -231,41 +231,56 @@ public class ToolController {
                              @RequestParam(value = "selectedImage", required = false) String selectedImage,
                              @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
                              @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
-                             Principal principal) throws Exception {
+                             Principal principal, RedirectAttributes redirectAttributes) throws Exception {
 
-        Tool existingTool = toolService.getToolById(id);
-        if (existingTool == null) throw new RuntimeException("Tool not found");
+        try {
+            Account seller = getCurrentSeller(principal);
+            Tool existingTool = toolService.getToolById(id);
+            if (existingTool == null) throw new RuntimeException("Tool not found");
 
-        existingTool.setToolName(tool.getToolName());
-        existingTool.setDescription(tool.getDescription());
-        existingTool.setStatus(tool.getStatus());
-
-        if (tool.getCategory() != null && tool.getCategory().getCategoryId() != null) {
-            categoryRepo.findById(tool.getCategory().getCategoryId()).ifPresent(existingTool::setCategory);
-        }
-
-        if (selectedImage != null && !selectedImage.isBlank()) {
-            existingTool.setImage(selectedImage);
-        }
-
-        Tool savedTool = toolService.save(existingTool);
-
-        if (licenseDays != null && licensePrices != null) {
-            for (int i = 0; i < licenseDays.size(); i++) {
-                Integer days = licenseDays.get(i);
-                Double price = licensePrices.get(i);
-                if (days == null || price == null || days <= 0 || price < 0) continue;
-
-                License newLicense = new License();
-                newLicense.setTool(savedTool);
-                newLicense.setDurationDays(days);
-                newLicense.setPrice(price);
-                newLicense.setName("License " + newLicense.getDurationDays() + " days");
-                newLicense.setCreatedAt(LocalDateTime.now());
-                licenseRepo.save(newLicense);
+            // 🖼 Nếu user chọn ảnh mới
+            if (selectedImage != null && !selectedImage.isBlank()) {
+                existingTool.setImage(selectedImage);
             }
+
+            // 🧩 Category
+            if (tool.getCategory() != null && tool.getCategory().getCategoryId() != null) {
+                categoryRepo.findById(tool.getCategory().getCategoryId()).ifPresent(existingTool::setCategory);
+            }
+
+            // 🧾 Cập nhật dữ liệu cơ bản
+            existingTool.setToolName(tool.getToolName());
+            existingTool.setDescription(tool.getDescription());
+            existingTool.setStatus(tool.getStatus());
+            existingTool.setQuantity(tool.getQuantity());
+            existingTool.setUpdatedAt(LocalDateTime.now());
+
+            // ✅ Gọi service để kiểm tra logic & lưu
+            toolService.updateTool(id, existingTool, seller);
+
+            // 🔄 Xử lý thêm license mới (nếu có)
+            if (licenseDays != null && licensePrices != null) {
+                for (int i = 0; i < licenseDays.size(); i++) {
+                    Integer days = licenseDays.get(i);
+                    Double price = licensePrices.get(i);
+                    if (days == null || price == null || days <= 0 || price < 0) continue;
+
+                    License newLicense = new License();
+                    newLicense.setTool(existingTool);
+                    newLicense.setDurationDays(days);
+                    newLicense.setPrice(price);
+                    newLicense.setName("License " + newLicense.getDurationDays() + " days");
+                    newLicense.setCreatedAt(LocalDateTime.now());
+                    licenseRepo.save(newLicense);
+                }
+            }
+
+            redirectAttributes.addFlashAttribute("success", "Tool updated successfully!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/seller/tools";
+
+        return "redirect:/seller/tools/edit/" + id;
     }
 
     @GetMapping("/delete/{id}")

@@ -64,7 +64,8 @@ public class Tool {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
+    @Column(nullable = false)
+    private Integer quantity = 0;
     public Tool() {
     }
 
@@ -197,5 +198,13 @@ public class Tool {
 
     public void setTotalReviews(Long totalReviews) {
         this.totalReviews = totalReviews;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 }

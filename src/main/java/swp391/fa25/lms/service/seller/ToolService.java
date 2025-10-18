@@ -2,21 +2,28 @@ package swp391.fa25.lms.service.seller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import swp391.fa25.lms.model.Tool;
+import org.springframework.transaction.annotation.Transactional;
 import swp391.fa25.lms.model.Account;
+import swp391.fa25.lms.model.LicenseAccount;
+import swp391.fa25.lms.model.Tool;
+import swp391.fa25.lms.repository.LicenseAccountRepository;
 import swp391.fa25.lms.repository.ToolFileRepository;
 import swp391.fa25.lms.repository.ToolRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 @Service("seller")
 public class ToolService {
+
     @Autowired
-    private ToolFileRepository toolFileRepository;;
+    private ToolFileRepository toolFileRepository;
+
     @Autowired
     private ToolRepository toolRepo;
+
+    @Autowired
+    private LicenseAccountRepository licenseAccountRepo;
 
     public Tool addTool(Tool tool, Account seller) {
         tool.setSeller(seller);
@@ -25,25 +32,54 @@ public class ToolService {
         tool.setUpdatedAt(LocalDateTime.now());
         return toolRepo.save(tool);
     }
+
     public Tool save(Tool tool) {
         tool.setUpdatedAt(LocalDateTime.now());
         return toolRepo.save(tool);
     }
-    public Tool updateTool(Long id, Tool newToolData, Account seller) {
-        Tool tool = toolRepo.findById(id).orElseThrow(() -> new RuntimeException("Tool not found"));
 
+    /**
+     * ✅ Update tool info + quantity validation
+     */
+    @Transactional
+    public Tool updateTool(Long id, Tool newToolData, Account seller) {
+        Tool tool = toolRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tool not found"));
+
+        // 1️⃣ Kiểm tra xem tool này có thuộc seller đang đăng nhập không
+        if (!tool.getSeller().getAccountId().equals(seller.getAccountId())) {
+            throw new RuntimeException("You are not allowed to edit this tool");
+        }
+
+        // 2️⃣ Đếm số lượng token key đã cấp (đã dùng)
+        long usedTokenCount = licenseAccountRepo.countByToolToolIdAndLoginMethod(
+                id, LicenseAccount.LoginMethod.TOKEN
+        );
+
+        // 3️⃣ Kiểm tra quantity hợp lệ
+        Integer newQuantity = newToolData.getQuantity();
+        if (newQuantity != null && newQuantity < usedTokenCount) {
+            throw new RuntimeException("Quantity cannot be less than the number of used token keys (" + usedTokenCount + ")");
+        }
+
+        // 4️⃣ Cập nhật các field
         tool.setToolName(newToolData.getToolName());
         tool.setDescription(newToolData.getDescription());
         tool.setImage(newToolData.getImage());
         tool.setCategory(newToolData.getCategory());
         tool.setUpdatedAt(LocalDateTime.now());
+
+        if (newQuantity != null) {
+            tool.setQuantity(newQuantity);
+        }
+
         return toolRepo.save(tool);
     }
 
     public void deleteTool(Long id, Account seller) {
-        Tool tool = toolRepo.findById(id).orElseThrow(() -> new RuntimeException("Tool not found"));
+        Tool tool = toolRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tool not found"));
         toolFileRepository.deleteAllByToolToolId(id);
-
         toolRepo.delete(tool);
     }
 
@@ -51,7 +87,6 @@ public class ToolService {
         return toolRepo.findBySeller(seller);
     }
 
-    // ✅ Lấy tool theo ID (thêm để dùng cho edit)
     public Tool getToolById(Long id) {
         return toolRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tool not found"));

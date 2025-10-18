@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Edit Tool</title>
@@ -8,7 +8,7 @@
         body {
             background-color: #f9fafb;
             font-family: 'Segoe UI', Tahoma, sans-serif;
-            margin: 0 ;
+            margin: 0;
             padding: 0;
         }
 
@@ -116,6 +116,24 @@
             margin-bottom: 10px;
             display: block;
         }
+
+        .alert {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .alert-danger {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
     </style>
 </head>
 
@@ -128,7 +146,13 @@
 </header>
 
 <section class="form-section">
-    <form th:action="@{|/seller/tools/edit/${tool.toolId}|}" th:object="${tool}" method="post" enctype="multipart/form-data">
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+    <form th:action="@{|/seller/tools/edit/${tool.toolId}|}"
+          th:object="${tool}"
+          method="post"
+          enctype="multipart/form-data">
 
         <!-- Tool Name -->
         <div class="form-group">
@@ -136,21 +160,20 @@
             <input type="text" name="toolName" th:value="${tool.toolName}" required class="form-input">
         </div>
 
+        <!-- Image -->
         <div class="form-group">
-            <label class="form-label">Chọn ảnh có sẵn</label>
-
+            <label class="form-label">Select Existing Image</label>
             <select name="selectedImage" class="form-select">
-                <option value="">-- Giữ nguyên ảnh hiện tại --</option>
+                <option value="">-- Keep current image --</option>
                 <option th:each="img : ${imageFiles}"
                         th:value="@{'/images/' + ${img}}"
                         th:text="${img}"
                         th:selected="${tool.image == '/images/' + img}">
                 </option>
-
             </select>
 
             <div style="margin-top:10px;">
-                <label>Ảnh hiện tại:</label>
+                <label>Current Image:</label>
                 <div th:if="${tool.image != null}">
                     <img th:src="@{${tool.image}}" alt="Current Image" class="preview">
                 </div>
@@ -172,18 +195,23 @@
         <!-- Description -->
         <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea name="description" rows="4" class="form-textarea"
-                      th:text="${tool.description}"></textarea>
+            <textarea name="description" rows="4" class="form-textarea" th:text="${tool.description}"></textarea>
         </div>
 
+        <!-- 🔢 Quantity -->
+        <div class="form-group">
+            <label class="form-label">Tool Quantity</label>
+            <input type="number" name="quantity" th:value="${tool.quantity}" class="form-input" min="0" required>
+            <small class="text-muted">⚠️ Quantity cannot be lower than the number of token-based licenses already issued.</small>
+        </div>
+
+        <!-- Pricing Options -->
         <div class="mb-3">
             <label class="form-label fw-semibold">Pricing Options</label>
             <div id="licenseContainer">
-                <div class="d-flex gap-2 mb-2">
-                    <div th:each="license : ${tool.licenses}">
-                        <input type="text" th:value="${license.durationDays}" placeholder="Số ngày">
-                        <input type="text" th:value="${license.price}" placeholder="Giá (VND)">
-                    </div>
+                <div class="d-flex gap-2 mb-2" th:each="license : ${tool.licenses}">
+                    <input type="text" th:value="${license.durationDays}" placeholder="Số ngày">
+                    <input type="text" th:value="${license.price}" placeholder="Giá (VND)">
                 </div>
             </div>
             <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addLicenseRow()">+ Add another</button>
@@ -194,21 +222,20 @@
             <button type="submit" class="submit-btn">Update Tool</button>
         </div>
 
-        <script>
-            function addLicenseRow() {
-                const c = document.getElementById('licenseContainer');
-                c.insertAdjacentHTML('beforeend', `
-        <div class="d-flex gap-2 mb-2">
-            <input type="number" name="licenseDays" class="form-control" placeholder="Duration (days)">
-            <input type="number" name="licensePrices" class="form-control" placeholder="Price (VND)">
-        </div>
-    `);
-            }
-        </script>
-
-
     </form>
 </section>
+
+<script>
+    function addLicenseRow() {
+        const c = document.getElementById('licenseContainer');
+        c.insertAdjacentHTML('beforeend', `
+            <div class="d-flex gap-2 mb-2">
+                <input type="number" name="licenseDays" class="form-control" placeholder="Duration (days)">
+                <input type="number" name="licensePrices" class="form-control" placeholder="Price (VND)">
+            </div>
+        `);
+    }
+</script>
 
 </body>
 </html>

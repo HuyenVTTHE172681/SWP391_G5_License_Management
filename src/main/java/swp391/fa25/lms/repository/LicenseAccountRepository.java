@@ -8,5 +8,6 @@ import java.util.List;
 public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, Long> {
     List<LicenseAccount> findByTool_ToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
     boolean existsByToken(String token);
+    long countByToolToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
 }
 
