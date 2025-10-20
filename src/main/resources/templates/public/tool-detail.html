@@ -58,30 +58,35 @@
                 <div th:if="${#lists.isEmpty(tool.licenses)}" class="text-muted mb-3">Chưa có license</div>
                 <div class="license-list">
                     <div th:each="lic, iStat : ${tool.licenses}"
+                         th:id="'lic-'+${lic.licenseId}"
                          th:classappend="${iStat.index == 0} ? 'license-item active' : 'license-item'"
                          th:data-price="${lic.price}"
-                         th:data-index="${iStat.index}"
                          th:text="${lic.name}"
+                         th:data-licenseid="${lic.licenseId}"
                          onclick="selectLicense(this)">
                     </div>
                 </div>
             </div>
 
             <!-- Số lượng -->
-            <div class="quantity-box mt-4">
-                <label for="quantity" class="form-label fw-semibold mb-2">Số lượng</label>
-                <div class="quantity-controls">
-                    <button type="button" class="btn-quantity" onclick="changeQuantity(-1)">−</button>
-                    <input id="quantity" type="number" value="1" min="1" />
-                    <button type="button" class="btn-quantity" onclick="changeQuantity(1)">+</button>
-                </div>
-            </div>
+<!--            <div class="quantity-box mt-4">-->
+<!--                <label for="quantity" class="form-label fw-semibold mb-2">Số lượng</label>-->
+<!--                <div class="quantity-controls">-->
+<!--                    <button type="button" class="btn-quantity" onclick="changeQuantity(-1)">−</button>-->
+<!--                    <input id="quantity" type="number" value="1" min="1" />-->
+<!--                    <button type="button" class="btn-quantity" onclick="changeQuantity(1)">+</button>-->
+<!--                </div>-->
+<!--            </div>-->
 
             <!-- Nút hành động -->
             <div class="actions mt-4 d-flex align-items-center gap-3">
-                <button class="btn btn-success px-4" onclick="buyNow()">
-                    Mua hàng
-                </button>
+                <!-- Nút mua hàng -->
+                <form id="buyForm" th:action="@{/payment/create}" method="get">
+                    <input type="hidden" name="toolId" th:value="${tool.toolId}">
+                    <!-- hidden licenseId sẽ được cập nhật khi user chọn license -->
+                    <input type="hidden" id="selectedLicense" name="licenseId" th:value="${tool.licenses.size() > 0 ? tool.licenses[0].licenseId : 0}">
+                    <button type="button" class="btn btn-success px-4" onclick="buyNow()">Mua hàng</button>
+                </form>
             </div>
 
         </div>
@@ -176,7 +181,11 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // server-side boolean (true/false) injected into JS
+    var isLoggedIn = /*[[${account != null}]]*/ false;
+
     // Format giá tiền
     function formatPrice(price) {
         return new Intl.NumberFormat('vi-VN').format(price) + ' VND';
@@ -190,53 +199,66 @@
     });
 
     // Chọn license khác
+    // function selectLicense(el) {
+    //     document.querySelectorAll('.license-item').forEach(e => e.classList.remove('active'));
+    //     el.classList.add('active');
+    //
+    //     const price = el.getAttribute('data-price');
+    //     const priceEl = document.getElementById('license-price');
+    //     priceEl.setAttribute('data-price', price);
+    //     priceEl.textContent = (price && price !== '0') ? formatPrice(price) : 'Miễn phí';
+    // }
+
+    // on page load show default price (first license)
+    document.addEventListener('DOMContentLoaded', function () {
+        var defaultEl = document.querySelector('.license-item.active');
+        if (defaultEl) {
+            var price = defaultEl.getAttribute('data-price');
+            var priceEl = document.getElementById('license-price');
+            if (priceEl) priceEl.textContent = (price && price !== '0') ? formatPrice(price) : 'Miễn phí';
+            // ensure hidden input has correct licenseId
+            var licenseId = defaultEl.getAttribute('data-licenseid');
+            if (licenseId) document.getElementById('selectedLicense').value = licenseId;
+        }
+    });
+
+    // select license — cập nhật UI và hidden input
     function selectLicense(el) {
         document.querySelectorAll('.license-item').forEach(e => e.classList.remove('active'));
         el.classList.add('active');
 
-        const price = el.getAttribute('data-price');
-        const priceEl = document.getElementById('license-price');
-        priceEl.setAttribute('data-price', price);
-        priceEl.textContent = (price && price !== '0') ? formatPrice(price) : 'Miễn phí';
+        var price = el.getAttribute('data-price');
+        var priceEl = document.getElementById('license-price');
+        if (priceEl) priceEl.textContent = (price && price !== '0') ? formatPrice(price) : 'Miễn phí';
+
+        // cập nhật hidden input licenseId
+        var licenseId = el.getAttribute('data-licenseid');
+        if (licenseId) document.getElementById('selectedLicense').value = licenseId;
     }
 
-    // Điều chỉnh số lượng
-    function changeQuantity(delta) {
-        const input = document.getElementById('quantity');
-        let val = parseInt(input.value) + delta;
-        if (val < 1) val = 1;
-        input.value = val;
-    }
-
-    // Mua hàng
+    // Mua hàng form hoặc show login modal
     function buyNow() {
-        const selected = document.querySelector('.license-item.active');
+        var selected = document.querySelector('.license-item.active');
         if (!selected) {
             alert('Vui lòng chọn gói license trước khi mua hàng!');
             return;
         }
 
-        // Giả lập kiểm tra login từ Thymeleaf (Spring Security)
-        const isLoggedIn = /*[[${#authentication.principal != null}]]*/ false;
-
         if (!isLoggedIn) {
-            // Nếu chưa đăng nhập → hiển thị modal
-            const modal = new bootstrap.Modal(document.getElementById('loginModal'));
+            var modal = new bootstrap.Modal(document.getElementById('loginModal'));
             modal.show();
             return;
         }
 
-        // Nếu đã đăng nhập → xử lý mua hàng (gọi API hoặc redirect)
-        const licenseName = selected.textContent.trim();
-        const priceText = document.getElementById('license-price').textContent;
-        const qty = document.getElementById('quantity').value;
-        alert(`Bạn đã chọn: ${licenseName} - ${priceText} - Số lượng: ${qty}`);
+        // nếu đã login → submit form (GET /payment/create?toolId=..&licenseId=..)
+        document.getElementById('buyForm').submit();
     }
 
     //  Chuyển hướng đến trang login
     function redirectToLogin() {
         window.location.href = '/login';
     }
+    /*]]>*/
 </script>
 </body>
 </html>
