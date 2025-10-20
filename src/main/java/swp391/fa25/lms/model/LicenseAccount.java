@@ -46,4 +46,127 @@ public class LicenseAccount {
     private LocalDateTime lastLogin;
     private String deviceInfo;
     private Integer maxDevices;
+
+    public LicenseAccount() {
+    }
+
+    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, Tool tool, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime lastLogin, String deviceInfo, Integer maxDevices) {
+        this.licenseAccountId = licenseAccountId;
+        this.username = username;
+        this.password = password;
+        this.license = license;
+        this.order = order;
+        this.tool = tool;
+        this.renewAcc = renewAcc;
+        this.status = status;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.lastLogin = lastLogin;
+        this.deviceInfo = deviceInfo;
+        this.maxDevices = maxDevices;
+    }
+
+    public Long getLicenseAccountId() {
+        return licenseAccountId;
+    }
+
+    public void setLicenseAccountId(Long licenseAccountId) {
+        this.licenseAccountId = licenseAccountId;
+    }
+
+    public @NotBlank(message = "User name can not blank") String getUsername() {
+        return username;
+    }
+
+    public void setUsername(@NotBlank(message = "User name can not blank") String username) {
+        this.username = username;
+    }
+
+    public @NotBlank(message = "Password name cannot be blank") String getPassword() {
+        return password;
+    }
+
+    public void setPassword(@NotBlank(message = "Password name cannot be blank") String password) {
+        this.password = password;
+    }
+
+    public License getLicense() {
+        return license;
+    }
+
+    public void setLicense(License license) {
+        this.license = license;
+    }
+
+    public CustomerOrder getOrder() {
+        return order;
+    }
+
+    public void setOrder(CustomerOrder order) {
+        this.order = order;
+    }
+
+    public Tool getTool() {
+        return tool;
+    }
+
+    public void setTool(Tool tool) {
+        this.tool = tool;
+    }
+
+    public List<LicenseRenewLog> getRenewAcc() {
+        return renewAcc;
+    }
+
+    public void setRenewAcc(List<LicenseRenewLog> renewAcc) {
+        this.renewAcc = renewAcc;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDateTime startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDateTime getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDateTime endDate) {
+        this.endDate = endDate;
+    }
+
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    public void setLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
+    }
+
+    public String getDeviceInfo() {
+        return deviceInfo;
+    }
+
+    public void setDeviceInfo(String deviceInfo) {
+        this.deviceInfo = deviceInfo;
+    }
+
+    public Integer getMaxDevices() {
+        return maxDevices;
+    }
+
+    public void setMaxDevices(Integer maxDevices) {
+        this.maxDevices = maxDevices;
+    }
 }
