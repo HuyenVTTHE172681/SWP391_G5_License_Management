@@ -2,12 +2,14 @@ package swp391.fa25.lms.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.service.used.CustomUserDetailsService;
 
@@ -90,5 +92,11 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         error.put("error", message);
         error.put("status", status);
         new ObjectMapper().writeValue(response.getOutputStream(), error);
+    }
+
+    // Bật listener để Spring Security biết khi session hết hạn
+    @Bean
+    public ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
+        return new ServletListenerRegistrationBean<>(new HttpSessionEventPublisher());
     }
 }
