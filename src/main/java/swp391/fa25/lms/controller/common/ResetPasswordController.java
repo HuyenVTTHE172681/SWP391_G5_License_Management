@@ -71,6 +71,7 @@ public class ResetPasswordController {
         accountRepository.save(account);
 
         model.addAttribute("message", "Đổi mật khẩu thành công!");
+        model.addAttribute("account", account);
         return "public/reset-passwordProfile";
     }
 }

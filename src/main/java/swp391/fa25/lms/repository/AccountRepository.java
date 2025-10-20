@@ -19,6 +19,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     // Tìm kiếm theo keyword (email hoặc fullName)
     Page<Account> findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
             String email, String fullName, Pageable pageable);
+    boolean existsByEmailAndVerifiedTrue(String email);
+    Optional<Account> findByVerificationCode(String code);
 
     // --- Dùng cho Tab Home (thống kê + danh sách) ---
     long countByRole_RoleName(RoleName roleName);
