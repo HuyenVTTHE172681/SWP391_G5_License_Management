@@ -29,74 +29,74 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/",
-                                "/home",
-                                "/home/**",
-                                "/register",
-                                "/verify-email/**",
-                                "/forgot-password",
-                                "/reset-password/**",
-                                "/css/**",
-                                "/js/**",
-                                "/images/**",
-                                "/assets/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/seller/**").hasRole("SELLER")
-                        .requestMatchers("/mod/**").hasRole("MOD")
-                        .anyRequest().authenticated()
-                )
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/login")
-                        .usernameParameter("email")
-                        .passwordParameter("password")
-                        .successHandler((req, res, auth) -> {
-                            CustomerUserDetail userDetails = (CustomerUserDetail) auth.getPrincipal();
-                            Account account = userDetails.getAccount();
-                            req.getSession().setAttribute("loggedInAccount", account);
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(csrf -> csrf.disable())
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers(
+//                                "/",
+//                                "/home",
+//                                "/home/**",
+//                                "/register",
+//                                "/verify-email/**",
+//                                "/forgot-password",
+//                                "/reset-password/**",
+//                                "/css/**",
+//                                "/js/**",
+//                                "/images/**",
+//                                "/assets/**").permitAll()
+//                        .requestMatchers("/admin/**").hasRole("ADMIN")
+//                        .requestMatchers("/seller/**").hasRole("SELLER")
+//                        .requestMatchers("/mod/**").hasRole("MOD")
+//                        .anyRequest().authenticated()
+//                )
+//                .formLogin(form -> form
+//                        .loginPage("/login")
+//                        .loginProcessingUrl("/login")
+//                        .usernameParameter("email")
+//                        .passwordParameter("password")
+//                        .successHandler((req, res, auth) -> {
+//                            CustomerUserDetail userDetails = (CustomerUserDetail) auth.getPrincipal();
+//                            Account account = userDetails.getAccount();
+//                            req.getSession().setAttribute("loggedInAccount", account);
+//
+//                            String role = account.getRole().getRoleName().name();
+//                            switch (role) {
+//                                case "ADMIN" -> res.sendRedirect("/admin/adminhome");
+//                                case "SELLER" -> res.sendRedirect("/seller/dashboard");
+//                                case "MOD" -> res.sendRedirect("/moderator/dashboard");
+//                                default -> res.sendRedirect("/home");
+//                            }
+//                        })
+//                        .failureUrl("/login?error=true")
+//                        .permitAll()
+//                )
+//                .logout(logout -> logout
+//                        .logoutUrl("/logout")
+//                        .logoutSuccessUrl("/login?logout")
+//                        .permitAll()
+//                );
+//
+//        return http.build();
+//    }
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+            // ✅ Tắt xác thực CSRF để tránh lỗi POST form
+            .csrf(csrf -> csrf.disable())
 
-                            String role = account.getRole().getRoleName().name();
-                            switch (role) {
-                                case "ADMIN" -> res.sendRedirect("/admin/adminhome");
-                                case "SELLER" -> res.sendRedirect("/seller/dashboard");
-                                case "MOD" -> res.sendRedirect("/moderator/dashboard");
-                                default -> res.sendRedirect("/home");
-                            }
-                        })
-                        .failureUrl("/login?error=true")
-                        .permitAll()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
-                        .permitAll()
-                );
+            // ✅ Cho phép tất cả request không cần đăng nhập
+            .authorizeHttpRequests(auth -> auth
+                    .anyRequest().permitAll()
+            )
 
-        return http.build();
-    }
-//@Bean
-//public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//    http
-//            // ✅ Tắt xác thực CSRF để tránh lỗi POST form
-//            .csrf(csrf -> csrf.disable())
-//
-//            // ✅ Cho phép tất cả request không cần đăng nhập
-//            .authorizeHttpRequests(auth -> auth
-//                    .anyRequest().permitAll()
-//            )
-//
-//            // ✅ Tắt hoàn toàn form login và logout
-//            .formLogin(form -> form.disable())
-//            .logout(logout -> logout.disable());
-//
-//    return http.build();
-//}
+            // ✅ Tắt hoàn toàn form login và logout
+            .formLogin(form -> form.disable())
+            .logout(logout -> logout.disable());
+
+    return http.build();
+}
 
     private void writeJsonError(HttpServletResponse response, String message, int status) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
