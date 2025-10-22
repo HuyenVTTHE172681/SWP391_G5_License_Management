@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.config.CustomerUserDetail;
@@ -37,16 +38,6 @@ public class HomePageController {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Account account = (Account) request.getSession().getAttribute("loggedInAccount");
-
-        if (auth != null && auth.getPrincipal() instanceof CustomerUserDetail userDetail) {
-            // ✅ Lấy thông tin tài khoản từ UserDetails
-            account = userDetail.getAccount();
-            model.addAttribute("account", account);
-            model.addAttribute("maskedPassword", "********");
-        } else {
-            // Trường hợp chưa đăng nhập
-            model.addAttribute("account", null);
-        }
 
         // Add vao model
         model.addAttribute("categories", categoryService.getAllCategories());
@@ -83,4 +74,10 @@ public class HomePageController {
         request.getSession().invalidate();
         return "redirect:/login";
     }
+
+//    @GetMapping("/logout-success")
+//    public String logoutSuccess(Model model) {
+//        model.addAttribute("message", "Bạn đã đăng xuất thành công");
+//        return "public/login";
+//    }
 }

@@ -67,8 +67,9 @@
                 <div class="mb-3">
                     <label class="form-label required">Email</label>
                     <input id="email" name="email" type="email" class="form-control"
-                           placeholder="Nhập email" required>
-                    <div id="emailError" class="error-message"></div>
+                           placeholder="Nhập email" required
+                           th:value="${email}">
+                    <div id="emailError" class="error-message" th:if="${emailError}" th:text="${emailError}"></div>
                 </div>
 
                 <!-- Password -->
@@ -82,7 +83,7 @@
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
-                    <div id="error-message" class="error-message"></div>
+                    <div id="passwordError" class="error-message" th:if="${passwordError}" th:text="${passwordError}"></div>
                 </div>
 
                 <!-- Forgot password link -->

@@ -2,12 +2,14 @@ package swp391.fa25.lms.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.service.used.CustomUserDetailsService;
 
@@ -33,7 +35,10 @@ public class SecurityConfig {
 //    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 //        http
 //                .csrf(csrf -> csrf.disable())
+//                // Tắt formLogin mặc định
+//                .formLogin(form -> form.disable())
 //                .authorizeHttpRequests(auth -> auth
+//                        // Các đường dẫn public
 //                        .requestMatchers(
 //                                "/",
 //                                "/home",
@@ -46,52 +51,34 @@ public class SecurityConfig {
 //                                "/js/**",
 //                                "/images/**",
 //                                "/assets/**").permitAll()
+//                        // Phân quyền theo role
 //                        .requestMatchers("/admin/**").hasRole("ADMIN")
 //                        .requestMatchers("/seller/**").hasRole("SELLER")
-//                        .requestMatchers("/mod/**").hasRole("MOD")
+//                        .requestMatchers("/moderator/**").hasRole("MOD")
+//                        .requestMatchers("/manager/**").hasRole("MANAGER")
 //                        .anyRequest().authenticated()
-//                )
-//                .formLogin(form -> form
-//                        .loginPage("/login")
-//                        .loginProcessingUrl("/login")
-//                        .usernameParameter("email")
-//                        .passwordParameter("password")
-//                        .successHandler((req, res, auth) -> {
-//                            CustomerUserDetail userDetails = (CustomerUserDetail) auth.getPrincipal();
-//                            Account account = userDetails.getAccount();
-//                            req.getSession().setAttribute("loggedInAccount", account);
-//
-//                            String role = account.getRole().getRoleName().name();
-//                            switch (role) {
-//                                case "ADMIN" -> res.sendRedirect("/admin/accounts");
-//                                case "SELLER" -> res.sendRedirect("/seller/dashboard");
-//                                case "MOD" -> res.sendRedirect("/moderator/dashboard");
-//                                default -> res.sendRedirect("/home");
-//                            }
-//                        })
-//                        .failureUrl("/login?error=true")
-//                        .permitAll()
 //                )
 //                .logout(logout -> logout
 //                        .logoutUrl("/logout")
-//                        .logoutSuccessUrl("/login?logout")
+//                        .logoutSuccessUrl("/logout")
 //                        .permitAll()
 //                );
 //
 //        return http.build();
 //    }
+
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
-            // ✅ Tắt xác thực CSRF để tránh lỗi POST form
+            // Tắt xác thực CSRF để tránh lỗi POST form
             .csrf(csrf -> csrf.disable())
-
-            // ✅ Cho phép tất cả request không cần đăng nhập
+            .formLogin(form -> form.disable())
+            // Cho phép tất cả request không cần đăng nhập
             .authorizeHttpRequests(auth -> auth
                     .anyRequest().permitAll()
             )
 
-            // ✅ Tắt hoàn toàn form login và logout
+            // Tắt hoàn toàn form login và logout
             .formLogin(form -> form.disable())
             .logout(logout -> logout.disable());
 
@@ -105,5 +92,11 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         error.put("error", message);
         error.put("status", status);
         new ObjectMapper().writeValue(response.getOutputStream(), error);
+    }
+
+    // Bật listener để Spring Security biết khi session hết hạn
+    @Bean
+    public ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
+        return new ServletListenerRegistrationBean<>(new HttpSessionEventPublisher());
     }
 }

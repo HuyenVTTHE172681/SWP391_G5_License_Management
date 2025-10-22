@@ -83,7 +83,7 @@
                 <!-- Email -->
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" th:field="*{email}" class="form-control" id="email">
+                    <input type="text" th:field="*{email}" class="form-control" id="email">
                     <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
                 </div>
 
@@ -103,15 +103,14 @@
                 <div class="mb-3">
                     <label for="confirmPassword" class="form-label">Xác nhận mật khẩu</label>
                     <div class="input-group">
-                        <input id="confirmPassword" name="confirmPassword" type="password" class="form-control">
+                        <input id="confirmPassword" type="password" th:field="*{confirmPassword}" class="form-control">
                         <button class="btn btn-outline-secondary" type="button"
                                 onclick="togglePassword('confirmPassword', this)">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                     <!-- lỗi xác nhận mật khẩu -->
-                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password') and alertMessage=='Mật khẩu không khớp.'}"
-                         th:text="'Mật khẩu không khớp.'"></div>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
                 </div>
 
                 <!-- Button -->
@@ -132,7 +131,7 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:inline="javascript">
     function togglePassword(fieldId, btn) {
         const input = document.getElementById(fieldId);
         const icon = btn.querySelector('i');
@@ -150,25 +149,14 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const inputs = document.querySelectorAll('#registerForm input');
+    const redirectUrl = /*[[${redirectUrl}]]*/ null;
 
-        inputs.forEach(input => {
-            input.addEventListener('input', () => {
-                // Xóa alert lỗi thẻ <div th:errors> hoặc <p th:text>
-                const errorDiv = input.closest('.mb-3, .mb-6')?.querySelector('.text-danger, .invalid-feedback');
-                if (errorDiv) {
-                    errorDiv.textContent = '';
-                }
-
-                // Nếu có alert tổng (showAlert)
-                const alertBox = document.querySelector('p[th\\:if="${showAlert}"], p[th\\:text="${alertMessage}"]');
-                if (alertBox) {
-                    alertBox.textContent = '';
-                }
-            });
-        });
-    });
+    if (redirectUrl) {
+        setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, 5000);
+    }
 </script>
+
 </body>
 </html>
