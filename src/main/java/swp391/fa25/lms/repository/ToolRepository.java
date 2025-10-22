@@ -10,6 +10,7 @@ import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ToolRepository extends JpaRepository<Tool, Long> {
@@ -39,4 +40,7 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
 
     List<Tool> findByToolNameContainingIgnoreCase(String keyword);
     List<Tool> findBySeller(Account seller);
+    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
+
+
 }

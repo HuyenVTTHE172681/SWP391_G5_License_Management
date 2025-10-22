@@ -283,12 +283,15 @@ public class ToolController {
         return "redirect:/seller/tools/edit/" + id;
     }
 
-    @GetMapping("/delete/{id}")
-    public String deleteTool(@PathVariable Long id, Principal principal) {
-        Account seller = getCurrentSeller(principal);
-        toolService.deleteTool(id, seller);
+    @PostMapping("/toggle/{id}")
+    public String toggleToolStatus(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Account seller = ((CustomerUserDetail) auth.getPrincipal()).getAccount();
+
+        toolService.toggleToolStatus(id, seller);
         return "redirect:/seller/tools";
     }
+
 
     // ✅ API JSON cho Ajax (frontend gọi fetch)
     @GetMapping("/api")

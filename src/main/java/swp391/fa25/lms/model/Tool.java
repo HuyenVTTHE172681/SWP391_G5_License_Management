@@ -52,7 +52,8 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED }
+
+    public enum Status {PENDING, APPROVED, REJECTED, PUBLISH, DEACTIVE}
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -66,6 +67,7 @@ public class Tool {
     private LocalDateTime updatedAt;
     @Column(nullable = false)
     private Integer quantity = 0;
+
     public Tool() {
     }
 
@@ -90,6 +92,7 @@ public class Tool {
     public void setLoginMethods(Set<String> loginMethods) {
         this.loginMethods = loginMethods;
     }
+
     public Long getToolId() {
         return toolId;
     }

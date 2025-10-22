@@ -75,12 +75,19 @@ public class ToolService {
 
         return toolRepo.save(tool);
     }
+    @Transactional
+    public void toggleToolStatus(Long id, Account seller) {
+        Tool tool = toolRepo.findByToolIdAndSeller(id, seller)
+                .orElseThrow(() -> new RuntimeException("Tool not found or unauthorized"));
 
-    public void deleteTool(Long id, Account seller) {
-        Tool tool = toolRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tool not found"));
-        toolFileRepository.deleteAllByToolToolId(id);
-        toolRepo.delete(tool);
+        if (tool.getStatus() == Tool.Status.PUBLISH) {
+            tool.setStatus(Tool.Status.DEACTIVE);
+        } else {
+            tool.setStatus(Tool.Status.PUBLISH);
+        }
+
+        tool.setUpdatedAt(LocalDateTime.now());
+        toolRepo.save(tool);
     }
 
     public List<Tool> getToolsBySeller(Account seller) {
@@ -91,4 +98,5 @@ public class ToolService {
         return toolRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tool not found"));
     }
+
 }
