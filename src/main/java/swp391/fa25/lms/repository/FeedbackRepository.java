@@ -12,11 +12,11 @@ import swp391.fa25.lms.model.Tool;
 import java.util.List;
 
 @Repository
-public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
+public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     public List<Feedback> findByTool(Tool tool);
 
     // Tính trung bình rating
-    long countByTool(Tool tool);
+    Long countByTool(Tool tool);
     @Query("SELECT AVG(f.rating) FROM Feedback f WHERE f.tool.toolId = :toolId")
     Double findAverageRatingByTool(@Param("toolId") Long toolId);
 
