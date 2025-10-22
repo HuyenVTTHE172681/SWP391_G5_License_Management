@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng ký làm Seller</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: #fff;
+            padding: 40px 45px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 35px rgba(0, 0, 0, 0.12);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            background: #f5f5f5;
+            color: #111;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        input:focus {
+            border-color: #000;
+            background: #fff;
+        }
+
+        .password-group {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .btn-submit {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            background: #222;
+        }
+
+        .alert {
+            margin-top: 18px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .alert-danger {
+            background: #ffebee;
+            color: #b71c1c;
+        }
+
+        .homeback {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        input:invalid {
+            border-color: #b71c1c;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Đăng ký trở thành Seller</h2>
+
+    <form th:action="@{/registerGuestToSeller}" method="post" onsubmit="return validatePasswords()">
+        <div class="form-group">
+            <label for="fullName">Họ và tên</label>
+            <input type="text" id="fullName" name="fullName" placeholder="Nhập họ và tên..." required>
+        </div>
+
+        <div class="form-group" style="margin-top:15px;">
+            <label for="email">Địa chỉ Email</label>
+            <input type="email" id="email" name="email" placeholder="Nhập email của bạn..." required>
+        </div>
+
+        <div class="form-group" style="margin-top:15px;">
+            <label for="phone">Số điện thoại</label>
+            <input type="tel" id="phone" name="phone"
+                   placeholder="Nhập số điện thoại..."
+                   pattern="^(0|\+84)[0-9]{9,10}$"
+                   title="Số điện thoại phải bắt đầu bằng 0 hoặc +84 và có 10–11 chữ số"
+                   required>
+        </div>
+
+        <div class="form-group" style="margin-top:15px;">
+            <label for="address">Địa chỉ</label>
+            <input type="text" id="address" name="address" placeholder="Nhập địa chỉ..." required>
+        </div>
+
+        <!-- Thêm mật khẩu -->
+        <div class="form-group password-group" style="margin-top:15px;">
+            <label for="password">Mật khẩu</label>
+            <input type="password" id="password" name="password"
+                   placeholder="Nhập mật khẩu..."
+                   minlength="6" required>
+            <span class="toggle-password" onclick="togglePassword('password', this)">👁️</span>
+        </div>
+
+        <!-- Xác minh mật khẩu -->
+        <div class="form-group password-group" style="margin-top:15px;">
+            <label for="confirmPassword">Xác minh mật khẩu</label>
+            <input type="password" id="confirmPassword" name="confirmPassword"
+                   placeholder="Nhập lại mật khẩu..." required>
+            <span class="toggle-password" onclick="togglePassword('confirmPassword', this)">👁️</span>
+        </div>
+
+        <button type="submit" class="btn-submit">Gửi yêu cầu đăng ký</button>
+    </form>
+
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <a th:href="@{/home}" class="homeback">Quay lại trang chủ</a>
+</div>
+
+<script>
+    // Ẩn/hiện mật khẩu
+    function togglePassword(id, el) {
+        const input = document.getElementById(id);
+        if (input.type === "password") {
+            input.type = "text";
+            el.textContent = "🙈";
+        } else {
+            input.type = "password";
+            el.textContent = "👁️";
+        }
+    }
+
+    // Kiểm tra xác nhận mật khẩu
+    function validatePasswords() {
+        const pass = document.getElementById("password").value;
+        const confirm = document.getElementById("confirmPassword").value;
+
+        if (pass !== confirm) {
+            alert("Mật khẩu xác nhận không trùng khớp!");
+            return false; // ngăn submit
+        }
+        return true;
+    }
+</script>
+</body>
+</html>
