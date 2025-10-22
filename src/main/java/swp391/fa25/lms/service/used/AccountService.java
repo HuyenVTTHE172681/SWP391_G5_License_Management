@@ -1,5 +1,6 @@
 package swp391.fa25.lms.service.used;
 
+import jakarta.transaction.Transactional;
 import org.apache.coyote.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RoleRepository roleRepository;
+    private static Scanner sc = new Scanner(System.in);
 
     @Value("2") // mặc định 15 phút
     private int tokenExpiryMinutes;
@@ -127,7 +129,7 @@ public class AccountService {
     }
 
     // Gửi mã xác minh sau khi dang ky thanh cong
-    private void sendVerificationCode(Account account, String code) {
+    public void sendVerificationCode(Account account, String code) {
         try {
             String subject = "[LMS] Xác minh tài khoản";
             String body = "<p>Xin chào <b>" + account.getFullName() + "</b>,</p>"
@@ -339,6 +341,71 @@ public class AccountService {
         account.setVerificationToken(null);
         account.setTokenExpiry(null);
         accountRepo.save(account);
+    }
+
+    public Account registerSeller(String email) {
+        Account account = accountRepo.findByEmail(email).orElseThrow(() ->new RuntimeException("Account not found"));
+
+        if(account.getRole().getRoleName() == Role.RoleName.SELLER){
+            throw new RuntimeException("Seller is already registered");
+        }
+
+        Role sellerRole = roleRepository.findByRoleName(Role.RoleName.SELLER).
+                orElseThrow(() ->new RuntimeException("Role not found"));
+
+        account.setRole(sellerRole);
+        return accountRepo.save(account);
+    }
+
+    @Transactional
+    public Account registerGuestToSeller(String email, String fullName) {
+        if (email == null || !EMAIL_REGEX.matcher(email).matches()) {
+            throw new RuntimeException("Invalid email format");
+        }
+
+        Optional<Account> existingOpt = accountRepo.findByEmail(email);
+
+        if (existingOpt.isPresent()) {
+            Account existing = existingOpt.get();
+
+            if (existing.getRole() != null && existing.getRole().getRoleName() == Role.RoleName.SELLER) {
+                throw new RuntimeException("This email is already registered as a seller");
+            }
+
+            Role sellerRole = roleRepository.findByRoleName(Role.RoleName.SELLER)
+                    .orElseThrow(() -> new RuntimeException("Role SELLER not found"));
+            existing.setRole(sellerRole);
+
+            String otp = String.format("%06d", new Random().nextInt(999999));
+            existing.setVerificationCode(otp);
+            existing.setCodeExpiry(LocalDateTime.now().plusMinutes(tokenExpiryMinutes));
+            existing.setStatus(Account.AccountStatus.DEACTIVATED);
+            existing.setVerified(false);
+
+            accountRepo.saveAndFlush(existing);
+            sendVerificationCode(existing, otp);
+            return existing;
+        }
+
+        Account account = new Account();
+        account.setEmail(email);
+        account.setFullName(fullName);
+        account.setCreatedAt(LocalDateTime.now());
+        account.setVerified(false);
+        account.setStatus(Account.AccountStatus.DEACTIVATED);
+
+        Role sellerRole = roleRepository.findByRoleName(Role.RoleName.SELLER)
+                .orElseThrow(() -> new RuntimeException("Role SELLER not found"));
+        account.setRole(sellerRole);
+
+        String code = String.format("%06d", new Random().nextInt(999999));
+        account.setVerificationCode(code);
+        account.setCodeExpiry(LocalDateTime.now().plusMinutes(tokenExpiryMinutes));
+
+        accountRepo.saveAndFlush(account);
+        sendVerificationCode(account, code);
+
+        return account;
     }
 
 }
