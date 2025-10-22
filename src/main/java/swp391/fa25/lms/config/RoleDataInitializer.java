@@ -31,6 +31,8 @@ public class RoleDataInitializer implements CommandLineRunner {
     @Autowired
     private LicenseToolRepository licenseRepo;
     @Autowired
+    private WalletRepository walletRepository;
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
@@ -337,12 +339,12 @@ public class RoleDataInitializer implements CommandLineRunner {
 
             // Tool 1
             License l1 = new License("Gói dùng thử 7 ngày", tools.get(0), 7, 0.0, null, LocalDateTime.now().minusDays(3));
-            License l2 = new License("Gói 1 tháng", tools.get(0), 30, 9.99, null, LocalDateTime.now().minusDays(2));
-            License l3 = new License("Gói 6 tháng", tools.get(0), 180, 49.99, null, LocalDateTime.now().minusDays(1));
+            License l2 = new License("Gói 1 tháng", tools.get(0), 30, 10000.0, null, LocalDateTime.now().minusDays(2));
+            License l3 = new License("Gói 6 tháng", tools.get(0), 180, 12000.0, null, LocalDateTime.now().minusDays(1));
 
             // Tool 2
-            License l4 = new License("Gói cơ bản", tools.get(1), 30, 19.99, null, LocalDateTime.now().minusDays(3));
-            License l5 = new License("Gói nâng cao", tools.get(1), 180, 59.99, null, LocalDateTime.now().minusDays(2));
+            License l4 = new License("Gói cơ bản", tools.get(1), 30, 10000.0, null, LocalDateTime.now().minusDays(3));
+            License l5 = new License("Gói nâng cao", tools.get(1), 180, 16000.0, null, LocalDateTime.now().minusDays(2));
             License l6 = new License("Gói trọn đời", tools.get(1), null, 99.99, null, LocalDateTime.now().minusDays(1));
 
             // Tool 3
@@ -387,7 +389,31 @@ public class RoleDataInitializer implements CommandLineRunner {
             System.out.println("Licenses already exist, skipping initialization.");
         }
 
+        // ============ WALLET ============
+        // Tạo ví mặc định cho tất cả Seller (nếu chưa có)
+        List<Account> allSellers = accountRepo.findAll()
+                .stream()
+                .filter(acc -> acc.getRole() != null && acc.getRole().getRoleName() == RoleName.SELLER)
+                .toList();
+
+        for (Account seller : allSellers) {
+            // Kiểm tra xem seller đã có ví chưa
+            boolean hasWallet = walletRepository.findByAccount(seller).isPresent();
+            if (!hasWallet) {
+                Wallet wallet = new Wallet();
+                wallet.setAccount(seller);
+                wallet.setBalance(java.math.BigDecimal.ZERO);
+                wallet.setCurrency("VND");
+                wallet.setUpdatedAt(LocalDateTime.now());
+                walletRepository.save(wallet);
+                System.out.println("Created default wallet for seller: " + seller.getEmail());
+            }
+        }
+
+        System.out.println("Wallet initialization completed successfully.");
+    }
+
     }
 
 
-}
+

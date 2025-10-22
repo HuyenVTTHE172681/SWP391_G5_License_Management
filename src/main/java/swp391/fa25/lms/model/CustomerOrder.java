@@ -26,6 +26,9 @@ public class CustomerOrder {
 
     private Double price;
 
+    public enum OrderStatus { PENDING, SUCCESS, FAILED }
+    private OrderStatus status;
+
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
     public enum PaymentMethod { WALLET, BANK, PAYPAL }
@@ -42,12 +45,13 @@ public class CustomerOrder {
     public CustomerOrder() {
     }
 
-    public CustomerOrder(Long orderId, Account account, Tool tool, License license, Double price, PaymentMethod paymentMethod, WalletTransaction transaction, LocalDateTime createdAt, LicenseAccount licenseAccount) {
+    public CustomerOrder(Long orderId, Account account, Tool tool, License license, Double price, OrderStatus status, PaymentMethod paymentMethod, WalletTransaction transaction, LocalDateTime createdAt, LicenseAccount licenseAccount) {
         this.orderId = orderId;
         this.account = account;
         this.tool = tool;
         this.license = license;
         this.price = price;
+        this.status = status;
         this.paymentMethod = paymentMethod;
         this.transaction = transaction;
         this.createdAt = createdAt;
@@ -92,6 +96,14 @@ public class CustomerOrder {
 
     public void setPrice(Double price) {
         this.price = price;
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
     }
 
     public PaymentMethod getPaymentMethod() {
