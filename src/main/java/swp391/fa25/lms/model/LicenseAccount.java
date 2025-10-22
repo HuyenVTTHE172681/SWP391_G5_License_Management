@@ -47,6 +47,18 @@ public class LicenseAccount {
     private String deviceInfo;
     private Integer maxDevices;
 
+    // ===== NEW FIELDS =====
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private LoginMethod loginMethod = LoginMethod.USER_PASSWORD;
+    public enum LoginMethod { USER_PASSWORD, TOKEN }
+
+    @Column(unique = true)
+    private String token;
+
+    private Boolean used = false;
+    private LocalDateTime activatedAt;
+
     public LicenseAccount() {
     }
 
@@ -169,4 +181,37 @@ public class LicenseAccount {
     public void setMaxDevices(Integer maxDevices) {
         this.maxDevices = maxDevices;
     }
+
+    public LoginMethod getLoginMethod() {
+        return loginMethod;
+    }
+
+    public void setLoginMethod(LoginMethod loginMethod) {
+        this.loginMethod = loginMethod;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public Boolean getUsed() {
+        return used;
+    }
+
+    public void setUsed(Boolean used) {
+        this.used = used;
+    }
+
+    public LocalDateTime getActivatedAt() {
+        return activatedAt;
+    }
+
+    public void setActivatedAt(LocalDateTime activatedAt) {
+        this.activatedAt = activatedAt;
+    }
 }
+
