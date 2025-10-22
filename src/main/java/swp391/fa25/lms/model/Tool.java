@@ -1,14 +1,19 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "Tool")
+@JsonIgnoreProperties({"seller", "toolFiles"})
 public class Tool {
 
     @Id
@@ -30,35 +35,37 @@ public class Tool {
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
+    @JsonManagedReference(value = "tool-seller")
     private Account seller;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "tool_login_methods", joinColumns = @JoinColumn(name = "tool_id"))
+    @Column(name = "login_method")
+    private Set<String> loginMethods = new HashSet<>();
 
     @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
+    @JsonManagedReference(value = "tool-category")
     private Category category;
+
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED }
+    public enum Status { PENDING, APPROVED, REJECTED }
 
-    @OneToMany(mappedBy = "tool")
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ToolFile> files;
 
-    @OneToMany(mappedBy = "tool")
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
+    @JsonManagedReference(value = "tool-licenses")
     private List<License> licenses;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    @Column(columnDefinition = "NVARCHAR(255)")
-    private String note;
-
-    public String getNote() {
-        return note;
-    }
-
-    public void setNote(String note) {
-        this.note = note;
-    }
+    @Column(nullable = false)
+    private Integer quantity = 0;
     public Tool() {
     }
 
@@ -76,6 +83,13 @@ public class Tool {
         this.updatedAt = updatedAt;
     }
 
+    public Set<String> getLoginMethods() {
+        return loginMethods;
+    }
+
+    public void setLoginMethods(Set<String> loginMethods) {
+        this.loginMethods = loginMethods;
+    }
     public Long getToolId() {
         return toolId;
     }
@@ -184,5 +198,13 @@ public class Tool {
 
     public void setTotalReviews(Long totalReviews) {
         this.totalReviews = totalReviews;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 }

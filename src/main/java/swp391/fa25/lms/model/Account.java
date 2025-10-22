@@ -1,5 +1,6 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -22,7 +23,7 @@ public class Account {
     private String password;
 
     @NotBlank(message = "Họ và tên không được để trống")
-    @Size(min = 5, max = 20, message = "Họ và tên đầy đủ phải từ 5 đến 20 ký tự")
+    @Size(min = 10, max = 20, message = "Họ và tên đầy đủ phải từ 10 đến 20 ký tự")
     @Column(name = "fullName", columnDefinition = "NVARCHAR(100)")
     private String fullName;
 

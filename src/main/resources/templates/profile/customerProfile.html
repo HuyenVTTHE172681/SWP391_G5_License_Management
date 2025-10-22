@@ -98,6 +98,7 @@
     </div>
 
     <a th:href="@{/profile/edit}" class="btn btn-warning mt-3 w-100">Edit Profile</a>
+    <a th:href="@{/profile/edit}" class="btn btn-warning mt-3 w-100 fw-semibold">Sửa trang cá nhân</a>
 
     <hr>
 
@@ -105,6 +106,7 @@
         Chào mừng bạn đã quay trở lại! Ở đây bạn có thể xem được thông tin tài khoản và cập nhật tài khoản của bạn.
     </p>
 
+    <a th:href="@{/home}" class="back-button">Quay trở lại</a>
     <!-- Nút Back to Home linh động theo role -->
     <a th:href="${account.role.roleName.name() == 'SELLER'} ? @{/seller/tools}
          : (${account.role.roleName.name() == 'MOD'} ? @{/moderator/}

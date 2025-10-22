@@ -28,8 +28,6 @@ public class WalletTransaction {
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal amount;
 
-    @OneToMany(mappedBy = "transaction")
-    private List<CustomerOrder> customerOrders;
 
     @OneToMany(mappedBy = "transaction")
     private List<LicenseRenewLog> licenseRenewLogs;
