@@ -55,6 +55,7 @@ public class ToolCommonController {
         model.addAttribute("feedbackPage", feedbackPage);
         model.addAttribute("avgRating", avgRating);
         model.addAttribute("totalReviews", totalReviews);
+        model.addAttribute("categories", categoryService.getAllCategories());
 
         return "public/tool-detail";
     }
