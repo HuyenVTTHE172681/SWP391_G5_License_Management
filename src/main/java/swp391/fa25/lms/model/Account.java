@@ -45,10 +45,6 @@ public class Account {
     @Column(name = "is_verified")
     private Boolean verified = false;
 
-    private String verificationToken;
-
-    private LocalDateTime tokenExpiry;
-
     @Column(name = "verification_code")
     private String verificationCode;
 
@@ -82,7 +78,7 @@ public class Account {
     public Account() {
     }
 
-    public Account(Long accountId, String email, String password, String fullName, AccountStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationToken, LocalDateTime tokenExpiry, String verificationCode, LocalDateTime codeExpiry, Role role, Wallet wallet, List<CustomerOrder> orders, List<Feedback> feedbacks, List<Favorite> favorites, List<Tool> tools) {
+    public Account(Long accountId, String email, String password, String fullName, AccountStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationCode, LocalDateTime codeExpiry, Role role, Wallet wallet, List<CustomerOrder> orders, List<Feedback> feedbacks, List<Favorite> favorites, List<Tool> tools) {
         this.accountId = accountId;
         this.email = email;
         this.password = password;
@@ -93,8 +89,6 @@ public class Account {
         this.phone = phone;
         this.address = address;
         this.verified = verified;
-        this.verificationToken = verificationToken;
-        this.tokenExpiry = tokenExpiry;
         this.verificationCode = verificationCode;
         this.codeExpiry = codeExpiry;
         this.role = role;
@@ -183,22 +177,6 @@ public class Account {
 
     public void setVerified(Boolean verified) {
         this.verified = verified;
-    }
-
-    public String getVerificationToken() {
-        return verificationToken;
-    }
-
-    public void setVerificationToken(String verificationToken) {
-        this.verificationToken = verificationToken;
-    }
-
-    public LocalDateTime getTokenExpiry() {
-        return tokenExpiry;
-    }
-
-    public void setTokenExpiry(LocalDateTime tokenExpiry) {
-        this.tokenExpiry = tokenExpiry;
     }
 
     public String getVerificationCode() {

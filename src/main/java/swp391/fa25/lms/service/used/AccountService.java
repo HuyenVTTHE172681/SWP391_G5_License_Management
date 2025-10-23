@@ -17,9 +17,11 @@ import swp391.fa25.lms.repository.AccountRepository;
 import swp391.fa25.lms.repository.RoleRepository;
 import swp391.fa25.lms.util.JwtService;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountService {
@@ -45,6 +47,11 @@ public class AccountService {
     private static final Pattern PASS_REGEX = Pattern.compile("" +
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$"
     );
+
+    private static final String SPECIALS = "!@#$%^&*";
+    private static final String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String LOWER = "abcdefghijklmnopqrstuvwxyz";
+    private static final String DIGITS = "0123456789";
 
     public AccountService(AccountRepository accountRepo, PasswordEncoder passwordEncoder,
                           JavaMailSender mailSender, JwtService jwtService, RoleRepository roleRepository) {
@@ -221,77 +228,74 @@ public class AccountService {
     }
 
     /**
-     * ====================== Đặt lại mật khẩu RESET PASSWORD
-     *
+     * ====================== Quên mật khẩu FORGOT PASSWORD
+     * Người dùng quên mật khẩu: sinh mật khẩu mới và gửi qua email
+     * @param email
      */
-
-    public void resetPassword(String token, String newPassword, String confirmPassword) {
-        Account account = accountRepo.findByVerificationToken(token)
-                .orElseThrow(() -> new RuntimeException("Link không hợp lệ hoặc đã hết hạn."));
-
-        // Check token có hết hạn không
-        if (account.getTokenExpiry().isBefore(LocalDateTime.now()) || account.getTokenExpiry() == null) {
-            account.setVerificationToken(null);
-            account.setTokenExpiry(null);
-            accountRepo.save(account);
-
-            throw new RuntimeException("Token đã hết hạn, vui lòng yêu cầu lại đặt lại mật khẩu.");
+    public void resetPasswordAndSendMail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("Vui lòng nhập email.");
+        }
+        if (!EMAIL_REGEX.matcher(email).matches()) {
+            throw new RuntimeException("Định dạng email không hợp lệ.");
         }
 
-        //  Validate mật khẩu
-        if (!newPassword.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$")) {
-            throw new RuntimeException("Mật khẩu phải có ít nhất 8 ký tự, bao gồm 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.");
-        } else if(newPassword.contains(" ")) {
-            throw new RuntimeException("Mật khẩu không được chứa khoảng trắng.");
-        }
+        Account account = accountRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống."));
 
+        // Gen password ngẫu nhiên
+        String newPassword = generateRandomPassword();
 
-        // Check confirmPassword
-        if (!newPassword.equals(confirmPassword)) {
-            throw new RuntimeException("Mật khẩu xác nhận không khớp.");
-        } else if (confirmPassword == null || confirmPassword.isBlank()) {
-            throw new RuntimeException("Vui lòng xác nhận mật khẩu.");
-        }
-
-        // Cập nhật mật khẩu
+        // Cap nhat DB
         account.setPassword(passwordEncoder.encode(newPassword));
-        account.setVerificationToken(null);
-        account.setTokenExpiry(null);
-
         accountRepo.save(account);
+
+        // Gui mail new password
+        sendNewPasswordEmail(account, newPassword);
     }
 
-    // Kiểm tra token hợp lệ (tồn tại và chưa hết hạn)
-    public boolean isValidResetToken(String token) {
-        return accountRepo.findByVerificationToken(token)
-                .filter(acc -> acc.getTokenExpiry() != null && acc.getTokenExpiry().isAfter(LocalDateTime.now()))
-                .isPresent();
+    /**
+     * Sinh mật khẩu mạnh gồm 8 ký tự:
+     * ít nhất 1 hoa, 1 thường, 1 số, 1 ký tự đặc biệt
+     */
+    public String generateRandomPassword() {
+        SecureRandom random = new SecureRandom();
+
+        StringBuilder password = new StringBuilder();
+        password.append(UPPER.charAt(random.nextInt(UPPER.length())));
+        password.append(LOWER.charAt(random.nextInt(LOWER.length())));
+        password.append(DIGITS.charAt(random.nextInt(DIGITS.length())));
+        password.append(SPECIALS.charAt(random.nextInt(SPECIALS.length())));
+
+        String words = UPPER + LOWER + DIGITS + SPECIALS;
+        for (int i = 4; i < 8; i++) {
+            password.append(words.charAt(random.nextInt(words.length())));
+        }
+
+        // Gen ngau nhien
+        List<Character> chars = password.chars().mapToObj(c -> (char) c).collect(Collectors.toList());
+        Collections.shuffle(chars, random);
+
+        StringBuilder finalPassword = new StringBuilder();
+        chars.forEach(finalPassword::append);
+
+        return finalPassword.toString();
     }
 
-    // Generate token reset password and send email
-    public void generateResetPasswordToken(String email) {
-        Account account = accountRepo.findByEmail(email) .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống."));
-
-        String token = UUID.randomUUID().toString();
-        account.setVerificationToken(token);
-        account.setTokenExpiry(LocalDateTime.now().plusMinutes(tokenExpiryMinutes));
-
-        accountRepo.save(account);
-        sendResetPasswordEmail(account);
-    }
-
-    // Send email reset password
-    public void sendResetPasswordEmail(Account account) {
+    /**
+     * Gửi email thông báo mật khẩu mới
+     */
+    private void sendNewPasswordEmail(Account account, String newPassword) {
         try {
-            String subject = "[LMS] Đặt lại mật khẩu";
-            String resetUrl = baseUrl + "/reset-password/" + account.getVerificationToken();
-
+            String subject = "[LMS] Mật khẩu mới của bạn";
             String body = "<p>Xin chào <b>" + account.getFullName() + "</b>,</p>"
-                    + "<p>Bạn đã yêu cầu đặt lại mật khẩu. Hãy nhấn vào liên kết bên dưới:</p>"
-                    + "<p><a href=\"" + resetUrl + "\" style=\"display:inline-block;padding:10px 15px;"
-                    + "background-color:#007bff;color:#fff;text-decoration:none;border-radius:5px;\">"
-                    + "Đặt lại mật khẩu</a></p>"
-                    + "<p>Liên kết sẽ hết hạn trong " + tokenExpiryMinutes + " phút.</p>";
+                    + "<p>Bạn vừa yêu cầu đặt lại mật khẩu.</p>"
+                    + "<p><b>Mật khẩu mới của bạn là:</b></p>"
+                    + "<div style='background:#f3f3f3;padding:10px;border-radius:5px;"
+                    + "font-size:16px;font-weight:bold;text-align:center;'>"
+                    + newPassword + "</div>"
+                    + "<p>Vui lòng đăng nhập và thay đổi mật khẩu sau khi vào hệ thống.</p>"
+                    + "<p>Trân trọng,<br><b>Đội ngũ LMS</b></p>";
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -301,9 +305,10 @@ public class AccountService {
             helper.setText(body, true);
 
             mailSender.send(message);
+
         } catch (Exception e) {
-            logger.error("Send reset email failed", e);
-            throw new RuntimeException("Không thể gửi email đặt lại mật khẩu.");
+            logger.error("Gửi email mật khẩu mới thất bại", e);
+            throw new RuntimeException("Không thể gửi email mật khẩu mới. Vui lòng thử lại sau.");
         }
     }
 
@@ -324,23 +329,6 @@ public class AccountService {
         existing.setAddress(updatedAccount.getAddress());
 
         return accountRepo.save(existing);
-    }
-
-
-
-    public void resetPassword(String token, String newPassword) {
-        Account account = accountRepo.findByVerificationToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid or expired token"));
-
-        if (account.getTokenExpiry() == null || account.getTokenExpiry().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Reset link has expired");
-        }
-
-        // Cập nhật mật khẩu
-        account.setPassword(passwordEncoder.encode(newPassword));
-        account.setVerificationToken(null);
-        account.setTokenExpiry(null);
-        accountRepo.save(account);
     }
 
     public Account registerSeller(String email) {
