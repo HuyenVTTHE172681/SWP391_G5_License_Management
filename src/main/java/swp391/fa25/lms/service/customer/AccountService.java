@@ -1,7 +1,6 @@
-package swp391.fa25.lms.service.used;
+package swp391.fa25.lms.service.customer;
 
 import jakarta.transaction.Transactional;
-import org.apache.coyote.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
