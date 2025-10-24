@@ -39,30 +39,30 @@ public class ToolService {
     }
 
     /**
-     * ✅ Update tool info + quantity validation
+     *  Update tool info + quantity validation
      */
     @Transactional
     public Tool updateTool(Long id, Tool newToolData, Account seller) {
         Tool tool = toolRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tool not found"));
 
-        // 1️⃣ Kiểm tra xem tool này có thuộc seller đang đăng nhập không
+        // 1 Kiểm tra xem tool này có thuộc seller đang đăng nhập không
         if (!tool.getSeller().getAccountId().equals(seller.getAccountId())) {
             throw new RuntimeException("You are not allowed to edit this tool");
         }
 
-        // 2️⃣ Đếm số lượng token key đã cấp (đã dùng)
+        // 2 Đếm số lượng token key đã cấp (đã dùng)
         long usedTokenCount = licenseAccountRepo.countByToolToolIdAndLoginMethod(
                 id, LicenseAccount.LoginMethod.TOKEN
         );
 
-        // 3️⃣ Kiểm tra quantity hợp lệ
+        // 3 Kiểm tra quantity hợp lệ
         Integer newQuantity = newToolData.getQuantity();
         if (newQuantity != null && newQuantity < usedTokenCount) {
             throw new RuntimeException("Quantity cannot be less than the number of used token keys (" + usedTokenCount + ")");
         }
 
-        // 4️⃣ Cập nhật các field
+        // 4 Cập nhật các field
         tool.setToolName(newToolData.getToolName());
         tool.setDescription(newToolData.getDescription());
         tool.setImage(newToolData.getImage());
@@ -75,12 +75,19 @@ public class ToolService {
 
         return toolRepo.save(tool);
     }
+    @Transactional
+    public void toggleToolStatus(Long id, Account seller) {
+        Tool tool = toolRepo.findByToolIdAndSeller(id, seller)
+                .orElseThrow(() -> new RuntimeException("Tool not found or unauthorized"));
 
-    public void deleteTool(Long id, Account seller) {
-        Tool tool = toolRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tool not found"));
-        toolFileRepository.deleteAllByToolToolId(id);
-        toolRepo.delete(tool);
+        if (tool.getStatus() == Tool.Status.PUBLISHED) {
+            tool.setStatus(Tool.Status.DEACTIVE);
+        } else {
+            tool.setStatus(Tool.Status.PUBLISHED);
+        }
+
+        tool.setUpdatedAt(LocalDateTime.now());
+        toolRepo.save(tool);
     }
 
     public List<Tool> getToolsBySeller(Account seller) {
@@ -91,4 +98,5 @@ public class ToolService {
         return toolRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tool not found"));
     }
+
 }

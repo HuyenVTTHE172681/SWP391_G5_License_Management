@@ -9,11 +9,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import swp391.fa25.lms.config.CustomerUserDetail;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.service.used.CategoryService;
-import swp391.fa25.lms.service.used.ToolService;
+import swp391.fa25.lms.service.customer.CategoryService;
+import swp391.fa25.lms.service.customer.ToolService;
 
 @Controller
 public class HomePageController {

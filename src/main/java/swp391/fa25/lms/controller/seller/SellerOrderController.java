@@ -39,7 +39,7 @@ public class SellerOrderController {
         Account seller = getCurrentSeller(principal);
         List<CustomerOrder> orders = orderRepo.findByToolSeller(seller);
 
-        // 🔹 Lọc theo keyword
+        // Lọc theo keyword
         if (keyword != null && !keyword.isBlank()) {
             String kw = keyword.toLowerCase();
             orders = orders.stream()
@@ -48,14 +48,14 @@ public class SellerOrderController {
                     .toList();
         }
 
-        // 🔹 Lọc theo trạng thái
+        // Lọc theo trạng thái
         if (status != null && !status.isBlank()) {
             orders = orders.stream()
-                    .filter(o -> o.getPaymentStatus().name().equalsIgnoreCase(status))
+                    .filter(o -> o.getOrderStatus().name().equalsIgnoreCase(status))
                     .toList();
         }
 
-        // 🔹 Lọc theo ngày tạo
+        // Lọc theo ngày tạo
         if (from != null) {
             orders = orders.stream()
                     .filter(o -> !o.getCreatedAt().toLocalDate().isBefore(from))
@@ -67,7 +67,7 @@ public class SellerOrderController {
                     .toList();
         }
 
-        // 🔹 Sắp xếp
+        // Sắp xếp
         Comparator<CustomerOrder> cmp = switch (sort) {
             case "oldest" -> Comparator.comparing(CustomerOrder::getCreatedAt);
             case "highest" -> Comparator.comparing(CustomerOrder::getPrice).reversed();
@@ -76,13 +76,13 @@ public class SellerOrderController {
         };
         orders = orders.stream().sorted(cmp).toList();
 
-        // 🔹 Tổng doanh thu
+        // Tổng doanh thu
         double totalRevenue = orders.stream()
-                .filter(o -> o.getPaymentStatus() == CustomerOrder.PaymentStatus.PAID)
+                .filter(o -> o.getOrderStatus() == CustomerOrder.OrderStatus.SUCCESS)
                 .mapToDouble(CustomerOrder::getPrice)
                 .sum();
 
-        // 🔹 Gửi dữ liệu ra view
+        // Gửi dữ liệu ra view
         model.addAttribute("orders", orders);
         model.addAttribute("totalRevenue", totalRevenue);
         model.addAttribute("keyword", keyword);

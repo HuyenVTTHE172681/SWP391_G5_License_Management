@@ -49,10 +49,9 @@ public class Tool {
     @JsonManagedReference(value = "tool-category")
     private Category category;
 
-
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED }
+    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, DEACTIVE }
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -64,8 +63,20 @@ public class Tool {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @Column(columnDefinition = "NVARCHAR(255)")
+    private String note;
+
     @Column(nullable = false)
     private Integer quantity = 0;
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
     public Tool() {
     }
 
@@ -198,6 +209,14 @@ public class Tool {
 
     public void setTotalReviews(Long totalReviews) {
         this.totalReviews = totalReviews;
+    }
+
+    public Set<String> getLoginMethods() {
+        return loginMethods;
+    }
+
+    public void setLoginMethods(Set<String> loginMethods) {
+        this.loginMethods = loginMethods;
     }
 
     public Integer getQuantity() {

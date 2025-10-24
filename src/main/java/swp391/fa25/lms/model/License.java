@@ -46,6 +46,16 @@ public class License {
         this.createdAt = createdAt;
     }
 
+    public License(String name, Tool tool, Integer durationDays, Double price, List<CustomerOrder> orders, LocalDateTime createdAt) {
+        this.name = name;
+        this.tool = tool;
+        this.durationDays = durationDays;
+        this.price = price;
+        this.customerOrders = orders;
+        this.createdAt = createdAt;
+    }
+
+
     public Long getLicenseId() {
         return licenseId;
     }

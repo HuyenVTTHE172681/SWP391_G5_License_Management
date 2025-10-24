@@ -25,11 +25,13 @@ public class RoleDataInitializer implements CommandLineRunner {
     @Autowired
     private ToolRepository toolRepo;
     @Autowired
-    private FeedBackRepo feedbackRepo;
+    private FeedbackRepository feedbackRepo;
     @Autowired
     private FavoriteRepository favoriteRepository;
     @Autowired
     private LicenseToolRepository licenseRepo;
+    @Autowired
+    private WalletRepository walletRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -177,7 +179,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t1.setImage("/images/tools/cafe.png");
             t1.setSeller(seller1);
             t1.setCategory(categories.get(0)); // Email
-            t1.setStatus(Tool.Status.APPROVED);
+            t1.setStatus(Tool.Status.PUBLISHED);
             t1.setCreatedAt(LocalDateTime.now().minusDays(5));
 
             Tool t2 = new Tool();
@@ -186,7 +188,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t2.setImage("/images/tools/copy_high_image.jpg");
             t2.setSeller(seller2);
             t2.setCategory(categories.get(2)); // Tăng tương tác
-            t2.setStatus(Tool.Status.APPROVED);
+            t2.setStatus(Tool.Status.PUBLISHED);
             t2.setCreatedAt(LocalDateTime.now().minusDays(7));
 
             Tool t3 = new Tool();
@@ -195,7 +197,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t3.setImage("/images/tools/hinh-shin-de-thuong-1.jpg");
             t3.setSeller(seller1);
             t3.setCategory(categories.get(3)); // SEO
-            t3.setStatus(Tool.Status.APPROVED);
+            t3.setStatus(Tool.Status.PUBLISHED);
             t3.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t4 = new Tool();
@@ -204,7 +206,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t4.setImage("/images/tools/seo1.png");
             t4.setSeller(seller1);
             t4.setCategory(categories.get(3)); // SEO
-            t4.setStatus(Tool.Status.APPROVED);
+            t4.setStatus(Tool.Status.PUBLISHED);
             t4.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t5 = new Tool();
@@ -213,7 +215,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t5.setImage("/images/tools/seo1.png");
             t5.setSeller(seller1);
             t5.setCategory(categories.get(3)); // SEO
-            t5.setStatus(Tool.Status.APPROVED);
+            t5.setStatus(Tool.Status.PUBLISHED);
             t5.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t6 = new Tool();
@@ -222,7 +224,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t6.setImage("/images/tools/seo1.png");
             t6.setSeller(seller1);
             t6.setCategory(categories.get(3)); // SEO
-            t6.setStatus(Tool.Status.APPROVED);
+            t6.setStatus(Tool.Status.PUBLISHED);
             t6.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t7 = new Tool();
@@ -231,7 +233,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t7.setImage("/images/tools/seo1.png");
             t7.setSeller(seller1);
             t7.setCategory(categories.get(3)); // SEO
-            t7.setStatus(Tool.Status.APPROVED);
+            t7.setStatus(Tool.Status.PUBLISHED);
             t7.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t8 = new Tool();
@@ -240,7 +242,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t8.setImage("/images/tools/seo1.png");
             t8.setSeller(seller1);
             t8.setCategory(categories.get(3)); // SEO
-            t8.setStatus(Tool.Status.APPROVED);
+            t8.setStatus(Tool.Status.PUBLISHED);
             t8.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t9 = new Tool();
@@ -249,7 +251,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t9.setImage("/images/tools/seo1.png");
             t9.setSeller(seller1);
             t9.setCategory(categories.get(3)); // SEO
-            t9.setStatus(Tool.Status.APPROVED);
+            t9.setStatus(Tool.Status.PUBLISHED);
             t9.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t10 = new Tool();
@@ -258,10 +260,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t10.setImage("/images/tools/seo1.png");
             t10.setSeller(seller1);
             t10.setCategory(categories.get(3)); // SEO
-            t10.setStatus(Tool.Status.APPROVED);
+            t10.setStatus(Tool.Status.PUBLISHED);
             t10.setCreatedAt(LocalDateTime.now().minusDays(2));
-
-
 
             toolRepo.saveAll(Arrays.asList(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10));
         } else {
@@ -297,12 +297,19 @@ public class RoleDataInitializer implements CommandLineRunner {
 
             Feedback f4 = new Feedback();
             f4.setAccount(customer);
-            f4.setTool(tools.get(0));
-            f4.setRating(3);
+            f4.setTool(tools.get(2));
+            f4.setRating(4);
             f4.setComment("Kho su dung");
             f4.setCreatedAt(LocalDateTime.now().minusDays(8));
 
-            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3, f4));
+            Feedback f5 = new Feedback();
+            f5.setAccount(customer);
+            f5.setTool(tools.get(2));
+            f5.setRating(5);
+            f5.setComment("Kho su dung");
+            f5.setCreatedAt(LocalDateTime.now().minusDays(8));
+
+            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3, f4, f5));
         } else {
             System.out.println("Feedback already exist, skipping initialization.");
         }
@@ -330,48 +337,83 @@ public class RoleDataInitializer implements CommandLineRunner {
         if (licenseRepo.count() == 0) {
             List<Tool> tools = toolRepo.findAll();
 
-            License l1 = new License();
-            l1.setName("Gói dùng thử 7 ngày");
-            l1.setTool(tools.get(0)); // Tool Email Bulk Sender Pro
-            l1.setDurationDays(7);
-            l1.setPrice(0.0);
-            l1.setCreatedAt(LocalDateTime.now().minusDays(3));
+            // Tool 1
+            License l1 = new License("Gói dùng thử 7 ngày", tools.get(0), 7, 0.0, null, LocalDateTime.now().minusDays(3));
+            License l2 = new License("Gói 1 tháng", tools.get(0), 30, 10000.0, null, LocalDateTime.now().minusDays(2));
+            License l3 = new License("Gói 6 tháng", tools.get(0), 180, 12000.0, null, LocalDateTime.now().minusDays(1));
 
-            License l2 = new License();
-            l2.setName("Gói 1 tháng");
-            l2.setTool(tools.get(0));
-            l2.setDurationDays(30);
-            l2.setPrice(9.99);
-            l2.setCreatedAt(LocalDateTime.now().minusDays(2));
+            // Tool 2
+            License l4 = new License("Gói cơ bản", tools.get(1), 30, 10000.0, null, LocalDateTime.now().minusDays(3));
+            License l5 = new License("Gói nâng cao", tools.get(1), 180, 16000.0, null, LocalDateTime.now().minusDays(2));
+            License l6 = new License("Gói trọn đời", tools.get(1), null, 99.99, null, LocalDateTime.now().minusDays(1));
 
-            License l3 = new License();
-            l3.setName("Gói 6 tháng");
-            l3.setTool(tools.get(0));
-            l3.setDurationDays(180);
-            l3.setPrice(49.99);
-            l3.setCreatedAt(LocalDateTime.now().minusDays(1));
+            // Tool 3
+            License l7 = new License("Gói dùng thử 14 ngày", tools.get(2), 14, 0.0, null, LocalDateTime.now().minusDays(2));
+            License l8 = new License("Gói 1 năm", tools.get(2), 365, 79.99, null, LocalDateTime.now().minusDays(1));
 
-            License l4 = new License();
-            l4.setName("Gói trọn đời");
-            l4.setTool(tools.get(1)); // Tool Auto Like & Share Facebook
-            l4.setDurationDays(null); // Không giới hạn
-            l4.setPrice(99.99);
-            l4.setCreatedAt(LocalDateTime.now().minusDays(1));
+            // Tool 4
+            License l9 = new License("Gói cơ bản", tools.get(3), 30, 14.99, null, LocalDateTime.now().minusDays(2));
+            License l10 = new License("Gói trọn đời", tools.get(3), null, 69.99, null, LocalDateTime.now().minusDays(1));
 
-            License l5 = new License();
-            l5.setName("Gói Premium 1 năm");
-            l5.setTool(tools.get(2)); // SEO Keyword Analyzer
-            l5.setDurationDays(365);
-            l5.setPrice(79.99);
-            l5.setCreatedAt(LocalDateTime.now().minusDays(1));
+            // Tool 5
+            License l11 = new License("Gói dùng thử", tools.get(4), 7, 0.0, null, LocalDateTime.now().minusDays(2));
+            License l12 = new License("Gói cao cấp", tools.get(4), 365, 89.99, null, LocalDateTime.now().minusDays(1));
 
-            licenseRepo.saveAll(Arrays.asList(l1, l2, l3, l4, l5));
+            // Tool 6
+            License l13 = new License("Gói Standard", tools.get(5), 30, 24.99, null, LocalDateTime.now().minusDays(2));
+            License l14 = new License("Gói Pro", tools.get(5), 180, 59.99, null, LocalDateTime.now().minusDays(1));
+
+            // Tool 7
+            License l15 = new License("Gói cơ bản", tools.get(6), 30, 12.99, null, LocalDateTime.now().minusDays(2));
+            License l16 = new License("Gói trọn đời", tools.get(6), null, 99.99, null, LocalDateTime.now().minusDays(1));
+
+            // Tool 8
+            License l17 = new License("Gói học sinh/sinh viên", tools.get(7), 90, 19.99, null, LocalDateTime.now().minusDays(2));
+            License l18 = new License("Gói doanh nghiệp", tools.get(7), 365, 129.99, null, LocalDateTime.now().minusDays(1));
+
+            // Tool 9
+            License l19 = new License("Gói cơ bản", tools.get(8), 30, 15.99, null, LocalDateTime.now().minusDays(2));
+            License l20 = new License("Gói trọn đời", tools.get(8), null, 99.99, null, LocalDateTime.now().minusDays(1));
+
+            // Tool 10
+            License l21 = new License("Gói Premium", tools.get(9), 365, 149.99, null, LocalDateTime.now().minusDays(1));
+            License l22 = new License("Gói dùng thử", tools.get(9), 14, 0.0, null, LocalDateTime.now().minusDays(3));
+
+            licenseRepo.saveAll(Arrays.asList(
+                    l1, l2, l3, l4, l5, l6, l7, l8, l9, l10,
+                    l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22
+            ));
+
             System.out.println("Default licenses have been initialized.");
         } else {
             System.out.println("Licenses already exist, skipping initialization.");
         }
 
+        // ============ WALLET ============
+        // Tạo ví mặc định cho tất cả Seller (nếu chưa có)
+        List<Account> allSellers = accountRepo.findAll()
+                .stream()
+                .filter(acc -> acc.getRole() != null && acc.getRole().getRoleName() == RoleName.SELLER)
+                .toList();
+
+        for (Account seller : allSellers) {
+            // Kiểm tra xem seller đã có ví chưa
+            boolean hasWallet = walletRepository.findByAccount(seller).isPresent();
+            if (!hasWallet) {
+                Wallet wallet = new Wallet();
+                wallet.setAccount(seller);
+                wallet.setBalance(java.math.BigDecimal.ZERO);
+                wallet.setCurrency("VND");
+                wallet.setUpdatedAt(LocalDateTime.now());
+                walletRepository.save(wallet);
+                System.out.println("Created default wallet for seller: " + seller.getEmail());
+            }
+        }
+
+        System.out.println("Wallet initialization completed successfully.");
+    }
+
     }
 
 
-}
+

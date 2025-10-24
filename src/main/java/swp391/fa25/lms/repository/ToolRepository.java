@@ -2,6 +2,8 @@ package swp391.fa25.lms.repository;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +13,9 @@ import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
 
 import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface ToolRepository extends JpaRepository<Tool, Long> {
@@ -38,5 +43,15 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
 
     List<Tool> findByToolNameContainingIgnoreCase(String keyword);
     List<Tool> findBySeller(Account seller);
+    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
+
+
+    List<Tool> findByStatusNot(Tool.Status status);
+
+    // Lấy Tool theo id status PUBLISHED
+    @EntityGraph(attributePaths = {"licenses", "seller", "category"})
+    Optional<Tool> findByToolIdAndStatus(Long toolId, Tool.Status status);
+    Optional<Tool> findById(Long toolId);
+
     List<Tool> findByStatusNot(Tool.Status status);
 }

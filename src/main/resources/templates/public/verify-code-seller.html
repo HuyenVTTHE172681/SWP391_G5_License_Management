@@ -34,10 +34,13 @@
             <p th:if="${errorMessage}" class="text-danger text-center fw-semibold" th:text="${errorMessage}"></p>
             <p th:if="${successMessage}" class="text-success text-center fw-semibold" th:text="${successMessage}"></p>
 
-            <form th:action="@{/verify}" method="post" class="text-center">
+            <form th:action="@{/verifyCode}" method="post" class="text-center">
+                <input type="hidden" name="email" th:value="${email}">
+
                 <div class="mb-4">
                     <input type="text" name="code" maxlength="6" class="form-control" placeholder="••••••" required>
                 </div>
+
                 <div class="d-grid">
                     <button type="submit" class="btn btn-dark btn-custom">Xác minh</button>
                 </div>
@@ -60,6 +63,5 @@
             }, 5000);
         }
     </script>
-
 </body>
 </html>

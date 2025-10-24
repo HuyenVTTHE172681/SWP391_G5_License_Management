@@ -125,45 +125,6 @@
         }
     }
 
-    // Xử lý validation phía client
-    document.getElementById('loginForm').addEventListener('submit', function (event) {
-        let isValid = true;
-        const email = document.getElementById('email');
-        const password = document.getElementById('password');
-        const emailError = document.getElementById('emailError');
-        const passwordError = document.getElementById('passwordError');
-
-        // Reset lỗi cũ
-        emailError.textContent = '';
-        passwordError.textContent = '';
-
-        // Regex kiểm tra email hợp lệ
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        // Kiểm tra email
-        if (!email.value.trim()) {
-            emailError.textContent = 'Vui lòng nhập email.';
-            isValid = false;
-        } else if (!emailPattern.test(email.value)) {
-            emailError.textContent = 'Định dạng email không hợp lệ.';
-            isValid = false;
-        }
-
-        // Kiểm tra password
-        if (!password.value.trim()) {
-            passwordError.textContent = 'Vui lòng nhập mật khẩu.';
-            isValid = false;
-        } else if (password.value.length < 6) {
-            passwordError.textContent = 'Mật khẩu phải có ít nhất 6 ký tự.';
-            isValid = false;
-        }
-
-        // Ngăn form submit nếu có lỗi
-        if (!isValid) {
-            event.preventDefault();
-        }
-    });
-
     document.addEventListener("DOMContentLoaded", function() {
         const usernameInput = document.getElementById("username");
         const passwordInput = document.getElementById("password");

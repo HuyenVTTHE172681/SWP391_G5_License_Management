@@ -12,62 +12,59 @@ public class CustomerOrder {
     @Column(name = "order_id")
     private Long orderId;
 
-    // 🔹 Người mua (customer)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
-    private Account account;
+    private Account account; // buyer
 
-    // 🔹 Tool mà customer mua (thuộc về một seller)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "tool_id", nullable = false)
     private Tool tool;
 
-    // 🔹 License mà buyer chọn
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "license_id", nullable = false)
     private License license;
 
-    // 🔹 Giá tại thời điểm mua
     @Column(nullable = false)
     private Double price;
 
-    // 🔹 Phương thức thanh toán
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false)
-    private PaymentMethod paymentMethod = PaymentMethod.QR_CODE;
-    public enum PaymentMethod {
-        QR_CODE, BANK_TRANSFER, PAYPAL
-    }
+    @Column(name = "order_status", nullable = false)
+    private OrderStatus orderStatus;
+    public enum OrderStatus { PENDING, SUCCESS, FAILED }
 
-    // 🔹 Trạng thái thanh toán
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status", nullable = false)
-    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
-    public enum PaymentStatus {
-        PENDING, PAID, FAILED, CANCELLED
-    }
+    private PaymentMethod paymentMethod;
+    public enum PaymentMethod { WALLET, BANK, PAYPAL }
 
-    // 🔹 Đường dẫn / ảnh QR code (nếu dùng thanh toán QR)
-    @Column(name = "qr_code_url")
-    private String qrCodeUrl;
+    @ManyToOne
+    @JoinColumn(name = "transaction_id")
+    private WalletTransaction transaction;
 
-    // 🔹 Mã giao dịch hoặc reference từ bên thanh toán (nếu có)
-    @Column(name = "payment_ref")
-    private String paymentRef;
-
-    // 🔹 Thời điểm tạo và thanh toán
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
-    @Column(name = "paid_at")
-    private LocalDateTime paidAt;
-
-    // 🔹 LicenseAccount được cấp sau khi thanh toán thành công
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private LicenseAccount licenseAccount;
 
-    // ======= Constructors =======
-    public CustomerOrder() {}
+    // Add fields để lưu trạng thái hiển thị trong View
+    @Transient
+    private boolean canFeedbackOrReport;
+
+    public CustomerOrder() {
+    }
+
+    public CustomerOrder(Long orderId, Account account, Tool tool, License license, Double price, OrderStatus orderStatus, PaymentMethod paymentMethod, WalletTransaction transaction, LocalDateTime createdAt, LicenseAccount licenseAccount) {
+        this.orderId = orderId;
+        this.account = account;
+        this.tool = tool;
+        this.license = license;
+        this.price = price;
+        this.orderStatus = orderStatus;
+        this.paymentMethod = paymentMethod;
+        this.transaction = transaction;
+        this.createdAt = createdAt;
+        this.licenseAccount = licenseAccount;
+    }
 
     public CustomerOrder(Account account, Tool tool, License license, Double price) {
         this.account = account;
@@ -77,47 +74,94 @@ public class CustomerOrder {
         this.createdAt = LocalDateTime.now();
     }
 
-    // ======= Helper =======
-    public boolean isPaid() {
-        return this.paymentStatus == PaymentStatus.PAID;
+    public boolean isCanFeedbackOrReport() {
+        return canFeedbackOrReport;
     }
 
-    // ======= Getters & Setters =======
-    public Long getOrderId() { return orderId; }
+    public void setCanFeedbackOrReport(boolean canFeedbackOrReport) {
+        this.canFeedbackOrReport = canFeedbackOrReport;
+    }
 
-    public Account getAccount() { return account; }
-    public void setAccount(Account account) { this.account = account; }
+    public Long getOrderId() {
+        return orderId;
+    }
 
-    public Tool getTool() { return tool; }
-    public void setTool(Tool tool) { this.tool = tool; }
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
 
-    public License getLicense() { return license; }
-    public void setLicense(License license) { this.license = license; }
+    public Account getAccount() {
+        return account;
+    }
 
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
+    public void setAccount(Account account) {
+        this.account = account;
+    }
 
-    public PaymentMethod getPaymentMethod() { return paymentMethod; }
-    public void setPaymentMethod(PaymentMethod paymentMethod) { this.paymentMethod = paymentMethod; }
+    public Tool getTool() {
+        return tool;
+    }
 
-    public PaymentStatus getPaymentStatus() { return paymentStatus; }
-    public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
+    public void setTool(Tool tool) {
+        this.tool = tool;
+    }
 
-    public String getQrCodeUrl() { return qrCodeUrl; }
-    public void setQrCodeUrl(String qrCodeUrl) { this.qrCodeUrl = qrCodeUrl; }
+    public License getLicense() {
+        return license;
+    }
 
-    public String getPaymentRef() { return paymentRef; }
-    public void setPaymentRef(String paymentRef) { this.paymentRef = paymentRef; }
+    public void setLicense(License license) {
+        this.license = license;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Double getPrice() {
+        return price;
+    }
 
-    public LocalDateTime getPaidAt() { return paidAt; }
-    public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
+    public void setPrice(Double price) {
+        this.price = price;
+    }
 
-    public LicenseAccount getLicenseAccount() { return licenseAccount; }
+    public OrderStatus getOrderStatus() {
+        return orderStatus;
+    }
+
+    public void setOrderStatus(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
+    }
+
+
+    public PaymentMethod getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public WalletTransaction getTransaction() {
+        return transaction;
+    }
+
+    public void setTransaction(WalletTransaction transaction) {
+        this.transaction = transaction;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LicenseAccount getLicenseAccount() {
+        return licenseAccount;
+    }
+
     public void setLicenseAccount(LicenseAccount licenseAccount) {
         this.licenseAccount = licenseAccount;
-        if (licenseAccount != null) licenseAccount.setOrder(this);
     }
 }
+
+

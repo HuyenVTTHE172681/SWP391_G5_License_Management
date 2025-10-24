@@ -12,7 +12,7 @@ import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.model.ToolFile;
 import swp391.fa25.lms.service.moderator.ToolFileService;
 import swp391.fa25.lms.service.moderator.ToolService;
-import swp391.fa25.lms.service.used.CategoryService;
+import swp391.fa25.lms.service.customer.CategoryService;
 
 import java.time.LocalDateTime;
 import java.util.List;

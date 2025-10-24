@@ -12,11 +12,15 @@ import swp391.fa25.lms.model.Tool;
 import java.util.Optional;
 
 @Repository
-public interface FeedBackRepo extends JpaRepository<Feedback, Long> {
-    // Tinh AVG rating
+public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
+    public List<Feedback> findByTool(Tool tool);
+
+    // Tính trung bình rating
+    Long countByTool(Tool tool);
     @Query("SELECT AVG(f.rating) FROM Feedback f WHERE f.tool.toolId = :toolId")
     Double findAverageRatingByTool(@Param("toolId") Long toolId);
-    Long countByTool(Tool tool);
+
+    // Lấy feedback theo tool (dùng paging)
     Page<Feedback> findByTool(Tool tool, Pageable pageable);
 
     long countByTool_ToolIdAndAccount_AccountId(Long toolId, Long accountId);
@@ -32,4 +36,7 @@ public interface FeedBackRepo extends JpaRepository<Feedback, Long> {
     @Modifying
     @Query("DELETE FROM Feedback f WHERE f.feedbackId = :fid AND f.account.accountId = :ownerId")
     int deleteByIdAndOwner(@Param("fid") Long feedbackId, @Param("ownerId") Long ownerId);
+
+    @Query("SELECT COUNT(f) FROM Feedback f WHERE f.tool.toolId = :toolId")
+    Long countByToolId(Long toolId);
 }

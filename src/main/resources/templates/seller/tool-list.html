@@ -11,16 +11,19 @@
             font-family: 'Poppins', sans-serif;
             background-color: #f9f9fb;
         }
+
         nav.navbar {
             background: rgba(0, 0, 0, 0.4);
             position: absolute;
             width: 100%;
             z-index: 1000;
         }
+
         nav a.nav-link, .navbar-brand {
             color: white !important;
             font-weight: 500;
         }
+
         .hero {
             background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
             url('https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
@@ -31,6 +34,7 @@
             color: white;
             text-align: center;
         }
+
         .tool-card {
             background: white;
             border-radius: 16px;
@@ -38,16 +42,22 @@
             overflow: hidden;
             transition: all 0.3s ease;
         }
+
         .tool-card:hover {
             transform: translateY(-6px);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
         }
+
         .tool-card img {
             width: 100%;
             height: 180px;
             object-fit: cover;
         }
-        .tool-card .card-body { padding: 20px; }
+
+        .tool-card .card-body {
+            padding: 20px;
+        }
+
         .btn-add {
             background-color: #4a63ff;
             color: white;
@@ -55,6 +65,7 @@
             padding: 10px 22px;
             font-weight: 500;
         }
+
         .btn-delete {
             background-color: #dc2626;
             color: white;
@@ -63,6 +74,7 @@
             border-radius: 6px;
             cursor: pointer;
         }
+
         .quantity-tag {
             background-color: #e0e7ff;
             color: #1e3a8a;
@@ -71,12 +83,14 @@
             padding: 2px 8px;
             font-weight: 600;
         }
+
         footer {
             background: #f8f9fa;
             padding: 25px 0;
             text-align: center;
             color: #777;
         }
+
         .hero a:hover {
             color: #ffd700;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
@@ -136,7 +150,8 @@
                     <label class="form-label fw-semibold">Category</label>
                     <select id="category" class="form-select">
                         <option value="">All</option>
-                        <option th:each="c : ${categories}" th:value="${c.categoryId}" th:text="${c.categoryName}"></option>
+                        <option th:each="c : ${categories}" th:value="${c.categoryId}"
+                                th:text="${c.categoryName}"></option>
                     </select>
                 </div>
 
@@ -233,7 +248,27 @@
                             <p class="fw-semibold text-primary" style="white-space: pre-line">${price}</p>
                             <div class="d-flex justify-content-between mt-3">
                                 <a href="/seller/tools/edit/${tool.toolId}" class="btn btn-sm btn-outline-primary">Edit</a>
-                                <button class="btn-delete" onclick="deleteTool(${tool.toolId})">Delete</button>
+                             <form action="/seller/tools/toggle/${tool.toolId}" method="post" style="display:inline;">
+    ${
+                tool.status === 'PUBLISH'
+                    ? `
+            <button type="submit"
+                class="btn btn-sm"
+                style="background-color:#dc2626; color:white; border:none; padding:6px 12px; border-radius:6px;"
+                onclick="return confirmToggle(event, 'deactivate')">
+                Deactivate
+            </button>
+          `
+                    : `
+            <button type="button"
+                class="btn btn-sm"
+                style="background-color:#9ca3af; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:not-allowed;"
+                disabled>
+                ${tool.status === 'DEACTIVE' ? 'Deactivated' : tool.status}
+            </button>
+          `
+            }
+</form>
                             </div>
                         </div>
                     </div>
@@ -241,7 +276,6 @@
             `);
         });
     }
-
     function renderPagination(current, total) {
         pagination.innerHTML = '';
         if (total <= 1) return;
@@ -257,22 +291,35 @@
         currentPage = 0;
         loadTools(0);
     }
+    document.addEventListener("DOMContentLoaded", function () {
+        window.confirmToggle = function (event, action) {
+            if (event) event.preventDefault();
 
-    function deleteTool(id) {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "This will permanently delete the tool!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '/seller/tools/delete/' + id;
+            const button = event ? event.target.closest('button') : null;
+            const form = button ? button.closest('form') : null;
+
+            if (!form) {
+                console.error("Không tìm thấy form để submit.");
+                return false;
             }
-        });
-    }
+
+            Swal.fire({
+                title: `Are you sure you want to ${action} this tool?`,
+                text: `This will ${action === 'deactivate' ? 'hide it from the dashboard' : 'make it visible again.'}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: `Yes, ${action} it!`
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+
+            return false;
+        };
+    });
 
     loadTools();
 </script>

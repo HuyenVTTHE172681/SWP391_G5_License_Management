@@ -14,29 +14,21 @@ public class LicenseAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long licenseAccountId;
 
-    @Column(nullable = true)
+    @NotBlank(message = "User name can not blank")
+    @Column(nullable = false)
     private String username;
-    @Column(nullable = true)
+
+    @NotBlank(message = "Password name cannot be blank")
+    @Column(nullable = false)
     private String password;
 
     @ManyToOne
     @JoinColumn(name = "license_id")
     private License license;
 
-    // ===== NEW FIELDS =====
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private LoginMethod loginMethod = LoginMethod.USER_PASSWORD;
-
-    @Column(unique = true)
-    private String token;
-
-    private Boolean used = false;
-    private LocalDateTime activatedAt;
-
     @OneToOne
-    @JoinColumn(name = "order_id", unique = true, nullable = true)
-    private CustomerOrder order;
+    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    private CustomerOrder order; // mỗi order sinh ra 1 license account
 
     @ManyToOne
     @JoinColumn(name = "tool_id")
@@ -48,7 +40,6 @@ public class LicenseAccount {
     @Enumerated(EnumType.STRING)
     private Status status;
     public enum Status { ACTIVE, EXPIRED, REVOKED }
-    public enum LoginMethod { USER_PASSWORD, TOKEN }
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
@@ -56,6 +47,36 @@ public class LicenseAccount {
     private String deviceInfo;
     private Integer maxDevices;
 
+    // ===== NEW FIELDS =====
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private LoginMethod loginMethod = LoginMethod.USER_PASSWORD;
+    public enum LoginMethod { USER_PASSWORD, TOKEN }
+
+    @Column(unique = true)
+    private String token;
+
+    private Boolean used = false;
+    private LocalDateTime activatedAt;
+
+    public LicenseAccount() {
+    }
+
+    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, Tool tool, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime lastLogin, String deviceInfo, Integer maxDevices) {
+        this.licenseAccountId = licenseAccountId;
+        this.username = username;
+        this.password = password;
+        this.license = license;
+        this.order = order;
+        this.tool = tool;
+        this.renewAcc = renewAcc;
+        this.status = status;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.lastLogin = lastLogin;
+        this.deviceInfo = deviceInfo;
+        this.maxDevices = maxDevices;
+    }
 
     public Long getLicenseAccountId() {
         return licenseAccountId;
@@ -65,19 +86,19 @@ public class LicenseAccount {
         this.licenseAccountId = licenseAccountId;
     }
 
-    public String getUsername() {
+    public @NotBlank(message = "User name can not blank") String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
+    public void setUsername(@NotBlank(message = "User name can not blank") String username) {
         this.username = username;
     }
 
-    public String getPassword() {
+    public @NotBlank(message = "Password name cannot be blank") String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(@NotBlank(message = "Password name cannot be blank") String password) {
         this.password = password;
     }
 
@@ -193,3 +214,4 @@ public class LicenseAccount {
         this.activatedAt = activatedAt;
     }
 }
+
