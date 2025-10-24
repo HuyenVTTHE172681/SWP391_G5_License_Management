@@ -3,7 +3,6 @@ package swp391.fa25.lms.service.customer;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -172,7 +171,7 @@ public class PaymentService {
             order.setPaymentMethod(CustomerOrder.PaymentMethod.BANK);
             order.setTransaction(tx);
             order.setCreatedAt(LocalDateTime.now());
-            order.setStatus(success ? CustomerOrder.OrderStatus.SUCCESS : CustomerOrder.OrderStatus.FAILED);
+            order.setOrderStatus(success ? CustomerOrder.OrderStatus.SUCCESS : CustomerOrder.OrderStatus.FAILED);
             orderRepository.save(order);
 
             // 4 Nếu thanh toán thành công → tạo license + gửi email

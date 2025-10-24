@@ -12,7 +12,7 @@ import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Role;
 import swp391.fa25.lms.repository.AccountRepository;
 import swp391.fa25.lms.repository.RoleRepository;
-import swp391.fa25.lms.service.used.AccountService;
+import swp391.fa25.lms.service.customer.AccountService;
 
 import java.time.LocalDateTime;
 import java.util.Optional;

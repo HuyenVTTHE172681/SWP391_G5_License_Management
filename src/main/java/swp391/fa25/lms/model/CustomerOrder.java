@@ -27,8 +27,10 @@ public class CustomerOrder {
     @Column(nullable = false)
     private Double price;
 
-    public enum OrderStatus { PENDING, SUCCESS, FAILED }
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", nullable = false)
     private OrderStatus orderStatus;
+    public enum OrderStatus { PENDING, SUCCESS, FAILED }
 
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
@@ -43,6 +45,10 @@ public class CustomerOrder {
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private LicenseAccount licenseAccount;
+
+    // Add fields để lưu trạng thái hiển thị trong View
+    @Transient
+    private boolean canFeedbackOrReport;
 
     public CustomerOrder() {
     }
@@ -66,6 +72,14 @@ public class CustomerOrder {
         this.license = license;
         this.price = price;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public boolean isCanFeedbackOrReport() {
+        return canFeedbackOrReport;
+    }
+
+    public void setCanFeedbackOrReport(boolean canFeedbackOrReport) {
+        this.canFeedbackOrReport = canFeedbackOrReport;
     }
 
     public Long getOrderId() {
@@ -108,13 +122,14 @@ public class CustomerOrder {
         this.price = price;
     }
 
-    public OrderStatus getStatus() {
+    public OrderStatus getOrderStatus() {
         return orderStatus;
     }
 
-    public void setStatus(OrderStatus orderStatus) {
+    public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
     }
+
 
     public PaymentMethod getPaymentMethod() {
         return paymentMethod;

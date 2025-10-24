@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.service.used.CategoryService;
-import swp391.fa25.lms.service.used.ToolService;
+import swp391.fa25.lms.service.customer.CategoryService;
+import swp391.fa25.lms.service.customer.ToolService;
 
 import java.util.Optional;
 
