@@ -62,6 +62,27 @@ public class RegisterSellerController {
                                         @RequestParam String password,
                                         Model model) {
 
+        if(fullName.isEmpty() || email.isEmpty() ||
+                phone.isEmpty() || address.isEmpty() || password.isEmpty()) {
+            model.addAttribute("error", "Vui lòng nhập thông tin");
+            return "public/registerGuestToSeller";
+        }
+
+        if(fullName.matches(".*[@$!%*?&^#()_+=-].*")){
+            model.addAttribute("error", "Tên khách hàng không được có ký tự đặc biệt");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!email.contains("@gmail.com")){
+            model.addAttribute("error", "Vui lòng nhập lại Email");
+            return "public/registerGuestToSeller";
+        }
+
+        if (!phone.matches("^0\\d{9}$")) {
+            model.addAttribute("error", "Số điện thoại không hợp lệ. Vui lòng nhập 10 chữ số và bắt đầu bằng 0.");
+            return "public/registerGuestToSeller";
+        }
+
         Optional<Account> existingOpt = accountRepo.findByEmail(email);
         Account account = existingOpt.orElse(new Account());
 
