@@ -119,7 +119,7 @@ public class ModeratorDashboardController {
             return "redirect:/moderator/uploadRequest";
         }
         tool.setStatus(Tool.Status.APPROVED);
-        tool.setNote(null);
+//        tool.setNote(null);
         tool.setUpdatedAt(LocalDateTime.now());
         toolService.save(tool);
 
@@ -139,7 +139,7 @@ public class ModeratorDashboardController {
         }
 
         tool.setStatus(Tool.Status.REJECTED);
-        tool.setNote(reason);
+//        tool.setNote(reason);
         tool.setUpdatedAt(LocalDateTime.now());
         toolService.save(tool);
 

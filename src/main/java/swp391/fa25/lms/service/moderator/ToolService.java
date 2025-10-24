@@ -68,12 +68,12 @@ public class ToolService {
     public void approveTool(Tool tool) {
         tool.setStatus(Tool.Status.APPROVED);
         tool.setUpdatedAt(LocalDateTime.now());
-        tool.setNote(null);
+//        tool.setNote(null);
         toolRepository.save(tool);
     }
     public void rejectTool(Tool tool, String reason) {
         tool.setStatus(Tool.Status.REJECTED);
-        tool.setNote(reason);
+//        tool.setNote(reason);
         tool.setUpdatedAt(LocalDateTime.now());
         toolRepository.save(tool);
     }
