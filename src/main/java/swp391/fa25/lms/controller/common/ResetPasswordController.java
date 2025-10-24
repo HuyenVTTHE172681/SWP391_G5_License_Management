@@ -91,6 +91,11 @@ public class ResetPasswordController {
             return "public/reset-passwordProfile";
         }
 
+        if(newPassword.contains(" ")){
+            model.addAttribute("error", "Mật khẩu không được có dấu cách");
+            return "public/reset-passwordProfile";
+        }
+
         // Cập nhật mật khẩu mới
         account.setPassword(passwordEncoder.encode(newPassword));
         accountRepository.save(account);
