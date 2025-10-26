@@ -276,22 +276,26 @@ public class ToolController {
                                    @RequestParam(required = false) Long categoryId,
                                    @RequestParam(required = false) Double minPrice,
                                    @RequestParam(required = false) Double maxPrice,
-                                   @RequestParam(required = false, defaultValue = "newest") String sort) {
+                                   @RequestParam(required = false, defaultValue = "newest") String sort,
+                                   @RequestParam(required = false) String status) {
         Account seller = getCurrentSeller(request);
         List<Tool> tools = toolService.getToolsBySeller(seller);
 
+        // 🔍 Tìm theo keyword
         if (q != null && !q.isBlank()) {
             tools = tools.stream()
                     .filter(t -> t.getToolName().toLowerCase().contains(q.toLowerCase()))
                     .collect(Collectors.toList());
         }
 
+        // 🔍 Lọc theo category
         if (categoryId != null) {
             tools = tools.stream()
                     .filter(t -> t.getCategory() != null && t.getCategory().getCategoryId().equals(categoryId))
                     .collect(Collectors.toList());
         }
 
+        // 💰 Lọc theo giá
         if (minPrice != null || maxPrice != null) {
             double min = (minPrice != null) ? minPrice : 0;
             double max = (maxPrice != null) ? maxPrice : Double.MAX_VALUE;
@@ -301,7 +305,20 @@ public class ToolController {
                             .stream().anyMatch(l -> l.getPrice() >= min && l.getPrice() <= max))
                     .collect(Collectors.toList());
         }
+        // 🟡 Lọc theo status
+        if (status != null && !status.isBlank()) {
+            try {
+                Tool.Status st = Tool.Status.valueOf(status.toUpperCase());
+                tools = tools.stream()
+                        .filter(t -> t.getStatus() == st)
+                        .collect(Collectors.toList());
+            } catch (IllegalArgumentException e) {
+                // Status không hợp lệ => bỏ qua
+            }
+        }
 
+
+        // ⚙️ Sắp xếp
         Comparator<Tool> byCreated = Comparator.comparing(Tool::getCreatedAt).reversed();
         Comparator<Tool> byPrice = Comparator.comparingDouble(t ->
                 licenseRepo.findByToolToolId(t.getToolId())

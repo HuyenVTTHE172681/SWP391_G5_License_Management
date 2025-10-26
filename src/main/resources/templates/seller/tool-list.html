@@ -149,22 +149,37 @@
 
         <!-- 🔍 FILTER BAR -->
         <div class="card mb-4 shadow-sm p-3">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
+            <form class="row gy-2 gx-3 align-items-end flex-wrap">
+                <!-- Keyword -->
+                <div class="col-lg-2 col-md-3 col-sm-6">
                     <label class="form-label fw-semibold">Keyword</label>
                     <input id="keyword" type="text" class="form-control" placeholder="Search tool name...">
                 </div>
 
-                <div class="col-md-3">
+                <!-- Category -->
+                <div class="col-lg-2 col-md-3 col-sm-6">
                     <label class="form-label fw-semibold">Category</label>
                     <select id="category" class="form-select">
                         <option value="">All</option>
-                        <option th:each="c : ${categories}" th:value="${c.categoryId}"
-                                th:text="${c.categoryName}"></option>
+                        <option th:each="c : ${categories}" th:value="${c.categoryId}" th:text="${c.categoryName}"></option>
                     </select>
                 </div>
 
-                <div class="col-md-3">
+                <!-- Status -->
+                <div class="col-lg-2 col-md-3 col-sm-6">
+                    <label class="form-label fw-semibold">Status</label>
+                    <select id="status" class="form-select">
+                        <option value="">All</option>
+                        <option value="PUBLISHED">Published</option>
+                        <option value="DEACTIVE">Deactivated</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+                </div>
+
+                <!-- Price Range -->
+                <div class="col-lg-3 col-md-4 col-sm-12">
                     <label class="form-label fw-semibold">Price Range (VND)</label>
                     <div class="d-flex gap-2">
                         <input id="minPrice" type="number" class="form-control" placeholder="Min">
@@ -172,7 +187,8 @@
                     </div>
                 </div>
 
-                <div class="col-md-2">
+                <!-- Sort -->
+                <div class="col-lg-2 col-md-3 col-sm-6">
                     <label class="form-label fw-semibold">Sort by</label>
                     <select id="sort" class="form-select">
                         <option value="createdAt,desc">Newest</option>
@@ -181,11 +197,13 @@
                     </select>
                 </div>
 
-                <div class="col-md-1 d-flex align-items-center">
-                    <button class="btn btn-primary w-100" onclick="applyFilters()">Go</button>
+                <!-- Go Button -->
+                <div class="col-lg-1 col-md-2 col-sm-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-primary w-100" onclick="applyFilters()">Go</button>
                 </div>
-            </div>
+            </form>
         </div>
+
 
         <!-- 🧱 TOOL GRID -->
         <div class="row g-4" id="toolsContainer"></div>
@@ -208,12 +226,14 @@
         const params = new URLSearchParams();
         const keyword = document.getElementById('keyword').value;
         const category = document.getElementById('category').value;
+        const status = document.getElementById('status').value;
         const minPrice = document.getElementById('minPrice').value;
         const maxPrice = document.getElementById('maxPrice').value;
         const sort = document.getElementById('sort').value;
 
         if (keyword) params.append('q', keyword);
         if (category) params.append('categoryId', category);
+        if (status) params.append('status', status);
         if (minPrice) params.append('minPrice', minPrice);
         if (maxPrice) params.append('maxPrice', maxPrice);
         if (sort) params.append('sort', sort);
