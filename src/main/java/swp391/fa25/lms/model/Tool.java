@@ -94,13 +94,7 @@ public class Tool {
         this.updatedAt = updatedAt;
     }
 
-    public Set<String> getLoginMethods() {
-        return loginMethods;
-    }
 
-    public void setLoginMethods(Set<String> loginMethods) {
-        this.loginMethods = loginMethods;
-    }
     public Long getToolId() {
         return toolId;
     }

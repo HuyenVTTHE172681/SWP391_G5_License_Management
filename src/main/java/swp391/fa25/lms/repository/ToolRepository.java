@@ -53,5 +53,5 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     Optional<Tool> findByToolIdAndStatus(Long toolId, Tool.Status status);
     Optional<Tool> findById(Long toolId);
 
-    List<Tool> findByStatusNot(Tool.Status status);
+
 }
