@@ -257,7 +257,9 @@
         }
 
         tools.forEach(tool => {
-            const imagePath = tool.image || '/images/default.jpg';
+            const imagePath = (tool.image && !tool.image.startsWith('/'))
+                ? '/images/tools/' + tool.image
+                : (tool.image || '/images/default.jpg');
             const categoryName = tool.category ? tool.category.categoryName : 'No category';
             const price = (tool.licenses && tool.licenses.length > 0)
                 ? tool.licenses.map(l => `${l.durationDays} ngày: ${l.price.toLocaleString()}₫`).join('<br>')
@@ -273,7 +275,15 @@
                                 <span class="quantity-tag">quantity: ${tool.quantity ?? 0}</span>
                             </div>
                             <p class="text-muted small mb-1">${categoryName}</p>
-                            <p class="text-secondary small mb-2">Updated: ${tool.updatedAt || ''}</p>
+                            <p class="text-secondary small mb-2">
+    Updated: ${tool.updatedAt ? new Date(tool.updatedAt).toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : ''}
+</p>
                             <p class="fw-semibold text-primary" style="white-space: pre-line">${price}</p>
                             <div class="d-flex justify-content-between mt-3">
                                 <a href="/seller/tools/edit/${tool.toolId}" class="btn btn-sm btn-outline-primary">Edit</a>
