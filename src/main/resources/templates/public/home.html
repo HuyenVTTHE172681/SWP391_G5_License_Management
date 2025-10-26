@@ -83,40 +83,73 @@
         <form class="search-filter-bar" id="filterForm">
             <div class="row g-3 align-items-end">
                 <!--SEARCH theo: tên tool, thêm tên seller-->
-                <div class="col-md-6">
-                    <div class="search-box position-relative">
-                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
-                        <input type="text" class="form-control ps-5" name="keyword" placeholder="Tìm kiếm theo tên...">
-                    </div>
+                <div class="col-md-5 search-box">
+                    <input type="text" class="form-control" name="keyword" placeholder="Tìm kiếm tool hoặc seller"
+                           th:value="${keyword}">
                 </div>
+
                 <!--Filter theo category-->
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select class="form-select" name="categoryId">
-                        <option value="">Dịch vụ</option>
+                        <option value="">Tất cả dịch vụ</option>
                         <option th:each="cate : ${categories}"
                                 th:value="${cate.categoryId}"
-                                th:text="${cate.categoryName}">
-                        </option>
+                                th:text="${cate.categoryName}"
+                                th:selected="${cate.categoryId == selectedCategory}"></option>
                     </select>
                 </div>
+
                 <!--Filter theo ngày đăng-->
                 <div class="col-md-2">
                     <select class="form-select" name="dateFilter">
                         <option value="">Ngày đăng</option>
-                        <option value="1">Mới nhất</option>
-                        <option value="2">30 ngày qua</option>
-                        <option value="3">3 tháng qua</option>
+                        <option value="1" th:selected="${dateFilter=='1'}">Mới nhất</option>
+                        <option value="2" th:selected="${dateFilter=='2'}">30 ngày qua</option>
+                        <option value="3" th:selected="${dateFilter=='3'}">3 tháng qua</option>
                     </select>
                 </div>
+
                 <!--Filter theo giá: Mọi giá, Dưới 100.000, 100.000 - 500.000, 500.000 - 1.000.000, Trên 1.000.000-->
+                <div class="col-md-2">
+                    <select class="form-select" name="priceFilter">
+                        <option value="all" th:selected="${priceFilter=='all'}">Mọi giá</option>
+                        <option value="under100k" th:selected="${priceFilter=='under100k'}">Dưới 100.000</option>
+                        <option value="100k-500k" th:selected="${priceFilter=='100k-500k'}">100.000 - 500.000</option>
+                        <option value="500k-1m" th:selected="${priceFilter=='500k-1m'}">500.000 - 1.000.000</option>
+                        <option value="above1m" th:selected="${priceFilter=='above1m'}">Trên 1.000.000</option>
+                    </select>
+                </div>
 
                 <!--Filter theo số sao-->
+                <div class="col-md-2">
+                    <select class="form-select" name="ratingFilter">
+                        <option value="">Số sao</option>
+                        <option value="1" th:selected="${ratingFilter==1}">1⭐ trở lên</option>
+                        <option value="2" th:selected="${ratingFilter==2}">2⭐ trở lên</option>
+                        <option value="3" th:selected="${ratingFilter==3}">3⭐ trở lên</option>
+                        <option value="4" th:selected="${ratingFilter==4}">4⭐ trở lên</option>
+                        <option value="5" th:selected="${ratingFilter==5}">5⭐</option>
+                    </select>
+                </div>
 
-                <div class="col-md-1 text-center">
-                    <button type="submit" class="submit btn btn-outline-primary w-100">
-                        <i class="fas fa-search"></i>
+                <!-- Page Size -->
+<!--                <div class="col-md-1">-->
+<!--                    <select class="form-select" name="size">-->
+<!--                        <option value="6" th:selected="${pageSize==6}">6</option>-->
+<!--                        <option value="9" th:selected="${pageSize==9}">9</option>-->
+<!--                        <option value="12" th:selected="${pageSize==12}">12</option>-->
+<!--                    </select>-->
+<!--                </div>-->
+
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-search"></i> Tìm kiếm
                     </button>
-                    <!--Thêm button clear để xóa bộ lọc-->
+                </div>
+                <div class="col-md-auto">
+                    <button type="button" id="clearFilters" class="btn btn-secondary px-4">
+                        <i class="bi bi-x-circle"></i> Xóa lọc
+                    </button>
                 </div>
             </div>
         </form>
@@ -148,9 +181,11 @@
             loadTools();
         });
 
-        function loadTools(page = 0) {
+
+        function loadTools(page = 0, size = 9) {
             const formData = new FormData(form);
             formData.append("page", page);
+            formData.append("size", size);
             const query = new URLSearchParams(formData).toString();
 
             fetch(`/home/tools?${query}`)
@@ -172,6 +207,7 @@
             });
         }
     });
+
 
     document.addEventListener("DOMContentLoaded", function () {
         const items = document.querySelectorAll(".category-item");
@@ -219,6 +255,12 @@
             .then(html => {
                 document.getElementById("toolContainer").innerHTML = html;
             });
+    });
+
+    document.getElementById("clearFilters").addEventListener("click", function() {
+        const form = document.getElementById("filterForm");
+        form.reset(); // Reset tất cả input/select
+        form.dispatchEvent(new Event("submit")); // Reload tools
     });
 
 </script>

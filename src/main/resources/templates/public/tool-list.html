@@ -67,7 +67,7 @@
                 <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                     <a href="#" class="page-link"
                        th:data-page="${currentPage - 1}"
-                       tabindex="-1">Previous</a>
+                       tabindex="-1">Trước</a>
                 </li>
 
                 <!-- Page numbers -->
@@ -79,10 +79,8 @@
                 <!-- Next -->
                 <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
                     <a href="#" class="page-link"
-                       th:data-page="${currentPage + 1}">Next</a>
+                       th:data-page="${currentPage + 1}">Sau</a>
                 </li>
-
-
             </ul>
         </nav>
     </div>
