@@ -99,6 +99,13 @@
 </head>
 <body>
 
+<div th:if="${success}" class="alert alert-success text-center">
+    <span th:text="${success}"></span>
+</div>
+<div th:if="${error}" class="alert alert-danger text-center">
+    <span th:text="${error}"></span>
+</div>
+
 <!-- 🧭 Navbar -->
 <nav class="navbar navbar-expand-lg">
     <div class="container">

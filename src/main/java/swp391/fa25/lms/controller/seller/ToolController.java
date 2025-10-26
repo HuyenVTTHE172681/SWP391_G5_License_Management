@@ -1,6 +1,7 @@
 package swp391.fa25.lms.controller.seller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.*;
-import swp391.fa25.lms.repository.*;
+import swp391.fa25.lms.repository.CategoryRepository;
+import swp391.fa25.lms.repository.LicenseToolRepository;
+import swp391.fa25.lms.repository.ToolFileRepository;
 import swp391.fa25.lms.service.seller.CategoryService;
 import swp391.fa25.lms.service.seller.ToolService;
 
@@ -21,7 +24,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -174,14 +178,26 @@ public class ToolController {
             reloadFormData(model);
             return "seller/tool-add";
         }
+        HttpSession session = request.getSession();
+        if ("TOKEN".equalsIgnoreCase(loginMethod)) {
+            Category category = categoryRepo.findById(tool.getCategory().getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Invalid category selected"));
+            tool.setCategory(category);
+            // Lưu dữ liệu tạm vào session thay vì tạo tool luôn
+            session.setAttribute("tempTool", tool);
+            session.setAttribute("licenseDays", licenseDays);
+            session.setAttribute("licensePrices", licensePrices);
+            redirectAttributes.addFlashAttribute("message", "Please add token keys to finish setup.");
+            return "redirect:/seller/tokens/manage";
+        }
+
+        Account seller = getCurrentSeller(request);
         Category category = categoryRepo.findById(tool.getCategory().getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Invalid category selected"));
         tool.setCategory(category);
-
-        Account seller = getCurrentSeller(request);
         tool.setSeller(seller);
         tool.setStatus(Tool.Status.PENDING);
-        tool.setLoginMethod(Tool.LoginMethod.valueOf(loginMethod)); // enum-based
+        tool.setLoginMethod(Tool.LoginMethod.valueOf(loginMethod));
         tool.setCreatedAt(LocalDateTime.now());
         tool.setUpdatedAt(LocalDateTime.now());
 
@@ -202,13 +218,6 @@ public class ToolController {
                 licenseRepo.save(l);
             }
         }
-
-        if (tool.getLoginMethod() == Tool.LoginMethod.TOKEN) {
-            redirectAttributes.addAttribute("toolId", saved.getToolId());
-            redirectAttributes.addFlashAttribute("message", "Please add token details to complete setup.");
-            return "redirect:/seller/tokens/manage";
-        }
-
         redirectAttributes.addFlashAttribute("success", "Tool added successfully!");
         return "redirect:/seller/tools";
     }

@@ -43,26 +43,30 @@
 
 <div class="container">
     <h2 class="mb-4">Manage Tokens</h2>
-    <a th:href="@{/seller/tools}" class="btn btn-light mb-3">← Back</a>
 
-    <!-- Thông báo -->
+    <!-- 🔹 Nút Back quay lại form add tool -->
+    <a th:href="@{/seller/tokens/back}" class="btn btn-light mb-3">← Back to Tool Setup</a>
+
+    <!-- 🔹 Thông báo -->
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-    <!-- Card -->
-    <div class="card p-4">
+    <!-- 🔹 Thông tin tool -->
+    <div class="card p-4 mb-4">
         <h4 class="fw-bold mb-3" th:text="'Tool: ' + ${tool.toolName}"></h4>
 
         <!-- Add multiple token form -->
         <form th:action="@{/seller/tokens/add-multiple}" method="post">
-            <input type="hidden" name="toolId" th:value="${tool.toolId}">
-
             <label class="form-label fw-semibold">Add New Tokens</label>
 
             <div id="tokenContainer">
                 <div class="row token-input-row">
                     <div class="col-10">
-                        <input type="text" name="tokens" class="form-control" placeholder="Enter token key..." required>
+                        <input type="text" name="tokens" class="form-control"
+                               placeholder="Enter token key..."
+                               required
+                               pattern="^[A-Za-z0-9_-]+$"
+                               title="Token chỉ được chứa chữ, số, dấu '-' hoặc '_' (không có khoảng trắng hoặc ký tự đặc biệt)">
                     </div>
                     <div class="col-2">
                         <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">×</button>
@@ -71,49 +75,46 @@
             </div>
 
             <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addRow()">+ Add another</button>
-            <button type="submit" class="btn btn-success mt-3 float-end">Save Tokens</button>
+            <button type="submit" class="btn btn-success mt-3 float-end">Add Tokens</button>
         </form>
     </div>
 
-    <!-- Bảng danh sách -->
-    <div class="card mt-4 p-3">
-        <h5 class="fw-semibold mb-3">Existing Tokens</h5>
+    <!-- 🔹 Danh sách token tạm -->
+    <div class="card p-3">
+        <h5 class="fw-semibold mb-3">Current Tokens</h5>
         <table class="table align-middle">
             <thead class="table-light">
             <tr>
                 <th>#</th>
                 <th>Token Key</th>
-                <th>Status</th>
-                <th>Used</th>
-                <th>Actions</th>
+                <th>Action</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="t, stat : ${tokenAccounts}">
-                <td th:text="${stat.count}"></td>
-                <td th:text="${t.token}"></td>
+            <tr th:each="token, stat : ${tempTokens}">
+                <td th:text="${stat.index + 1}"></td>
+                <td th:text="${token}"></td>
                 <td>
-                    <span th:text="${t.status}"
-                          th:classappend="${t.status.name() == 'ACTIVE'} ? 'badge bg-success' : 'badge bg-secondary'">
-                    </span>
-                </td>
-                <td>
-                    <span th:text="${t.used ? 'Yes' : 'No'}"
-                          th:classappend="${t.used} ? 'text-danger' : 'text-success'"></span>
-                </td>
-                <td>
-                    <form th:action="@{'/seller/tokens/' + ${t.licenseAccountId} + '/delete'}" method="post">
-                        <input type="hidden" name="toolId" th:value="${tool.toolId}">
+                    <form th:action="@{/seller/tokens/delete}" method="post" class="d-inline">
+                        <input type="hidden" name="index" th:value="${stat.index}">
                         <button type="submit" class="btn btn-sm btn-outline-danger"
                                 onclick="return confirm('Delete this token?')">Delete</button>
                     </form>
                 </td>
             </tr>
-            <tr th:if="${tokenAccounts == null or #lists.isEmpty(tokenAccounts)}">
-                <td colspan="5" class="text-center text-muted">No tokens yet</td>
+            <tr th:if="${tempTokens == null or #lists.isEmpty(tempTokens)}">
+                <td colspan="3" class="text-center text-muted">No tokens added yet</td>
             </tr>
             </tbody>
         </table>
+
+        <!-- 🔹 Nút Finalize tool -->
+        <form th:action="@{/seller/tokens/finalize}" method="post" class="mt-3 text-end">
+            <button type="submit" class="btn btn-success"
+                    onclick="return confirm('Finish setup and create tool?')">
+                ✅ Finalize Tool Creation
+            </button>
+        </form>
     </div>
 </div>
 
@@ -123,15 +124,18 @@
         const row = document.createElement('div');
         row.className = 'row token-input-row';
         row.innerHTML = `
-            <div class="col-10">
-                <input type="text" name="tokens" class="form-control" placeholder="Enter token key..." required>
-            </div>
-            <div class="col-2">
-                <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">×</button>
-            </div>`;
+        <div class="col-10">
+            <input type="text" name="tokens" class="form-control"
+                   placeholder="Enter token key..."
+                   required
+                   pattern="^[A-Za-z0-9_-]+$"
+                   title="Token chỉ được chứa chữ, số, '-' hoặc '_' (không có khoảng trắng hoặc ký tự đặc biệt)">
+        </div>
+        <div class="col-2">
+            <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">×</button>
+        </div>`;
         container.appendChild(row);
     }
-
     function removeRow(btn) {
         btn.closest('.token-input-row').remove();
     }
