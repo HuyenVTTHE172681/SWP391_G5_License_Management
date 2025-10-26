@@ -103,7 +103,12 @@
 <nav class="navbar navbar-expand-lg">
     <div class="container">
         <a class="navbar-brand fw-bold" th:href="@{/seller/tools}">SELLER DASHBOARD</a>
-        <div class="collapse navbar-collapse justify-content-end">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a th:href="@{/seller/tools}" class="nav-link">Dashboard</a>
@@ -112,7 +117,10 @@
                     <a th:href="@{/seller/orders}" class="nav-link">Tool Manager</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">Settings</a>
+                    <a th:href="@{/seller/profile}" class="nav-link">View Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/seller/feedback}" class="nav-link">View Feedback</a>
                 </li>
                 <li class="nav-item">
                     <a href="/logout" class="nav-link text-danger">Logout</a>
@@ -121,6 +129,7 @@
         </div>
     </div>
 </nav>
+
 
 <!-- 🌄 Hero -->
 <section class="hero">
