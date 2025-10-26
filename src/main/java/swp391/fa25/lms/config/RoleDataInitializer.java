@@ -184,6 +184,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t1.setSeller(seller1);
             t1.setCategory(categories.get(0)); // Email
             t1.setStatus(Tool.Status.PUBLISHED);
+            t1.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t1.setQuantity(10);
             t1.setCreatedAt(LocalDateTime.now().minusDays(5));
 
             Tool t2 = new Tool();
@@ -193,6 +195,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t2.setSeller(seller2);
             t2.setCategory(categories.get(2)); // Tăng tương tác
             t2.setStatus(Tool.Status.PUBLISHED);
+            t2.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t2.setQuantity(10);
             t2.setCreatedAt(LocalDateTime.now().minusDays(7));
 
             Tool t3 = new Tool();
@@ -202,6 +206,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t3.setSeller(seller1);
             t3.setCategory(categories.get(3)); // SEO
             t3.setStatus(Tool.Status.PUBLISHED);
+            t3.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t3.setQuantity(10);
             t3.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t4 = new Tool();
@@ -211,6 +217,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t4.setSeller(seller1);
             t4.setCategory(categories.get(3)); // SEO
             t4.setStatus(Tool.Status.PUBLISHED);
+            t4.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t4.setQuantity(0);
             t4.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t5 = new Tool();
@@ -220,6 +228,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t5.setSeller(seller1);
             t5.setCategory(categories.get(3)); // SEO
             t5.setStatus(Tool.Status.PUBLISHED);
+            t5.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t5.setQuantity(10);
             t5.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t6 = new Tool();
@@ -229,6 +239,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t6.setSeller(seller1);
             t6.setCategory(categories.get(3)); // SEO
             t6.setStatus(Tool.Status.PUBLISHED);
+            t6.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t6.setQuantity(1);
             t6.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t7 = new Tool();
@@ -238,6 +250,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t7.setSeller(seller1);
             t7.setCategory(categories.get(3)); // SEO
             t7.setStatus(Tool.Status.PUBLISHED);
+            t7.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t7.setQuantity(5);
             t7.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t8 = new Tool();
@@ -247,6 +261,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t8.setSeller(seller1);
             t8.setCategory(categories.get(3)); // SEO
             t8.setStatus(Tool.Status.PUBLISHED);
+            t8.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t8.setQuantity(0);
             t8.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t9 = new Tool();
@@ -256,6 +272,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t9.setSeller(seller1);
             t9.setCategory(categories.get(3)); // SEO
             t9.setStatus(Tool.Status.PUBLISHED);
+            t9.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t9.setQuantity(0);
             t9.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             Tool t10 = new Tool();
@@ -265,6 +283,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             t10.setSeller(seller1);
             t10.setCategory(categories.get(3)); // SEO
             t10.setStatus(Tool.Status.PUBLISHED);
+            t10.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t10.setQuantity(0);
             t10.setCreatedAt(LocalDateTime.now().minusDays(2));
 
             // === TOOL VỚI HAI KIỂU LOGIN METHOD ===
@@ -401,38 +421,38 @@ public class RoleDataInitializer implements CommandLineRunner {
             // Tool 2
             License l4 = new License("Gói cơ bản", tools.get(1), 30, 10000.0, null, LocalDateTime.now().minusDays(3));
             License l5 = new License("Gói nâng cao", tools.get(1), 180, 16000.0, null, LocalDateTime.now().minusDays(2));
-            License l6 = new License("Gói trọn đời", tools.get(1), null, 99.99, null, LocalDateTime.now().minusDays(1));
+            License l6 = new License("Gói trọn đời", tools.get(1), null, 99000.0, null, LocalDateTime.now().minusDays(1));
 
             // Tool 3
             License l7 = new License("Gói dùng thử 14 ngày", tools.get(2), 14, 0.0, null, LocalDateTime.now().minusDays(2));
-            License l8 = new License("Gói 1 năm", tools.get(2), 365, 79.99, null, LocalDateTime.now().minusDays(1));
+            License l8 = new License("Gói 1 năm", tools.get(2), 365, 150000.0, null, LocalDateTime.now().minusDays(1));
 
             // Tool 4
-            License l9 = new License("Gói cơ bản", tools.get(3), 30, 14.99, null, LocalDateTime.now().minusDays(2));
-            License l10 = new License("Gói trọn đời", tools.get(3), null, 69.99, null, LocalDateTime.now().minusDays(1));
+            License l9 = new License("Gói cơ bản", tools.get(3), 30, 30000.0, null, LocalDateTime.now().minusDays(2));
+            License l10 = new License("Gói trọn đời", tools.get(3), null, 999000.0, null, LocalDateTime.now().minusDays(1));
 
             // Tool 5
             License l11 = new License("Gói dùng thử", tools.get(4), 7, 0.0, null, LocalDateTime.now().minusDays(2));
-            License l12 = new License("Gói cao cấp", tools.get(4), 365, 89.99, null, LocalDateTime.now().minusDays(1));
+            License l12 = new License("Gói cao cấp", tools.get(4), 365, 500000.0, null, LocalDateTime.now().minusDays(1));
 
             // Tool 6
-            License l13 = new License("Gói Standard", tools.get(5), 30, 24.99, null, LocalDateTime.now().minusDays(2));
-            License l14 = new License("Gói Pro", tools.get(5), 180, 59.99, null, LocalDateTime.now().minusDays(1));
+            License l13 = new License("Gói Standard", tools.get(5), 30, 299000.0, null, LocalDateTime.now().minusDays(2));
+            License l14 = new License("Gói Pro", tools.get(5), 180, 590000.0, null, LocalDateTime.now().minusDays(1));
 
             // Tool 7
-            License l15 = new License("Gói cơ bản", tools.get(6), 30, 12.99, null, LocalDateTime.now().minusDays(2));
-            License l16 = new License("Gói trọn đời", tools.get(6), null, 99.99, null, LocalDateTime.now().minusDays(1));
+            License l15 = new License("Gói cơ bản", tools.get(6), 30, 12000.0, null, LocalDateTime.now().minusDays(2));
+            License l16 = new License("Gói trọn đời", tools.get(6), null, 300000.0, null, LocalDateTime.now().minusDays(1));
 
             // Tool 8
-            License l17 = new License("Gói học sinh/sinh viên", tools.get(7), 90, 19.99, null, LocalDateTime.now().minusDays(2));
-            License l18 = new License("Gói doanh nghiệp", tools.get(7), 365, 129.99, null, LocalDateTime.now().minusDays(1));
+            License l17 = new License("Gói học sinh/sinh viên", tools.get(7), 90, 19000.0, null, LocalDateTime.now().minusDays(2));
+            License l18 = new License("Gói doanh nghiệp", tools.get(7), 365, 1000000000.0, null, LocalDateTime.now().minusDays(1));
 
             // Tool 9
-            License l19 = new License("Gói cơ bản", tools.get(8), 30, 15.99, null, LocalDateTime.now().minusDays(2));
-            License l20 = new License("Gói trọn đời", tools.get(8), null, 99.99, null, LocalDateTime.now().minusDays(1));
+            License l19 = new License("Gói cơ bản", tools.get(8), 30, 15000.0, null, LocalDateTime.now().minusDays(2));
+            License l20 = new License("Gói trọn đời", tools.get(8), null, 999000.0, null, LocalDateTime.now().minusDays(1));
 
             // Tool 10
-            License l21 = new License("Gói Premium", tools.get(9), 365, 149.99, null, LocalDateTime.now().minusDays(1));
+            License l21 = new License("Gói Premium", tools.get(9), 365, 149000.0, null, LocalDateTime.now().minusDays(1));
             License l22 = new License("Gói dùng thử", tools.get(9), 14, 0.0, null, LocalDateTime.now().minusDays(3));
 
             // License cho tokenTool
