@@ -7,6 +7,26 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link th:href="@{/css/home.css}" rel="stylesheet">
+    <style>
+        /* Căn tất cả nút hành động trên cùng 1 dòng */
+        td.text-center > .btn {
+            display: inline-flex;      /* cho phép icon và text nằm gọn gàng */
+            align-items: center;       /* căn giữa icon và text theo chiều dọc */
+            margin: 0 2px;             /* khoảng cách giữa các nút */
+            white-space: nowrap;       /* không cho xuống dòng */
+        }
+
+        /* Tùy chọn: làm hàng nút gọn hơn trong cột */
+        td.text-center {
+            white-space: nowrap;       /* toàn bộ ô không bị wrap */
+        }
+
+        /* Nếu icon → chữ, cho khoảng cách nhỏ giữa icon và chữ */
+        .btn i {
+            margin-right: 2px;
+        }
+    </style>
+
 </head>
 <body>
 <!--Header-->
@@ -128,19 +148,22 @@
                 <td class="text-center">
                 <span th:switch="${order.orderStatus.name()}">
                     <span th:case="'SUCCESS'" class="badge bg-success">Thành công</span>
-<!--                    <span th:case="'PENDING'" class="badge bg-warning text-dark">Đang xử lý</span>-->
                     <span th:case="'FAILED'" class="badge bg-danger">Thất bại</span>
                     <span th:case="*">Không xác định</span>
                 </span>
                 </td>
                 <td class="text-center">
-                    <a th:href="@{'/order/' + ${order.orderId}}" class="btn btn-sm btn-primary text-white">Chi tiết</a>
+                    <button class="btn btn-sm btn-primary" title="Xem chi tiết">
+                        <i class="bi bi-eye"></i>
+                    </button>
                     <button class="btn btn-sm btn-warning" th:disabled="${!order.canFeedbackOrReport}">Feedback</button>
                     <button class="btn btn-sm btn-danger" th:disabled="${!order.canFeedbackOrReport}">Report</button>
-                    <button class="btn btn-sm btn-success" th:disabled="${!order.canFeedbackOrReport}">
-                        <i class="bi bi-arrow-right"></i>
-                        Dùng dịch vụ
-                    </button>
+                    <a th:href="@{'/my-tools/' + ${order.orderId}}"
+                       class="btn btn-sm btn-success"
+                       th:disabled="${!order.canFeedbackOrReport}">
+                        <i class="bi bi-arrow-right"></i> Dùng dịch vụ
+                    </a>
+
                 </td>
             </tr>
             </tbody>
