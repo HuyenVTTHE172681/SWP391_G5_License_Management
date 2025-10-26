@@ -8,10 +8,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriUtils;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Role.RoleName;
 import swp391.fa25.lms.service.admin.AdminAccountService;
 import swp391.fa25.lms.service.admin.AdminHomeService;
+
+import java.nio.charset.StandardCharsets;
 
 @Controller
 @RequestMapping("/admin")
@@ -58,18 +61,23 @@ public class DashBoardAdminController {
     @GetMapping("/accounts")
     public String list(
             @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "ACTIVE") String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "accountId,asc") String sort,
             Model model,
             @ModelAttribute("msg") String msg) {
-
         String[] s = sort.split(",");
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(s[1]), s[0]));
-        Page<Account> accPage = adminAccountService.search(q, pageable);
+        Account.AccountStatus st = null;
+        try { st = (status == null || status.isBlank()) ? null : Account.AccountStatus.valueOf(status); }
+        catch (Exception ignored) {}
+
+        Page<Account> accPage = adminAccountService.search(q, pageable, st);
 
         model.addAttribute("accPage", accPage);
         model.addAttribute("q", q);
+        model.addAttribute("status", status);
         model.addAttribute("sort", sort);
         model.addAttribute("roles", RoleName.values());
         model.addAttribute("fixedAdminEmail", FIXED_ADMIN_EMAIL);
@@ -105,13 +113,37 @@ public class DashBoardAdminController {
     }
 
     @PostMapping("/accounts/{id}/delete")
-    public String delete(@PathVariable long id, RedirectAttributes ra) {
+    public String delete(@PathVariable long id,
+                         @RequestParam(defaultValue = "") String q,
+                         @RequestParam(defaultValue = "ACTIVE") String status,
+                         @RequestParam(defaultValue = "0") int page,
+                         @RequestParam(defaultValue = "10") int size,
+                         @RequestParam(defaultValue = "accountId,asc") String sort,
+                         RedirectAttributes ra) {
         try {
-            adminAccountService.delete(id);
-            ra.addFlashAttribute("msg", "Deleted account: " + id);
+            Account acc = adminAccountService.get(id);
+            if (acc != null && FIXED_ADMIN_EMAIL.equalsIgnoreCase(acc.getEmail())) {
+                ra.addFlashAttribute("msg", "Không thể vô hiệu hóa tài khoản ADMIN cố định.");
+            } else {
+                adminAccountService.deactivate(id);
+                ra.addFlashAttribute("msg", "Đã chuyển tài khoản " + id + " sang DEACTIVATED.");
+            }
         } catch (Exception ex) {
             ra.addFlashAttribute("msg", ex.getMessage());
         }
-        return "redirect:/admin/accounts";
+        return "redirect:/admin/accounts?q=" + UriUtils.encode(q, StandardCharsets.UTF_8)
+                + "&status=" + status + "&page=" + page + "&size=" + size + "&sort=" + UriUtils.encode(sort, StandardCharsets.UTF_8);
+    }
+
+    @PostMapping("/accounts/{id}/reactivate")
+    public String reactivate(@PathVariable long id,
+                             RedirectAttributes ra) {
+        try {
+            adminAccountService.reactivate(id);
+            ra.addFlashAttribute("msg", "Đã kích hoạt lại tài khoản " + id + ".");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("msg", ex.getMessage());
+        }
+        return "redirect:/admin/adminhome";
     }
 }

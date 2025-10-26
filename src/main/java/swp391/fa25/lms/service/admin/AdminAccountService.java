@@ -1,14 +1,20 @@
 package swp391.fa25.lms.service.admin;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Role;
 import swp391.fa25.lms.model.Role.RoleName;
 import swp391.fa25.lms.repository.AccountRepository;
 import swp391.fa25.lms.repository.RoleRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service("adminAccountService")
 public class AdminAccountService {
@@ -60,5 +66,35 @@ public class AdminAccountService {
             throw new IllegalStateException("Cannot delete the fixed admin account.");
         }
         accountRepo.deleteById(accountId);
+    }
+    @Transactional
+    public void deactivate(long id) {
+        Account acc = accountRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found: " + id));
+        if (FIXED_ADMIN_EMAIL.equalsIgnoreCase(acc.getEmail())) {
+            throw new IllegalStateException("Không thể vô hiệu hóa tài khoản ADMIN cố định.");
+        }
+        accountRepo.updateStatus(id, Account.AccountStatus.DEACTIVATED);
+    }
+
+    @Transactional
+    public void reactivate(long id) {
+        // (tuỳ bạn có cần check gì thêm)
+        accountRepo.updateStatus(id, Account.AccountStatus.ACTIVE);
+    }
+
+    public Page<Account> search(String q, Pageable pageable, Account.AccountStatus status) {
+        return accountRepo.search(q, status, pageable);
+    }
+
+    public List<Account> latestAccounts(int limit) {
+        return accountRepo.findAll(
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"))
+        ).getContent();
+    }
+
+    public List<Account> deactivatedAccounts(int limit) {
+        List<Account> lst = accountRepo.findTop8ByStatusOrderByUpdatedAtDesc(Account.AccountStatus.DEACTIVATED);
+        return lst.size() > limit ? lst.subList(0, limit) : lst;
     }
 }
