@@ -23,18 +23,37 @@
                         <img th:src="${tool.image != null ? tool.image : '/placeholder.svg?height=250&width=350'}" alt="Product">
                     </div>
                     <div class="product-info">
-                        <h3 class="product-name" th:text="${tool.toolName}"></h3>
+
+                        <!-- Tool Name + Hết hàng -->
+                        <h3 class="product-name fs-5 fw-bold">
+                            <span th:text="${tool.toolName}"></span>
+                            <span th:if="${tool.quantity == 0}" class="text-danger fw-bold ms-2 fs-6">(Hết hàng)</span>
+                        </h3>
+
+                        <span th:text="'👤 ' + ${tool.seller.fullName}"></span>
+
+                        <!--Review-->
                         <div class="product-rating">
                             <div class="stars">
                             <span th:each="i : ${#numbers.sequence(1,5)}">
-            <i th:classappend="${i <= tool.averageRating} ? 'fas fa-star text-warning' :
+                                <i th:classappend="${i <= tool.averageRating} ? 'fas fa-star text-warning' :
                                 (${i - tool.averageRating < 1} ? 'fas fa-star-half-alt text-warning' : 'far fa-star text-warning')"></i>
-        </span>
+                            </span>
                             </div>
                             <span class="review-count" th:text="${tool.totalReviews + ' reviews'}"></span>
                         </div>
-                        <span th:text="'👤 ' + ${tool.seller.fullName}"></span>
-                        <p class="product-meta" th:text="${tool.description}"></p>
+
+                        <!--Price-->
+                        <p class="product-price fw-bold mt-2">
+                            <i class="bi bi-cash-stack"></i>
+                            <span th:if="${tool.minPrice != null && tool.maxPrice != null}">
+                            <span th:text="${tool.minPrice.equals(tool.maxPrice) ?
+                            #numbers.formatDecimal(tool.minPrice, 0, 'COMMA', 0, 'POINT') :
+                            #numbers.formatDecimal(tool.minPrice, 0, 'COMMA', 0, 'POINT') + ' – ' +
+                            #numbers.formatDecimal(tool.maxPrice, 0, 'COMMA', 0, 'POINT')}"></span>
+                                VND
+                            </span>
+                        </p>
                     </div>
                 </a>
             </div>
@@ -62,6 +81,8 @@
                     <a href="#" class="page-link"
                        th:data-page="${currentPage + 1}">Next</a>
                 </li>
+
+
             </ul>
         </nav>
     </div>

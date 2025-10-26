@@ -75,7 +75,12 @@
                     <input type="hidden" name="toolId" th:value="${tool.toolId}">
                     <!-- hidden licenseId sẽ được cập nhật khi user chọn license -->
                     <input type="hidden" id="selectedLicense" name="licenseId" th:value="${tool.licenses.size() > 0 ? tool.licenses[0].licenseId : 0}">
-                    <button type="button" class="btn btn-success px-4" onclick="buyNow()">Mua hàng</button>
+                    <button type="button"
+                            class="btn btn-success px-4"
+                            th:disabled="${tool.quantity == 0}"
+                            th:text="${tool.quantity == 0 ? 'Hết hàng' : 'Mua hàng'}"
+                            onclick="buyNow()">
+                    </button>
                 </form>
             </div>
 
@@ -229,6 +234,13 @@
     // Mua hàng form hoặc show login modal
     function buyNow() {
         var selected = document.querySelector('.license-item.active');
+        const quantity = /*[[${tool.quantity}]]*/ 0;
+
+        if (quantity <= 0) {
+            alert("Sản phẩm này hiện đã hết hàng, vui lòng quay lại sau!");
+            return;
+        }
+
         if (!selected) {
             alert('Vui lòng chọn gói license trước khi mua hàng!');
             return;

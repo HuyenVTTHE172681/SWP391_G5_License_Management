@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -237,5 +238,28 @@ public class Tool {
 
     public Tool(LoginMethod loginMethod) {
         this.loginMethod = loginMethod;
+    }
+
+    // ================== PRICE HELPERS ==================
+    @Transient
+    private BigDecimal minPrice;
+
+    @Transient
+    private BigDecimal maxPrice;
+
+    public BigDecimal getMinPrice() {
+        return minPrice;
+    }
+
+    public void setMinPrice(BigDecimal minPrice) {
+        this.minPrice = minPrice;
+    }
+
+    public BigDecimal getMaxPrice() {
+        return maxPrice;
+    }
+
+    public void setMaxPrice(BigDecimal maxPrice) {
+        this.maxPrice = maxPrice;
     }
 }

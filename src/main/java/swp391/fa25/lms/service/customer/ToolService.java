@@ -4,10 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Feedback;
+import swp391.fa25.lms.model.License;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.repository.FeedbackRepository;
 import swp391.fa25.lms.repository.ToolRepository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -61,11 +63,30 @@ public class ToolService {
             }
         }
 
-        // Tính rating trung bình & số feedback cho từng tool
+        // Tính minPrice, maxPrice, averageRating, totalReviews cho từng tool
         tools.forEach(tool -> {
+            // --- Min/Max Price ---
+            if (tool.getLicenses() != null && !tool.getLicenses().isEmpty()) {
+                BigDecimal min = tool.getLicenses().stream()
+                        .map(l -> BigDecimal.valueOf(l.getPrice())) // convert từ Double sang BigDecimal
+                        .min(BigDecimal::compareTo)
+                        .orElse(BigDecimal.ZERO);
+
+                BigDecimal max = tool.getLicenses().stream()
+                        .map(l -> BigDecimal.valueOf(l.getPrice()))
+                        .max(BigDecimal::compareTo)
+                        .orElse(BigDecimal.ZERO);
+
+                tool.setMinPrice(min);
+                tool.setMaxPrice(max);
+            } else {
+                tool.setMinPrice(BigDecimal.ZERO);
+                tool.setMaxPrice(BigDecimal.ZERO);
+            }
+
+            // Rating trung bình và số review
             Double avgRating = feedbackRepo.findAverageRatingByTool(tool.getToolId());
             Long totalReviews = feedbackRepo.countByTool(tool);
-
             tool.setAverageRating(avgRating != null ? avgRating : 0.0);
             tool.setTotalReviews(totalReviews != null ? totalReviews : 0L);
         });
@@ -105,4 +126,13 @@ public class ToolService {
         Long count = feedbackRepo.countByToolId(tool.getToolId());
         return count != null ? count : 0L;
     }
+
+    /**
+     * Lấy tool theo id
+     */
+    public Optional<Tool> findById(Long id) {
+        return toolRepo.findById(id);
+    }
+
+
 }
