@@ -33,6 +33,7 @@ public class PaymentService {
     private JavaMailSender mailSender;
     private WalletRepository walletRepository;
 
+    // Các biến môi trường VNPay (được config trong application.properties)
     @Value("${vnpay.tmnCode}")
     private String tmnCode;
     @Value("${vnpay.hashSecret}")
@@ -84,6 +85,7 @@ public class PaymentService {
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
 
+        // Build query string & dữ liệu để hash
         for (String fieldName : fieldNames) {
             String value = vnpParams.get(fieldName);
             if (value == null || value.length() == 0) continue;
@@ -97,7 +99,6 @@ public class PaymentService {
                 // Encode an toàn, UTF-8
                 String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
                 String encodedFieldName = URLEncoder.encode(fieldName, StandardCharsets.UTF_8.toString());
-
                 // build hashData và query
                 hashData.append(fieldName).append('=').append(encodedValue);
                 query.append(encodedFieldName).append('=').append(encodedValue);
@@ -115,7 +116,10 @@ public class PaymentService {
     }
 
     /**
-     * Xử lý callback trả về từ VNPay (sau khi thanh toán)
+     * Xử lý kết quả thanh toán từ VNPay.
+     * - VNPay gọi lại URL return (GET) và gửi kèm param.
+     * - Dựa vào vnp_ResponseCode để xác định thành công.
+     * - Ghi nhận giao dịch, cập nhật ví seller, tạo đơn hàng, gửi mail.
      */
     @Transactional
     public boolean handlePaymentCallback(Map<String, String> params) {
@@ -124,6 +128,7 @@ public class PaymentService {
             String orderInfo = params.get("vnp_OrderInfo");
             double amount = Double.parseDouble(params.get("vnp_Amount")) / 100.0;
 
+            // Response Code thanh toán thành công
             boolean success = "00".equals(responseCode);
 
             // Parse: toolId_licenseId_accountId
