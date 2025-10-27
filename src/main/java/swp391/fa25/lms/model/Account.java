@@ -264,4 +264,28 @@ public class Account {
     public void setConfirmPassword(String confirmPassword) {
         this.confirmPassword = confirmPassword;
     }
+
+    public SellerPackage getSellerPackage() {
+        return sellerPackage;
+    }
+
+    public void setSellerPackage(SellerPackage sellerPackage) {
+        this.sellerPackage = sellerPackage;
+    }
+
+    public Boolean getSellerActive() {
+        return sellerActive;
+    }
+
+    public void setSellerActive(Boolean sellerActive) {
+        this.sellerActive = sellerActive;
+    }
+
+    public LocalDateTime getSellerExpiryDate() {
+        return sellerExpiryDate;
+    }
+
+    public void setSellerExpiryDate(LocalDateTime sellerExpiryDate) {
+        this.sellerExpiryDate = sellerExpiryDate;
+    }
 }
