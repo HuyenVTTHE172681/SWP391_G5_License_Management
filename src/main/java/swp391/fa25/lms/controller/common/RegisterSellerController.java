@@ -83,6 +83,41 @@ public class RegisterSellerController {
             return "public/registerGuestToSeller";
         }
 
+        if(address.matches(".*[@$!%*?&^#()_+=-].*")){
+            model.addAttribute("error", "Điạ chỉ không có ký tự đặc biệt");
+            return "public/registerGuestToSeller";
+        }
+
+        if(password.length() < 8){
+            model.addAttribute("error", "Vui lòng nhập mật khẩu có độ dài ít nhất là 8");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!password.matches(".*[a-z].*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 ký tự in thường");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!password.matches(".*[A-Z].*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 ký tự in hoa");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!password.matches(".*[@$!%*?&^#()_+=-].*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhát 1 ký tự đặc biệt");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!password.matches(".*\\d.*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 chữ số");
+            return "public/registerGuestToSeller";
+        }
+
+        if(password.contains(" ")){
+            model.addAttribute("error", "Mật khẩu không được có dấu cách");
+            return "public/registerGuestToSeller";
+        }
+
         Optional<Account> existingOpt = accountRepo.findByEmail(email);
         Account account = existingOpt.orElse(new Account());
 
