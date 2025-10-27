@@ -163,5 +163,8 @@ public class ToolService {
         return toolRepo.findById(id);
     }
 
+    public Tool getToolById(Long toolId) {
+        return toolRepo.findById(toolId).orElse(null);
+    }
 
 }
