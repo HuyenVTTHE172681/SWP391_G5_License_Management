@@ -25,6 +25,7 @@ public class ToolService {
     @Autowired
     private LicenseAccountRepository licenseAccountRepo;
 
+    @Transactional
     public Tool addTool(Tool tool, Account seller) {
         tool.setSeller(seller);
         tool.setStatus(Tool.Status.PENDING);
@@ -32,6 +33,7 @@ public class ToolService {
         tool.setUpdatedAt(LocalDateTime.now());
         return toolRepo.save(tool);
     }
+
 
     public Tool save(Tool tool) {
         tool.setUpdatedAt(LocalDateTime.now());

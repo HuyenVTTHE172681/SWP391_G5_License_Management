@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -22,14 +23,16 @@ public class Tool {
     private Long toolId;
 
     @NotBlank(message = "Tool name cannot be blank")
+    @Size(max = 100, message = "Tool name must be less than 100 characters")
     @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
     private String toolName;
 
-    @NotBlank(message = "Image cannot be blank")
+
     @Column(nullable = false)
     private String image;
 
     @NotBlank(message = "Description cannot be blank")
+    @Size(max = 500, message = "Description must be under 500 characters")
     @Column(columnDefinition = "NVARCHAR(100)", nullable = false)
     private String description;
 
@@ -38,10 +41,14 @@ public class Tool {
     @JsonManagedReference(value = "tool-seller")
     private Account seller;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "tool_login_methods", joinColumns = @JoinColumn(name = "tool_id"))
-    @Column(name = "login_method")
-    private Set<String> loginMethods = new HashSet<>();
+    @Enumerated(EnumType.STRING)
+    @Column(name = "login_method", nullable = false)
+    private LoginMethod loginMethod;
+
+    public enum LoginMethod {
+        USER_PASSWORD,
+        TOKEN
+    }
 
     @NotNull(message = "Category cannot be null")
     @ManyToOne
@@ -205,14 +212,13 @@ public class Tool {
         this.totalReviews = totalReviews;
     }
 
-    public Set<String> getLoginMethods() {
-        return loginMethods;
+    public LoginMethod getLoginMethod() {
+        return loginMethod;
     }
 
-    public void setLoginMethods(Set<String> loginMethods) {
-        this.loginMethods = loginMethods;
+    public void setLoginMethod(LoginMethod loginMethod) {
+        this.loginMethod = loginMethod;
     }
-
     public Integer getQuantity() {
         return quantity;
     }

@@ -1,18 +1,20 @@
 package swp391.fa25.lms.controller.seller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import swp391.fa25.lms.model.LicenseAccount;
-import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.repository.LicenseAccountRepository;
-import swp391.fa25.lms.repository.ToolRepository;
+import swp391.fa25.lms.model.*;
+import swp391.fa25.lms.repository.*;
+import swp391.fa25.lms.service.seller.ToolService;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/seller/tokens")
@@ -24,91 +26,236 @@ public class TokenController {
     @Autowired
     private LicenseAccountRepository licenseAccountRepository;
 
-    /** 🔹 Trang quản lý token của tool */
+    @Autowired
+    private ToolService toolService;
+
+    @Autowired
+    private LicenseToolRepository licenseRepo;
+
+    /** ============================================================
+     * 🔹 1️⃣ Trang quản lý token cho tool TẠM (chưa lưu DB)
+     * ============================================================ */
     @GetMapping("/manage")
-    public String manageTokens(@RequestParam("toolId") Long toolId, Model model) {
-        Tool tool = toolRepository.findById(toolId)
-                .orElseThrow(() -> new RuntimeException("Tool not found"));
+    public String manageTokens(HttpServletRequest request, Model model) {
+        HttpSession session = request.getSession();
 
-        List<LicenseAccount> tokenAccounts =
-                licenseAccountRepository.findByTool_ToolIdAndLoginMethod(toolId, LicenseAccount.LoginMethod.TOKEN);
+        // Lấy tool tạm đang lưu trong session
+        Tool tempTool = (Tool) session.getAttribute("tempTool");
+        if (tempTool == null) {
+            return "redirect:/seller/tools/add";
+        }
 
-        model.addAttribute("tool", tool);
-        model.addAttribute("tokenAccounts", tokenAccounts);
-        return "seller/token-manage";
+        // Lấy danh sách token tạm trong session
+        List<String> tempTokens = (List<String>) session.getAttribute("tempTokens");
+        if (tempTokens == null) {
+            tempTokens = new ArrayList<>();
+            session.setAttribute("tempTokens", tempTokens);
+        }
+
+        model.addAttribute("tool", tempTool);
+        model.addAttribute("tempTokens", tempTokens);
+        return "seller/token-manage"; // Giao diện CRUD token
     }
 
-    /** 🔹 Thêm 1 token đơn lẻ (form input 1 dòng) */
-    @PostMapping("/{toolId}/add")
-    public String addSingleToken(@PathVariable Long toolId,
+    /** ============================================================
+     * 🔹 2️⃣ Thêm 1 token đơn lẻ (lưu tạm vào session)
+     * ============================================================ */
+    @PostMapping("/add-single")
+    public String addSingleToken(HttpServletRequest request,
                                  @RequestParam("token") String token,
                                  RedirectAttributes redirectAttributes) {
 
-        Tool tool = toolRepository.findById(toolId)
-                .orElseThrow(() -> new RuntimeException("Tool not found"));
+        HttpSession session = request.getSession();
+        List<String> tempTokens = (List<String>) session.getAttribute("tempTokens");
+        if (tempTokens == null) tempTokens = new ArrayList<>();
 
-        // check trùng token
-        if (licenseAccountRepository.existsByToken(token)) {
-            redirectAttributes.addFlashAttribute("error", "Token already exists!");
-            return "redirect:/seller/tokens/manage?toolId=" + toolId;
+        // Kiểm tra token trùng
+        if (tempTokens.contains(token) || licenseAccountRepository.existsByToken(token)) {
+            redirectAttributes.addFlashAttribute("error", "❌ Token already exists!");
+            return "redirect:/seller/tokens/manage";
         }
 
-        LicenseAccount acc = new LicenseAccount();
-        acc.setTool(tool);
-        acc.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
-        acc.setToken(token);
-        acc.setUsed(false);
-        acc.setStatus(LicenseAccount.Status.ACTIVE);
-        acc.setStartDate(LocalDateTime.now());
-        acc.setOrder(null); // ✅ tránh lỗi null order_id
-
-        licenseAccountRepository.save(acc);
-        redirectAttributes.addFlashAttribute("success", "Added token successfully!");
-        return "redirect:/seller/tokens/manage?toolId=" + toolId;
+        tempTokens.add(token);
+        session.setAttribute("tempTokens", tempTokens);
+        redirectAttributes.addFlashAttribute("success", "✅ Added token successfully!");
+        return "redirect:/seller/tokens/manage";
     }
 
-    /** 🔹 Thêm nhiều token 1 lúc (textarea) */
+    /** ============================================================
+     * 🔹 3️⃣ Thêm nhiều token cùng lúc (textarea)
+     * ============================================================ */
     @PostMapping("/add-multiple")
-    public String addMultipleTokens(@RequestParam("toolId") Long toolId,
-                                    @RequestParam("tokens") String tokens,
-                                    RedirectAttributes redirectAttributes) {
+    public String addMultipleTokens(@RequestParam("tokens") List<String> tokens,
+                                    RedirectAttributes redirectAttributes,
+                                    HttpSession session) {
 
-        Tool tool = toolRepository.findById(toolId)
-                .orElseThrow(() -> new RuntimeException("Tool not found"));
-
-        // Tách từng dòng, lọc dòng trống và bỏ trùng
-        List<String> tokenList = Arrays.stream(tokens.split("\\r?\\n"))
-                .map(String::trim)
-                .filter(t -> !t.isEmpty())
-                .distinct()
-                .toList();
-
-        int addedCount = 0;
-        for (String tokenValue : tokenList) {
-            if (licenseAccountRepository.existsByToken(tokenValue)) continue; // bỏ qua trùng
-
-            LicenseAccount acc = new LicenseAccount();
-            acc.setTool(tool);
-            acc.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
-            acc.setToken(tokenValue);
-            acc.setUsed(false);
-            acc.setStatus(LicenseAccount.Status.ACTIVE);
-            acc.setOrder(null); // ✅ cho phép null order_id
-            acc.setStartDate(LocalDateTime.now());
-            licenseAccountRepository.save(acc);
-            addedCount++;
+        Tool currentTool = (Tool) session.getAttribute("tempTool");
+        if (currentTool == null) {
+            redirectAttributes.addFlashAttribute("error", "Phiên thêm tool đã hết hạn. Vui lòng tạo lại tool.");
+            return "redirect:/seller/tools";
         }
 
-        redirectAttributes.addFlashAttribute("success", "Added " + addedCount + " tokens successfully!");
-        return "redirect:/seller/tokens/manage?toolId=" + toolId;
+        List<String> tempTokens = (List<String>) session.getAttribute("tempTokens");
+        if (tempTokens == null) tempTokens = new ArrayList<>();
+
+        int max = currentTool.getQuantity();
+
+        // 🔹 validate từng token
+        for (String t : tokens) {
+            if (t == null || t.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "❌ Token không được để trống.");
+                return "redirect:/seller/tokens/manage";
+            }
+            if (!t.matches("^[A-Za-z0-9_-]+$")) {
+                redirectAttributes.addFlashAttribute("error", "❌ Token '" + t + "' chứa ký tự không hợp lệ.");
+                return "redirect:/seller/tokens/manage";
+            }
+        }
+
+        // 🔹 Kiểm tra tổng số lượng không vượt quá
+        if (tempTokens.size() + tokens.size() > max) {
+            redirectAttributes.addFlashAttribute("error", "❌ Không thể thêm " + tokens.size() +
+                    " token. Số lượng vượt quá giới hạn (" + max + ").");
+            return "redirect:/seller/tokens/manage";
+        }
+
+        tempTokens.addAll(tokens);
+        session.setAttribute("tempTokens", tempTokens);
+
+        redirectAttributes.addFlashAttribute("success", "✅ Đã thêm " + tokens.size() + " token thành công!");
+        return "redirect:/seller/tokens/manage";
     }
 
-    /** 🔹 Xóa token */
-    @PostMapping("/{id}/delete")
-    public String deleteToken(@PathVariable Long id, @RequestParam("toolId") Long toolId,
+    /** ============================================================
+     * 🔹 4️⃣ Xóa token tạm (trong session)
+     * ============================================================ */
+    @PostMapping("/delete")
+    public String deleteToken(HttpServletRequest request,
+                              @RequestParam("index") int index,
                               RedirectAttributes redirectAttributes) {
-        licenseAccountRepository.deleteById(id);
-        redirectAttributes.addFlashAttribute("success", "Token deleted successfully!");
-        return "redirect:/seller/tokens/manage?toolId=" + toolId;
+
+        HttpSession session = request.getSession();
+        List<String> tempTokens = (List<String>) session.getAttribute("tempTokens");
+        if (tempTokens != null && index >= 0 && index < tempTokens.size()) {
+            tempTokens.remove(index);
+            session.setAttribute("tempTokens", tempTokens);
+            redirectAttributes.addFlashAttribute("success", "✅ Token removed!");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "❌ Invalid token index!");
+        }
+
+        return "redirect:/seller/tokens/manage";
+    }
+
+    /** ============================================================
+     * 🔹 5️⃣ Submit hoàn tất — tạo tool thật + lưu token vào DB
+     * ============================================================ */
+    @PostMapping("/finalize")
+    @Transactional
+    public String finalizeTool(HttpServletRequest request,
+                               RedirectAttributes redirectAttributes) {
+
+        HttpSession session = request.getSession();
+
+        // ✅ Lấy dữ liệu tạm
+        Tool tempTool = (Tool) session.getAttribute("tempTool");
+        List<String> tempTokens = (List<String>) session.getAttribute("tempTokens");
+        List<Integer> licenseDays = (List<Integer>) session.getAttribute("licenseDays");
+        List<Double> licensePrices = (List<Double>) session.getAttribute("licensePrices");
+
+        if (tempTool == null || tempTokens == null || tempTokens.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error",
+                    "❌ Missing tool or tokens. Please try again.");
+            return "redirect:/seller/tools/add";
+        }
+
+        System.out.println("=== [FINALIZE TOOL CREATION] ===");
+        System.out.println("Tool Name: " + tempTool.getToolName());
+        System.out.println("Tokens: " + tempTokens.size());
+        System.out.println("Licenses: " + (licenseDays != null ? licenseDays.size() : 0));
+
+        try {
+            Account seller = (Account) session.getAttribute("loggedInAccount");
+
+            // ✅ 1️⃣ Tạo tool thật trong DB
+            tempTool.setSeller(seller);
+            tempTool.setStatus(Tool.Status.PENDING);
+            tempTool.setLoginMethod(Tool.LoginMethod.TOKEN);
+            tempTool.setCreatedAt(LocalDateTime.now());
+            tempTool.setUpdatedAt(LocalDateTime.now());
+            Tool saved = toolService.addTool(tempTool, seller);
+
+            System.out.println("✅ Tool saved to DB with ID: " + saved.getToolId());
+
+            // ✅ 2️⃣ Thêm License (nếu có)
+            if (licenseDays != null && licensePrices != null) {
+                for (int i = 0; i < Math.min(licenseDays.size(), licensePrices.size()); i++) {
+                    Integer days = licenseDays.get(i);
+                    Double price = licensePrices.get(i);
+                    if (days == null || price == null || days <= 0 || price < 0) continue;
+
+                    License l = new License();
+                    l.setTool(saved);
+                    l.setDurationDays(days);
+                    l.setPrice(price);
+                    l.setName("License " + days + " days");
+                    l.setCreatedAt(LocalDateTime.now());
+                    licenseRepo.save(l);
+
+                    System.out.println("   → License added: " + days + " days / " + price + "đ");
+                }
+            }
+
+            // ✅ 3️⃣ Thêm Token vào DB
+            for (String token : tempTokens) {
+                if (token == null || token.isBlank()) continue;
+
+                LicenseAccount acc = new LicenseAccount();
+                acc.setTool(saved);
+                acc.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
+                acc.setToken(token.trim());
+                acc.setUsed(false);
+                acc.setStatus(LicenseAccount.Status.ACTIVE);
+                acc.setOrder(null);
+                acc.setStartDate(LocalDateTime.now());
+                licenseAccountRepository.save(acc);
+
+                System.out.println("   → Token inserted: " + token);
+            }
+
+            // ✅ 4️⃣ Xóa dữ liệu session tạm
+            session.removeAttribute("tempTool");
+            session.removeAttribute("tempTokens");
+            session.removeAttribute("licenseDays");
+            session.removeAttribute("licensePrices");
+            System.out.println("🧹 Cleared session temp data.");
+
+            // ✅ 5️⃣ Redirect về trang seller/tools
+            redirectAttributes.addFlashAttribute("success",
+                    "🎉 Tool '" + saved.getToolName() + "' created successfully with "
+                            + tempTokens.size() + " tokens and "
+                            + (licenseDays != null ? licenseDays.size() : 0) + " licenses!");
+            System.out.println("=== [FINALIZE DONE] ===");
+            return "redirect:/seller/tools";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "❌ Error: " + e.getMessage());
+            return "redirect:/seller/tools/add";
+        }
+    }
+
+
+    /** ============================================================
+     * 🔹 6️⃣ Nếu user bấm "Back" → quay lại form tạo tool
+     * ============================================================ */
+    @GetMapping("/back")
+    public String backToToolAdd(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Tool tempTool = (Tool) session.getAttribute("tempTool");
+        if (tempTool == null) {
+            return "redirect:/seller/tools/add";
+        }
+        return "redirect:/seller/tools/add"; // Dữ liệu tool vẫn còn vì đang giữ trong session
     }
 }

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Add New Tool</title>
 
+    <!-- ✅ Giao diện & Validate Style -->
     <style>
         body {
             background-color: #f9fafb;
@@ -56,7 +57,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        .form-group { margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1.5rem; position: relative; }
 
         .form-label {
             display: block;
@@ -79,6 +80,44 @@
         .form-input:focus, .form-select:focus, .form-textarea:focus {
             border-color: #16a34a;
             box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-border {
+            border: 2px solid #dc2626 !important;
+            background-color: #fff5f5;
+        }
+
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .image-gallery img {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            object-fit: cover;
+        }
+
+        .image-gallery img:hover {
+            transform: scale(1.05);
+            border-color: #16a34a;
+        }
+
+        .image-gallery img.selected {
+            border-color: #16a34a;
+            box-shadow: 0 0 4px rgba(22,163,74,0.5);
         }
 
         .form-actions {
@@ -111,100 +150,148 @@
 </header>
 
 <section class="form-section">
-    <form th:action="@{/seller/tools/add}"
-          th:object="${tool}"
-          method="post"
-          enctype="multipart/form-data">
+    <form id="toolForm" th:action="@{/seller/tools/add}" th:object="${tool}" method="post" enctype="multipart/form-data">
 
         <!-- 🧾 Tool Name -->
         <div class="form-group">
             <label class="form-label">Tool Name</label>
-            <input type="text" name="toolName" required class="form-input">
+            <input type="text" th:field="*{toolName}" id="toolName" class="form-input" placeholder="Enter tool name">
+            <small class="error-message" id="error-toolName">Tool name is required.</small>
         </div>
 
-        <!-- 🖼 Image -->
+        <!-- 🖼 Image Gallery -->
         <div class="form-group">
             <label class="form-label">Select Image</label>
-            <select name="selectedImage" class="form-select" required>
-                <option value="">-- Select an image --</option>
-                <option th:each="img : ${imageFiles}"
-                        th:value="@{'/images/' + ${img}}"
-                        th:text="${img}">
-                </option>
-            </select>
+            <div class="image-gallery" id="imageGallery">
+                <img th:each="img : ${imageFiles}"
+                     th:src="@{'/images/tools/' + ${img}}"
+                     th:alt="${img}"
+                     onclick="selectImage(this)">
+            </div>
+            <input type="hidden" th:field="*{image}" id="selectedImage">
+            <small class="error-message" id="error-selectedImage">Please select an image.</small>
         </div>
 
-        <div class="form-group">
-            <label class="form-label">File Upload (Optional)</label>
-            <input type="file" name="file" class="form-input">
-        </div>
-
+        <!-- 🗂 Category -->
         <div class="form-group">
             <label class="form-label">Category</label>
-            <select th:field="*{category.categoryId}" class="form-select" required>
+            <select th:field="*{category.categoryId}" id="category" class="form-select">
                 <option value="">-- Select category --</option>
-                <option th:each="c : ${categories}"
-                        th:value="${c.categoryId}"
-                        th:text="${c.categoryName}">
-                </option>
+                <option th:each="c : ${categories}" th:value="${c.categoryId}" th:text="${c.categoryName}"></option>
             </select>
+            <small class="error-message" id="error-category">Please select a category.</small>
         </div>
 
         <!-- 📝 Description -->
         <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea name="description" rows="4" class="form-textarea"></textarea>
+            <textarea th:field="*{description}" id="description" rows="4" class="form-textarea" placeholder="Enter description"></textarea>
+            <small class="error-message" id="error-description">Description is required.</small>
         </div>
 
-        <!-- 🔐 Login Methods -->
-        <label class="form-label fw-semibold">Tool Login Method</label>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="loginMethods" value="USER_PASSWORD"
-                   th:checked="${tool.loginMethods != null and tool.loginMethods.contains('USER_PASSWORD')}">
-            <label class="form-check-label">User & Password</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="loginMethods" value="TOKEN"
-                   th:checked="${tool.loginMethods != null and tool.loginMethods.contains('TOKEN')}">
-            <label class="form-check-label">Token (Key-based)</label>
+        <!-- 🔐 Tool Login Method -->
+        <div class="mb-3">
+            <label for="loginMethod" class="form-label">Login Method</label>
+            <select name="loginMethod" id="loginMethod" class="form-select">
+                <option value="USER_PASSWORD"
+                        th:selected="${tool.loginMethod?.name() == 'USER_PASSWORD'}">
+                    User & Password
+                </option>
+                <option value="TOKEN"
+                        th:selected="${tool.loginMethod?.name() == 'TOKEN'}">
+                    Token (Key-based)
+                </option>
+            </select>
         </div>
 
         <!-- 🔢 Quantity -->
         <div class="form-group">
             <label class="form-label">Tool Quantity</label>
-            <input type="number" name="quantity" class="form-input" min="0" value="0"
-                   placeholder="Enter available tool quantity" required>
+            <input type="number" th:field="*{quantity}" id="quantity" class="form-input" min="1" placeholder="Enter quantity">
+            <small class="error-message" id="error-quantity">Quantity must be at least 1.</small>
         </div>
 
         <!-- 💰 License Pricing -->
         <div class="form-group">
-            <label class="form-label fw-semibold">Pricing Options</label>
+            <label class="form-label">Pricing Options</label>
             <div id="licenseContainer">
-                <div class="d-flex gap-2 mb-2">
-                    <input type="number" name="licenseDays" min="1" placeholder="Số ngày" required>
-                    <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" required>
+                <div class="d-flex gap-2 mb-2" style="display:flex; gap:10px;">
+                    <input type="number" name="licenseDays" min="1" placeholder="Số ngày" class="form-input" style="width:48%;">
+                    <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" class="form-input" style="width:48%;">
                 </div>
             </div>
-            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addLicenseRow()">+ Add another</button>
+            <button type="button" class="submit-btn" style="background:#e5e7eb; color:#374151; margin-top:0.5rem;"
+                    onclick="addLicenseRow()">+ Add another</button>
         </div>
 
         <!-- ✅ Submit -->
         <div class="form-actions">
             <button type="submit" id="saveToolBtn" class="submit-btn">Save Tool</button>
         </div>
+
     </form>
 </section>
 
 <script>
+    function selectImage(img) {
+        document.querySelectorAll('.image-gallery img').forEach(i => i.classList.remove('selected'));
+        img.classList.add('selected');
+
+        // chỉ lưu tên file (không lưu cả /images/...):
+        const filename = img.getAttribute('data-filename') || img.alt || img.src.split('/').pop();
+        document.getElementById('selectedImage').value = filename;
+
+        console.log('Selected image file:', filename);
+
+    }
+    // ✅ Add License Rows
     function addLicenseRow() {
         const c = document.getElementById('licenseContainer');
         c.insertAdjacentHTML('beforeend', `
-            <div class="d-flex gap-2 mb-2">
-                <input type="number" name="licenseDays" min="1" placeholder="Số ngày" required>
-                <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" required>
-            </div>
-        `);
+      <div class="d-flex gap-2 mb-2" style="display:flex; gap:10px;">
+        <input type="number" name="licenseDays" min="1" placeholder="Số ngày" class="form-input" style="width:48%;">
+        <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" class="form-input" style="width:48%;">
+      </div>
+    `);
     }
+
+    // ✅ Validate trước khi submit
+    document.getElementById('toolForm').addEventListener('submit', function(e) {
+        let valid = true;
+        const fields = [
+            { id: 'toolName', msg: 'Tool name is required' },
+            { id: 'description', msg: 'Description is required' },
+            { id: 'loginMethod', msg: 'Please select a login method' },
+            { id: 'category', msg: 'Please select a category' },
+            { id: 'quantity', msg: 'Quantity must be at least 1' }
+        ];
+
+        fields.forEach(f => {
+            const field = document.getElementById(f.id);
+            const error = document.getElementById('error-' + f.id);
+            if (!field.value || (f.id === 'quantity' && field.value < 1)) {
+                field.classList.add('error-border');
+                error.style.display = 'block';
+                valid = false;
+            } else {
+                field.classList.remove('error-border');
+                error.style.display = 'none';
+            }
+        });
+
+        const img = document.getElementById('selectedImage').value;
+        const imgErr = document.getElementById('error-selectedImage');
+        if (!img) {
+            imgErr.style.display = 'block';
+            valid = false;
+        } else imgErr.style.display = 'none';
+
+        if (!valid) {
+            e.preventDefault();
+            window.scrollTo({ top: 100, behavior: 'smooth' });
+        }
+    });
+
 </script>
 </body>
 </html>
