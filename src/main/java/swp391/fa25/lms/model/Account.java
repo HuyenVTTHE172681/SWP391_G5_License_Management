@@ -88,25 +88,29 @@ public class Account {
     public Account() {
     }
 
-    public Account(Long accountId, String email, String password, String fullName, AccountStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationCode, LocalDateTime codeExpiry, Role role, Wallet wallet, List<CustomerOrder> orders, List<Feedback> feedbacks, List<Favorite> favorites, List<Tool> tools) {
+    public Account(Long accountId, String email, String password, String fullName, LocalDateTime createdAt, AccountStatus status, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationCode, LocalDateTime codeExpiry, String confirmPassword, Role role, Wallet wallet, LocalDateTime sellerExpiryDate, Boolean sellerActive, SellerPackage sellerPackage, List<Tool> tools, List<Favorite> favorites, List<Feedback> feedbacks, List<CustomerOrder> orders) {
         this.accountId = accountId;
         this.email = email;
         this.password = password;
         this.fullName = fullName;
-        this.status = status;
         this.createdAt = createdAt;
+        this.status = status;
         this.updatedAt = updatedAt;
         this.phone = phone;
         this.address = address;
         this.verified = verified;
         this.verificationCode = verificationCode;
         this.codeExpiry = codeExpiry;
+        this.confirmPassword = confirmPassword;
         this.role = role;
         this.wallet = wallet;
-        this.orders = orders;
-        this.feedbacks = feedbacks;
-        this.favorites = favorites;
+        this.sellerExpiryDate = sellerExpiryDate;
+        this.sellerActive = sellerActive;
+        this.sellerPackage = sellerPackage;
         this.tools = tools;
+        this.favorites = favorites;
+        this.feedbacks = feedbacks;
+        this.orders = orders;
     }
 
     public Long getAccountId() {
