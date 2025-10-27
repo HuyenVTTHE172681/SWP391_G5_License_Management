@@ -262,4 +262,10 @@ public class Tool {
     public void setMaxPrice(BigDecimal maxPrice) {
         this.maxPrice = maxPrice;
     }
+
+    @Transient
+    private boolean isFavorite;
+
+    public boolean isIsFavorite() { return isFavorite; }
+    public void setIsFavorite(boolean isFavorite) { this.isFavorite = isFavorite; }
 }
