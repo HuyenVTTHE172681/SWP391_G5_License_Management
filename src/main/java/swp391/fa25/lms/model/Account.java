@@ -75,6 +75,16 @@ public class Account {
     @JsonBackReference(value = "tool-seller")
     private List<Tool> tools;
 
+    @ManyToOne
+    @JoinColumn(name = "seller_package_id") // tên cột trong bảng Account
+    private SellerPackage sellerPackage;
+
+    @Column(name = "seller_active")
+    private Boolean sellerActive = false;
+
+    @Column(name = "seller_expiry_date")
+    private LocalDateTime sellerExpiryDate;
+
     public Account() {
     }
 
