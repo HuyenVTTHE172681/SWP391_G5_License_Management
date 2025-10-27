@@ -21,6 +21,17 @@ public class SellerPackage {
     @Column(nullable = true)
     private String description;
 
+    public SellerPackage() {
+    }
+
+    public SellerPackage(int id, String packageName, int durationInMonths, double price, String description) {
+        this.id = id;
+        this.packageName = packageName;
+        this.durationInMonths = durationInMonths;
+        this.price = price;
+        this.description = description;
+    }
+
     public int getId() {
         return id;
     }
