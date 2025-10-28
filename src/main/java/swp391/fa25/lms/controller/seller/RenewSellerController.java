@@ -10,8 +10,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.SellerSubscription;
+import swp391.fa25.lms.repository.AccountRepository;
+import swp391.fa25.lms.service.customer.AccountService;
 import swp391.fa25.lms.service.seller.SellerService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -21,8 +24,24 @@ public class RenewSellerController {
     @Autowired
     private SellerService sellerService;
 
+    @Autowired
+    private AccountRepository accountRepo;
+
     @GetMapping("/renew")
-    public String showRenewSeller(Model model){
+    public String showRenewPage(Authentication authentication, Model model) {
+        if (authentication != null) {
+            String email = authentication.getName();
+            Account account = accountRepo.findByEmail(email).orElse(null);
+            if (account != null) {
+                if (account.getSellerExpiryDate() != null &&
+                        account.getSellerExpiryDate().isBefore(LocalDateTime.now())) {
+                    model.addAttribute("warning", "Gói Seller của bạn đã hết hạn! Vui lòng gia hạn để tiếp tục.");
+                } else {
+                    model.addAttribute("warning", "Bạn chưa kích hoạt gói Seller. Vui lòng chọn gói phù hợp!");
+                }
+            }
+        }
+
         model.addAttribute("packages", sellerService.getAllPackage());
         return "seller/renewSeller";
     }
