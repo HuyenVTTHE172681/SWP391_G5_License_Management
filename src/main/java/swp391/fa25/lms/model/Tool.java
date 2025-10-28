@@ -121,13 +121,8 @@ public class Tool {
         this.toolName = toolName;
     }
 
-    public @NotBlank(message = "Image cannot be blank") String getImage() {
-        return image;
-    }
-
-    public void setImage(@NotBlank(message = "Image cannot be blank") String image) {
-        this.image = image;
-    }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
 
     public @NotBlank(message = "Description cannot be blank") String getDescription() {
         return description;

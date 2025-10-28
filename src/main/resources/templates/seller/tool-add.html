@@ -182,19 +182,20 @@
                    th:errors="*{toolName}"></small>
         </div>
 
-        <!-- 🖼 Image Gallery -->
+        <!-- 🖼 Upload Image -->
         <div class="form-group">
-            <label class="form-label">Select Image</label>
-            <div class="image-gallery" id="imageGallery">
-                <img th:each="img : ${imageFiles}"
-                     th:src="@{'/images/tools/' + ${img}}"
-                     th:alt="${img}"
-                     onclick="selectImage(this)">
+            <label class="form-label">Upload Image</label>
+            <input type="file" name="imageFile" id="imageFile" class="form-input" accept="image/*">
+
+            <!-- Preview -->
+            <div id="previewContainer" style="margin-top:10px;">
+                <img id="previewImage" src="#" alt="Preview"
+                     style="max-width:150px; display:none; border-radius:8px; border:1px solid #ccc;">
             </div>
-            <input type="hidden" th:field="*{image}" id="selectedImage">
+
             <small class="error-message text-danger"
-                   th:if="${#fields.hasErrors('image')}"
-                   th:errors="*{image}"></small>
+                   th:if="${errorImage != null}"
+                   th:text="${errorImage}"></small>
         </div>
 
         <!-- 🗂 Category -->
@@ -256,9 +257,9 @@
                 <!-- 🔹 Dòng đầu tiên PHẢI có class license-row -->
                 <div class="license-row d-flex align-items-center mb-2" style="gap:10px;">
                     <input type="number" name="licenseDays" min="1"
-                           placeholder="Số ngày" class="form-input flex-fill" style="max-width:45%;">
+                           placeholder="Days" class="form-input flex-fill" style="max-width:45%;">
                     <input type="number" name="licensePrices" min="0"
-                           placeholder="Giá (VNĐ)" class="form-input flex-fill" style="max-width:45%;">
+                           placeholder="Price (VNĐ)" class="form-input flex-fill" style="max-width:45%;">
                     <button type="button" class="remove-btn" onclick="removeLicenseRow(this)">×</button>
                 </div>
             </div>
@@ -300,8 +301,8 @@
         row.style.display = 'flex';
         row.style.gap = '10px';
         row.innerHTML = `
-        <input type="number" name="licenseDays" min="1" placeholder="Số ngày" class="form-input" style="width:45%;">
-        <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" class="form-input" style="width:45%;">
+        <input type="number" name="licenseDays" min="1" placeholder="Days" class="form-input" style="width:45%;">
+        <input type="number" name="licensePrices" min="0" placeholder="Price (VNĐ)" class="form-input" style="width:45%;">
         <button type="button" class="btn btn-outline-danger remove-btn" onclick="removeLicenseRow(this)">×</button>
     `;
         container.appendChild(row);
@@ -345,6 +346,48 @@
             window.scrollTo({ top: 100, behavior: 'smooth' });
         }
     });
+
+    document.getElementById('imageFile').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('previewImage');
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = ev => {
+                preview.src = ev.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "#";
+            preview.style.display = 'none';
+        }
+    });
+    // ⚠️ Kiểm tra định dạng và dung lượng trước khi submit
+    document.getElementById('toolForm').addEventListener('submit', function (e) {
+        const fileInput = document.getElementById('imageFile');
+        const file = fileInput.files[0];
+        const errorMsg = document.querySelector('.error-message.text-danger');
+
+        if (!file) return; // để server validate nếu trống
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            e.preventDefault();
+            errorMsg.textContent = 'Only JPG, JPEG, or PNG files are allowed.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            e.preventDefault();
+            errorMsg.textContent = 'Image must be smaller than 2MB.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
+    });
+
 
     // ✅ Validate trước khi submit
     document.getElementById('toolForm').addEventListener('submit', function(e) {

@@ -11,5 +11,6 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
     List<LicenseAccount> findByTool_ToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
     boolean existsByToken(String token);
     long countByToolToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
+    List<LicenseAccount> findByToolToolId(Long toolId);
 }
 
