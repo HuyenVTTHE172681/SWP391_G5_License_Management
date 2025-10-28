@@ -104,21 +104,5 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         return new ServletListenerRegistrationBean<>(new HttpSessionEventPublisher());
     }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/public/**", "/register/**", "/seller/renew").permitAll()
-                        .requestMatchers("/seller/**").hasRole("SELLER")
-                        .anyRequest().authenticated()
-                )
-                .formLogin(login -> login
-                        .loginPage("/login")
-                        .successHandler(successHandler)  // ✅ Custom redirect
-                        .permitAll()
-                )
-                .logout(logout -> logout.permitAll());
 
-        return http.build();
-    }
 }
