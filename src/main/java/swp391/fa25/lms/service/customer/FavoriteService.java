@@ -5,11 +5,13 @@ import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Favorite;
 import swp391.fa25.lms.model.Tool;
+import swp391.fa25.lms.repository.AccountRepository;
 import swp391.fa25.lms.repository.FavoriteRepository;
 import swp391.fa25.lms.repository.ToolRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class FavoriteService {
@@ -18,6 +20,8 @@ public class FavoriteService {
     private FavoriteRepository favoriteRepository;
     @Autowired
     private ToolRepository toolRepository;
+    @Autowired
+    private AccountRepository accountRepository;
 
     /**
      * Toggle favorite: nếu đã yêu thích -> xóa, nếu chưa -> thêm
@@ -47,4 +51,22 @@ public class FavoriteService {
                 .map(Favorite::getTool)
                 .toList();
     }
+
+    /**
+     * Đếm số favorite của account.
+     */
+    public long countFavoritesByAccount(Account account) {
+        return favoriteRepository.countByAccount(account);
+    }
+
+    /**
+     * Lấy list Tool favorite của account (dùng cho /list).
+     */
+    public List<Tool> getFavoritesByAccount(Long accountId) {
+        return favoriteRepository.findByAccount(new Account() {{ setAccountId(accountId); }})
+                .stream()
+                .map(Favorite::getTool)
+                .collect(Collectors.toList());
+    }
+
 }

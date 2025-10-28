@@ -45,9 +45,15 @@
                 </ul>
 
                 <div class="d-flex align-items-center">
-                    <a href="#" class="wishlist-icon">
-                        <i class="far fa-heart"></i>
+                    <a th:href="@{/favorite/list}" class="wishlist-icon position-relative" id="wishlistLink">
+                        <i class="far fa-heart fs-5"></i>
+                        <span id="favoriteCountBadge"
+                              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              style="font-size: 0.75rem;" >
+                                0
+                        </span>
                     </a>
+
 
                     <!--Đăng ký seller-->
                     <a th:href="@{/register-guest-seller}"
@@ -85,6 +91,53 @@
         </div>
     </nav>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function () {
+        const badge = document.getElementById("favoriteCountBadge");
+        const wishlistLink = document.getElementById("wishlistLink");
+
+        if (!badge || !wishlistLink) {
+            console.error("Không tìm thấy badge hoặc wishlist link");
+            return;
+        }
+
+        // Sử dụng global function từ home (nếu chưa define, fallback local)
+        if (typeof window.loadFavoriteCount !== 'function') {
+            window.loadFavoriteCount = async function() {
+                try {
+                    const res = await fetch("/favorite/count", { credentials: "include" });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const count = await res.json();
+                    badge.textContent = count;
+                    console.log("Favorite count từ API:", count);
+                } catch (error) {
+                    console.error("Lỗi khi load favorite count:", error);
+                    badge.textContent = "0";
+                }
+            };
+        }
+
+        // Listen event (backup)
+        document.addEventListener("favorite-changed", window.loadFavoriteCount);
+
+        // Click wishlist
+        wishlistLink.addEventListener("click", async function (e) {
+            e.preventDefault();
+            await window.loadFavoriteCount();  // Load trước khi check
+            const count = parseInt(badge.textContent) || 0;
+            console.log("Favorite count khi click:", count);
+            if (count > 0) {
+                window.location.href = "/favorite/list";
+            } else {
+                window.location.href = "/login";
+            }
+        });
+
+        // Load ban đầu
+        await window.loadFavoriteCount();
+    });
+</script>
 
 </body>
 </html>

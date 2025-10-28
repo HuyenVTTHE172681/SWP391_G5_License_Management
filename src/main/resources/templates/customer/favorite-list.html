@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách yêu thích</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link th:href="@{/css/home.css}" rel="stylesheet">
+</head>
+<body>
+<!--Header-->
+<div th:replace="common/header :: header"></div>
+
+<div class="container my-5">
+    <h2 class="mb-4">Danh sách Tool yêu thích</h2>
+    <th:block th:if="${#lists.isEmpty(favorites)}">
+        <div class="text-center py-5">
+            <i class="fas fa-heart fs-1 text-muted mb-3"></i>
+            <h5 class="text-muted">Chưa có tool nào trong danh sách yêu thích</h5>
+            <a th:href="@{/home}" class="btn btn-primary">Khám phá Tool</a>
+        </div>
+    </th:block>
+    <div th:unless="${#lists.isEmpty(favorites)}" class="row g-4">
+        <div class="col-md-4" th:each="tool : ${favorites}">
+            <div class="card h-100 shadow-sm">
+                <div class="position-relative">
+                    <img th:src="${tool.image != null ? tool.image : '/placeholder.svg?height=250&width=350'}"
+                         class="card-img-top" alt="Tool Image" style="height: 200px; object-fit: cover;">
+                    <button class="btn btn-danger btn-sm position-absolute top-2 end-2 remove-fav"
+                            th:attr="data-tool-id=${tool.toolId}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${tool.toolName}">Tool Name</h5>
+                    <p class="card-text text-muted" th:text="${tool.seller.fullName}">Seller</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="stars">
+                            <span th:each="i : ${#numbers.sequence(1,5)}">
+                                <i th:classappend="${i <= tool.averageRating} ? 'fas fa-star text-warning' : 'far fa-star text-muted'"></i>
+                            </span>
+                            <span class="text-muted ms-1" th:text="${tool.totalReviews} + ' reviews'">0 reviews</span>
+                        </div>
+                        <span class="fw-bold text-success" th:text="${#numbers.formatDecimal(tool.minPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                    </div>
+                    <a th:href="@{'/tools/' + ${tool.toolId}}" class="btn btn-outline-primary w-100 mt-2">Xem chi tiết</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Footer-->
+<div th:replace="common/footer :: footer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Remove favorite
+        document.querySelectorAll(".remove-fav").forEach(btn => {
+            btn.addEventListener("click", async function(e) {
+                e.preventDefault();
+                const toolId = this.getAttribute("data-tool-id");
+                try {
+                    const res = await fetch(`/favorite/toggle?toolId=${toolId}`, {
+                        method: "POST",
+                        credentials: "include"
+                    });
+                    if (res.ok && (await res.text()).trim() === "removed") {
+                        this.closest(".col-md-4").remove();
+                        if (document.querySelectorAll(".col-md-4").length === 0) {
+                            location.reload();  // Reload nếu empty
+                        }
+                        window.loadFavoriteCount();  // Update header count
+                    }
+                } catch (err) {
+                    console.error("Remove favorite error:", err);
+                }
+            });
+        });
+
+        // Load count nếu global function tồn tại
+        if (typeof window.loadFavoriteCount === 'function') {
+            window.loadFavoriteCount();
+        }
+    });
+</script>
+</body>
+</html>
