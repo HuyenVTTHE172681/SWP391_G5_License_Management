@@ -141,7 +141,9 @@ public class ToolController {
 
     @GetMapping("/add")
     public String showAddForm(Model model) throws IOException {
-        model.addAttribute("tool", new Tool());
+        if (!model.containsAttribute("tool")) {
+            model.addAttribute("tool", new Tool());
+        }
         reloadFormData(model);
         return "seller/tool-add";
     }
@@ -164,9 +166,11 @@ public class ToolController {
         }
 
         if (bindingResult.hasErrors()) {
+            model.addAttribute("tool", tool);
             reloadFormData(model);
             return "seller/tool-add";
         }
+
 
         if (loginMethod == null || loginMethod.isBlank()) {
             model.addAttribute("errorLoginMethod", "Please select a login method.");

@@ -109,16 +109,23 @@
         </table>
 
         <!-- 🔹 Nút Finalize tool -->
-        <form th:action="@{/seller/tokens/finalize}" method="post" class="mt-3 text-end">
-            <button type="submit" class="btn btn-success"
-                    onclick="return confirm('Finish setup and create tool?')">
-                ✅ Finalize Tool Creation
-            </button>
+        <form th:action="@{/seller/tokens/finalize}" method="post" class="mt-3 text-end" onsubmit="return validateFinalize()">
+             <button type="submit" class="btn btn-success">
+            ✅ Finalize Tool Creation
+        </button>
         </form>
     </div>
 </div>
 
 <script>
+    function validateFinalize() {
+        const rows = document.querySelectorAll("table tbody tr");
+        if (rows.length === 1 && rows[0].innerText.includes("No tokens added yet")) {
+            alert("❌ Bạn phải thêm ít nhất 1 token trước khi hoàn tất!");
+            return false;
+        }
+        return confirm("Bạn có chắc muốn hoàn tất tạo tool?");
+    }
     function addRow() {
         const container = document.getElementById('tokenContainer');
         const row = document.createElement('div');

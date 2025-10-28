@@ -69,15 +69,23 @@ public class TokenController {
         List<String> tempTokens = (List<String>) session.getAttribute("tempTokens");
         if (tempTokens == null) tempTokens = new ArrayList<>();
 
-        // Kiểm tra token trùng
+        token = token.trim();
+
+        // ✅ Validate token: phải gồm đúng 6 chữ số
+        if (!token.matches("^\\d{6}$")) {
+            redirectAttributes.addFlashAttribute("error", "❌ Token phải gồm đúng 6 chữ số.");
+            return "redirect:/seller/tokens/manage";
+        }
+
+        // ✅ Check trùng
         if (tempTokens.contains(token) || licenseAccountRepository.existsByToken(token)) {
-            redirectAttributes.addFlashAttribute("error", "❌ Token already exists!");
+            redirectAttributes.addFlashAttribute("error", "❌ Token đã tồn tại!");
             return "redirect:/seller/tokens/manage";
         }
 
         tempTokens.add(token);
         session.setAttribute("tempTokens", tempTokens);
-        redirectAttributes.addFlashAttribute("success", "✅ Added token successfully!");
+        redirectAttributes.addFlashAttribute("success", "✅ Thêm token thành công!");
         return "redirect:/seller/tokens/manage";
     }
 
@@ -106,8 +114,19 @@ public class TokenController {
                 redirectAttributes.addFlashAttribute("error", "❌ Token không được để trống.");
                 return "redirect:/seller/tokens/manage";
             }
-            if (!t.matches("^[A-Za-z0-9_-]+$")) {
-                redirectAttributes.addFlashAttribute("error", "❌ Token '" + t + "' chứa ký tự không hợp lệ.");
+            if (!t.matches("^\\d{6}$")) {
+                redirectAttributes.addFlashAttribute("error", "❌ Token '" + t + "' phải gồm đúng 6 chữ số.");
+                return "redirect:/seller/tokens/manage";
+            }
+            // ✅ Kiểm tra token đã tồn tại trong session chưa
+            if (tempTokens.contains(t)) {
+                redirectAttributes.addFlashAttribute("error", "❌ Token '" + t + "' đã tồn tại trong danh sách tạm.");
+                return "redirect:/seller/tokens/manage";
+            }
+
+            // ✅ Kiểm tra token đã tồn tại trong DB chưa
+            if (licenseAccountRepository.existsByToken(t)) {
+                redirectAttributes.addFlashAttribute("error", "❌ Token '" + t + "' đã tồn tại trong hệ thống!");
                 return "redirect:/seller/tokens/manage";
             }
         }
@@ -163,12 +182,17 @@ public class TokenController {
         List<Integer> licenseDays = (List<Integer>) session.getAttribute("licenseDays");
         List<Double> licensePrices = (List<Double>) session.getAttribute("licensePrices");
 
-        if (tempTool == null || tempTokens == null || tempTokens.isEmpty()) {
+        if (tempTool == null) {
             redirectAttributes.addFlashAttribute("error",
-                    "❌ Missing tool or tokens. Please try again.");
-            return "redirect:/seller/tools/add";
+                    "⚠️ Phiên thêm tool đã hết hạn. Vui lòng tạo lại tool.");
+            return "redirect:/seller/tools";
         }
 
+        if (tempTokens == null || tempTokens.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error",
+                    "❌ Bạn phải thêm ít nhất 1 token trước khi hoàn tất tạo tool.");
+            return "redirect:/seller/tokens/manage";
+        }
         System.out.println("=== [FINALIZE TOOL CREATION] ===");
         System.out.println("Tool Name: " + tempTool.getToolName());
         System.out.println("Tokens: " + tempTokens.size());
