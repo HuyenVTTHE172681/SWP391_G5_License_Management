@@ -43,7 +43,7 @@
             <div class="mb-2 sellerName" >
                 <p>Người bán: <b th:text="${tool.seller.fullName}">Seller</b></p>
 
-                <p th:text="${'Kho: '}"></p>
+                <p>Kho: <b th:text="${tool.quantity}">Seller</b></p>
 
                 <div class="price">
                 <span id="license-price"
@@ -68,16 +68,6 @@
                 </div>
             </div>
 
-            <!-- Số lượng -->
-<!--            <div class="quantity-box mt-4">-->
-<!--                <label for="quantity" class="form-label fw-semibold mb-2">Số lượng</label>-->
-<!--                <div class="quantity-controls">-->
-<!--                    <button type="button" class="btn-quantity" onclick="changeQuantity(-1)">−</button>-->
-<!--                    <input id="quantity" type="number" value="1" min="1" />-->
-<!--                    <button type="button" class="btn-quantity" onclick="changeQuantity(1)">+</button>-->
-<!--                </div>-->
-<!--            </div>-->
-
             <!-- Nút hành động -->
             <div class="actions mt-4 d-flex align-items-center gap-3">
                 <!-- Nút mua hàng -->
@@ -85,7 +75,12 @@
                     <input type="hidden" name="toolId" th:value="${tool.toolId}">
                     <!-- hidden licenseId sẽ được cập nhật khi user chọn license -->
                     <input type="hidden" id="selectedLicense" name="licenseId" th:value="${tool.licenses.size() > 0 ? tool.licenses[0].licenseId : 0}">
-                    <button type="button" class="btn btn-success px-4" onclick="buyNow()">Mua hàng</button>
+                    <button type="button"
+                            class="btn btn-success px-4"
+                            th:disabled="${tool.quantity == 0}"
+                            th:text="${tool.quantity == 0 ? 'Hết hàng' : 'Mua hàng'}"
+                            onclick="buyNow()">
+                    </button>
                 </form>
             </div>
 
@@ -239,6 +234,13 @@
     // Mua hàng form hoặc show login modal
     function buyNow() {
         var selected = document.querySelector('.license-item.active');
+        const quantity = /*[[${tool.quantity}]]*/ 0;
+
+        if (quantity <= 0) {
+            alert("Sản phẩm này hiện đã hết hàng, vui lòng quay lại sau!");
+            return;
+        }
+
         if (!selected) {
             alert('Vui lòng chọn gói license trước khi mua hàng!');
             return;

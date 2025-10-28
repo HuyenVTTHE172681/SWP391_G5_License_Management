@@ -30,7 +30,7 @@ public class CustomerOrder {
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", nullable = false)
     private OrderStatus orderStatus;
-    public enum OrderStatus { PENDING, SUCCESS, FAILED }
+    public enum OrderStatus { SUCCESS, FAILED }
 
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;

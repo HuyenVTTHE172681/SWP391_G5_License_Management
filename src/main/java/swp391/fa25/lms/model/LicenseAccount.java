@@ -46,7 +46,7 @@ public class LicenseAccount {
     private LocalDateTime endDate;
     private LocalDateTime lastLogin;
     private String deviceInfo;
-    private Integer maxDevices;
+    private Integer maxDevices = 1;
 
     // ===== NEW FIELDS =====
     @Enumerated(EnumType.STRING)

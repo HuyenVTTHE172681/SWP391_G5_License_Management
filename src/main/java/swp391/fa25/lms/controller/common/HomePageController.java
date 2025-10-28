@@ -12,7 +12,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.service.customer.CategoryService;
+import swp391.fa25.lms.service.customer.FavoriteService;
 import swp391.fa25.lms.service.customer.ToolService;
+
+import java.util.List;
 
 @Controller
 public class HomePageController {
@@ -21,6 +24,8 @@ public class HomePageController {
     private CategoryService categoryService;
     @Autowired
     private ToolService toolService;
+    @Autowired
+    private FavoriteService favoriteService;
 
     @GetMapping("/")
     public String defaultRedirect() {
@@ -50,11 +55,26 @@ public class HomePageController {
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "dateFilter", required = false) String dateFilter,
+            @RequestParam(value = "priceFilter", required = false) String priceFilter,
+            @RequestParam(value = "ratingFilter", required = false) Integer ratingFilter,
             @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "9") int size,
+            HttpServletRequest request,
             Model model) {
 
-        int size = 9;
-        Page<Tool> toolPage = toolService.searchAndFilterTools(keyword, categoryId, dateFilter, page, size);
+        Page<Tool> toolPage = toolService.searchAndFilterTools(
+                keyword, categoryId, dateFilter, priceFilter, ratingFilter, page, size
+        );
+
+        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
+
+        // Nếu đã login -> đánh dấu tool đã favorite
+        if (account != null) {
+            List<Tool> favTools = favoriteService.getFavoriteTools(account);
+            toolPage.getContent().forEach(tool -> {
+                tool.setIsFavorite(favTools.contains(tool));
+            });
+        }
 
         model.addAttribute("tools", toolPage.getContent());
         model.addAttribute("currentPage", page);
@@ -62,20 +82,18 @@ public class HomePageController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("selectedCategory", categoryId);
         model.addAttribute("dateFilter", dateFilter);
+        model.addAttribute("priceFilter", priceFilter);
+        model.addAttribute("ratingFilter", ratingFilter);
+        model.addAttribute("pageSize", size);
 
-        // Trả về fragment Thymeleaf
-        return "public/tool-list :: toolList";
+        // Render fragment trong home.html
+        return "public/home :: toolList";
     }
+
 
     @GetMapping("/logout")
     public String logout(HttpServletRequest request) {
         request.getSession().invalidate();
         return "redirect:/login";
     }
-
-//    @GetMapping("/logout-success")
-//    public String logoutSuccess(Model model) {
-//        model.addAttribute("message", "Bạn đã đăng xuất thành công");
-//        return "public/login";
-//    }
 }

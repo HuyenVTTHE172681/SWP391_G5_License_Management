@@ -32,7 +32,9 @@ public class PaymentService {
     private LicenseAccountRepository licenseAccountRepository;
     private JavaMailSender mailSender;
     private WalletRepository walletRepository;
+    private AccountRepository accountRepository;
 
+    // Các biến môi trường VNPay (được config trong application.properties)
     @Value("${vnpay.tmnCode}")
     private String tmnCode;
     @Value("${vnpay.hashSecret}")
@@ -42,7 +44,14 @@ public class PaymentService {
     @Value("${vnpay.returnUrl}")
     private String returnUrl;
 
-    public PaymentService(ToolRepository toolRepository, LicenseToolRepository licenseToolRepository, CustomerOrderRepository orderRepository, WalletTransactionRepository transactionRepository, LicenseAccountRepository licenseAccountRepository, JavaMailSender mailSender, WalletRepository walletRepository) {
+    public PaymentService(ToolRepository toolRepository,
+                          LicenseToolRepository licenseToolRepository,
+                          CustomerOrderRepository orderRepository,
+                          WalletTransactionRepository transactionRepository,
+                          LicenseAccountRepository licenseAccountRepository,
+                          JavaMailSender mailSender,
+                          WalletRepository walletRepository,
+                          AccountRepository accountRepository) {
         this.toolRepository = toolRepository;
         this.licenseToolRepository = licenseToolRepository;
         this.orderRepository = orderRepository;
@@ -50,6 +59,7 @@ public class PaymentService {
         this.licenseAccountRepository = licenseAccountRepository;
         this.mailSender = mailSender;
         this.walletRepository = walletRepository;
+        this.accountRepository = accountRepository;
     }
 
     /**
@@ -84,6 +94,7 @@ public class PaymentService {
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
 
+        // Build query string & dữ liệu để hash
         for (String fieldName : fieldNames) {
             String value = vnpParams.get(fieldName);
             if (value == null || value.length() == 0) continue;
@@ -97,7 +108,6 @@ public class PaymentService {
                 // Encode an toàn, UTF-8
                 String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
                 String encodedFieldName = URLEncoder.encode(fieldName, StandardCharsets.UTF_8.toString());
-
                 // build hashData và query
                 hashData.append(fieldName).append('=').append(encodedValue);
                 query.append(encodedFieldName).append('=').append(encodedValue);
@@ -115,7 +125,10 @@ public class PaymentService {
     }
 
     /**
-     * Xử lý callback trả về từ VNPay (sau khi thanh toán)
+     * Xử lý kết quả thanh toán từ VNPay.
+     * - VNPay gọi lại URL return (GET) và gửi kèm param.
+     * - Dựa vào vnp_ResponseCode để xác định thành công.
+     * - Ghi nhận giao dịch, cập nhật ví seller, tạo đơn hàng, gửi mail.
      */
     @Transactional
     public boolean handlePaymentCallback(Map<String, String> params) {
@@ -124,6 +137,7 @@ public class PaymentService {
             String orderInfo = params.get("vnp_OrderInfo");
             double amount = Double.parseDouble(params.get("vnp_Amount")) / 100.0;
 
+            // Response Code thanh toán thành công
             boolean success = "00".equals(responseCode);
 
             // Parse: toolId_licenseId_accountId
@@ -134,6 +148,7 @@ public class PaymentService {
 
             Tool tool = toolRepository.findById(toolId).orElseThrow();
             License license = licenseToolRepository.findById(licenseId).orElseThrow();
+            Account buyer = accountRepository.findById(buyerId).orElseThrow();
 
             // Lấy seller của tool (ví seller sẽ nhận tiền)
             Account seller = tool.getSeller();
@@ -141,6 +156,10 @@ public class PaymentService {
 
             Wallet wallet = walletRepository.findByAccount(seller)
                     .orElseThrow(() -> new RuntimeException("Wallet not found for seller ID: " + seller.getAccountId()));
+
+            // Lấy người mua đầy đủ từ DB (để có email)
+//            Account buyer = accountRepository.findById(buyerId)
+//                    .orElseThrow(() -> new RuntimeException("Buyer not found with ID: " + buyerId));
 
             // 1 Ghi nhận giao dịch vào bảng WalletTransaction
             WalletTransaction tx = new WalletTransaction();
@@ -160,9 +179,6 @@ public class PaymentService {
             }
 
             // 3 Tạo mới đơn hàng
-            Account buyer = new Account();
-            buyer.setAccountId(buyerId);
-
             CustomerOrder order = new CustomerOrder();
             order.setAccount(buyer);
             order.setTool(tool);
@@ -176,20 +192,53 @@ public class PaymentService {
 
             // 4 Nếu thanh toán thành công → tạo license + gửi email
             if (success) {
+                // Giảm quantity của Tool (mỗi lần chỉ mua được 1)
+                if (tool.getQuantity() <= 0) {
+                    throw new RuntimeException("Tool này đã hết lượt bán!");
+                }
+                tool.setQuantity(tool.getQuantity() - 1);
+                toolRepository.save(tool);
+
                 LicenseAccount acc = new LicenseAccount();
-                acc.setUsername("user_" + buyerId);
-                acc.setPassword(UUID.randomUUID().toString().substring(0, 8));
                 acc.setLicense(license);
                 acc.setOrder(order);
                 acc.setTool(tool);
+                acc.setUsed(true); // Đánh dấu license này đang được dùng
                 acc.setStatus(LicenseAccount.Status.ACTIVE);
                 acc.setStartDate(LocalDateTime.now());
                 acc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
-                licenseAccountRepository.save(acc);
 
-                sendOrderSuccessEmail(order, acc);
+                // Kiểm tra loginMethod (Tool chỉ có 1 phương thức)
+                String loginMethod = tool.getLoginMethod().toString(); // USER_PASSWORD hoặc TOKEN
+                acc.setLoginMethod(LicenseAccount.LoginMethod.valueOf(loginMethod));
+
+                if (loginMethod.equals("USER_PASSWORD")) {
+                    // Tạo tài khoản đăng nhập riêng
+                    acc.setUsername("user_" + buyerId + "_" + System.currentTimeMillis());
+                    acc.setPassword(UUID.randomUUID().toString().substring(0, 8));
+                    licenseAccountRepository.save(acc);
+
+                    sendUserPasswordEmail(order, acc);
+
+                } else if (loginMethod.equals("TOKEN")) {
+                    // Tìm token chưa dùng (used = false)
+                    Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByToolAndUsedFalse(tool);
+
+                    if (unusedToken.isEmpty()) {
+                        throw new RuntimeException("Không còn token khả dụng cho tool này!");
+                    }
+
+                    LicenseAccount tokenAcc = unusedToken.get();
+                    tokenAcc.setUsed(true);
+                    tokenAcc.setOrder(order);
+                    tokenAcc.setStatus(LicenseAccount.Status.ACTIVE);
+                    tokenAcc.setStartDate(LocalDateTime.now());
+                    tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
+                    licenseAccountRepository.save(tokenAcc);
+
+                    sendTokenEmail(order, tokenAcc);
+                }
             }
-
             return success;
 
         } catch (Exception e) {
@@ -198,43 +247,72 @@ public class PaymentService {
         }
     }
 
-
     /**
-     * Gửi email xác nhận thanh toán thành công
+     * Gửi mail cho tool dạng USER_PASSWORD
      */
-    private void sendOrderSuccessEmail(CustomerOrder order, LicenseAccount licenseAcc) {
+    private void sendUserPasswordEmail(CustomerOrder order, LicenseAccount acc) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            String to = order.getAccount().getEmail();
-            String subject = "[LMS] Thanh toán thành công!";
+            helper.setTo(order.getAccount().getEmail());
+            helper.setSubject("[LMS] Thanh toán thành công - Thông tin tài khoản Tool");
+
             String body = """
-                    <h2>Cảm ơn bạn đã mua tool trên Tool Market!</h2>
-                    <p><b>Tool:</b> %s</p>
-                    <p><b>License:</b> %s</p>
-                    <p><b>Giá:</b> %,.0f VND</p>
-                    <p><b>Tài khoản sử dụng:</b> %s</p>
-                    <p><b>Mật khẩu:</b> %s</p>
-                    <p>Hạn sử dụng đến: %s</p>
-                    <br/>
-                    <p>Chúc bạn có trải nghiệm tuyệt vời!</p>
-                    """.formatted(
+                <h2>Bạn đã mua thành công tool: <b>%s</b></h2>
+                <p><b>License:</b> %s</p>
+                <p><b>Tên đăng nhập:</b> %s</p>
+                <p><b>Mật khẩu:</b> %s</p>
+                <p>Thời hạn sử dụng đến: %s</p>
+                <br/>
+                <p>Chúc bạn trải nghiệm vui vẻ!</p>
+                """.formatted(
                     order.getTool().getToolName(),
                     order.getLicense().getName(),
-                    order.getPrice(),
-                    licenseAcc.getUsername(),
-                    licenseAcc.getPassword(),
-                    licenseAcc.getEndDate().toLocalDate()
+                    acc.getUsername(),
+                    acc.getPassword(),
+                    acc.getEndDate().toLocalDate()
             );
 
-            helper.setTo(to);
-            helper.setSubject(subject);
             helper.setText(body, true);
             mailSender.send(message);
 
         } catch (Exception e) {
-            System.err.println("Gửi email thất bại: " + e.getMessage());
+            System.err.println("Gửi email USER_PASSWORD thất bại: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Gửi mail cho tool dạng TOKEN
+     */
+    private void sendTokenEmail(CustomerOrder order, LicenseAccount tokenAcc) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(order.getAccount().getEmail());
+            helper.setSubject("[LMS] Thanh toán thành công - Tool Token");
+
+            String body = """
+                <h2>Bạn đã mua thành công tool: <b>%s</b></h2>
+                <p><b>License:</b> %s</p>
+                <p><b>Token sử dụng:</b> %s</p>
+                <p><b>Trạng thái token:</b> Đã kích hoạt</p>
+                <p>Thời hạn sử dụng đến: %s</p>
+                <br/>
+                <p><i>Lưu ý:</i> Token này chỉ được dùng một lần và không thể chỉnh sửa.</p>
+                """.formatted(
+                    order.getTool().getToolName(),
+                    order.getLicense().getName(),
+                    tokenAcc.getToken(),
+                    tokenAcc.getEndDate().toLocalDate()
+            );
+
+            helper.setText(body, true);
+            mailSender.send(message);
+
+        } catch (Exception e) {
+            System.err.println("Gửi email TOKEN thất bại: " + e.getMessage());
         }
     }
 

@@ -41,22 +41,9 @@ body {
     margin-bottom: 40px;
 }
 
-.search-box {
-    position: relative;
-}
-
 .search-box input {
-    padding-left: 40px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-}
-
-.search-box i {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-light);
 }
 
 .filter-select {

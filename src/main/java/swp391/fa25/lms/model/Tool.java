@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -45,6 +46,13 @@ public class Tool {
     @Column(name = "login_method", nullable = false)
     private LoginMethod loginMethod;
 
+    public enum LoginMethod {
+        USER_PASSWORD,
+        TOKEN
+    }
+
+    @Enumerated(EnumType.STRING)
+    private LoginMethod loginMethod;
     public enum LoginMethod {
         USER_PASSWORD,
         TOKEN
@@ -100,7 +108,6 @@ public class Tool {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-
 
     public Long getToolId() {
         return toolId;
@@ -219,6 +226,7 @@ public class Tool {
     public void setLoginMethod(LoginMethod loginMethod) {
         this.loginMethod = loginMethod;
     }
+
     public Integer getQuantity() {
         return quantity;
     }
@@ -227,4 +235,45 @@ public class Tool {
         this.quantity = quantity;
     }
 
+
+    public LoginMethod getLoginMethod() {
+        return loginMethod;
+    }
+
+    public void setLoginMethod(LoginMethod loginMethod) {
+        this.loginMethod = loginMethod;
+    }
+
+    public Tool(LoginMethod loginMethod) {
+        this.loginMethod = loginMethod;
+    }
+
+    // ================== PRICE HELPERS ==================
+    @Transient
+    private BigDecimal minPrice;
+
+    @Transient
+    private BigDecimal maxPrice;
+
+    public BigDecimal getMinPrice() {
+        return minPrice;
+    }
+
+    public void setMinPrice(BigDecimal minPrice) {
+        this.minPrice = minPrice;
+    }
+
+    public BigDecimal getMaxPrice() {
+        return maxPrice;
+    }
+
+    public void setMaxPrice(BigDecimal maxPrice) {
+        this.maxPrice = maxPrice;
+    }
+
+    @Transient
+    private boolean isFavorite;
+
+    public boolean isIsFavorite() { return isFavorite; }
+    public void setIsFavorite(boolean isFavorite) { this.isFavorite = isFavorite; }
 }
