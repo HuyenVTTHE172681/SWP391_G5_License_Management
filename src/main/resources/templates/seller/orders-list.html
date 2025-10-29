@@ -65,7 +65,8 @@
     <!-- 🔹 Tổng doanh thu -->
     <div class="revenue-box">
         <h5 class="text-secondary mb-1">Total Revenue</h5>
-        <h2 class="text-success fw-bold" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</h2>
+        <h2 class="text-success fw-bold"
+            th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</h2>
     </div>
 
     <!-- 🔹 Bộ lọc tìm kiếm -->
@@ -73,7 +74,8 @@
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Keyword</label>
-                <input type="text" name="keyword" class="form-control" placeholder="Tool or buyer name..." th:value="${keyword}">
+                <input type="text" name="keyword" class="form-control"
+                       placeholder="Tool or buyer name..." th:value="${keyword}">
             </div>
 
             <div class="col-md-2">
@@ -90,13 +92,11 @@
                 <label class="form-label fw-semibold">Status</label>
                 <select name="status" class="form-select">
                     <option th:value="${''}" th:selected="${status == null or status == ''}">All</option>
-                    <option th:value="PAID" th:selected="${status == 'PAID'}">Paid</option>
+                    <option th:value="SUCCESS" th:selected="${status == 'SUCCESS'}">Success</option>
                     <option th:value="PENDING" th:selected="${status == 'PENDING'}">Pending</option>
                     <option th:value="FAILED" th:selected="${status == 'FAILED'}">Failed</option>
-                    <option th:value="CANCELLED" th:selected="${status == 'CANCELLED'}">Cancelled</option>
                 </select>
             </div>
-
 
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Sort by</label>
@@ -127,31 +127,27 @@
                 <th>Payment</th>
                 <th>Status</th>
                 <th>Created At</th>
-                <th>Paid At</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="order, i : ${orders}">
                 <td th:text="${i.index + 1}"></td>
-                <td th:text="${order.tool.name}"></td>
+                <td th:text="${order.tool.toolName}"></td>
                 <td th:text="${order.account.fullName}"></td>
                 <td th:text="${order.license.durationDays + ' days'}"></td>
                 <td th:text="${#numbers.formatDecimal(order.price, 0, 'COMMA', 0, 'POINT')}"></td>
                 <td th:text="${order.paymentMethod}"></td>
                 <td>
-                    <span th:classappend="${
-                        order.paymentStatus == 'PAID' ? 'badge bg-success' :
-                        (order.paymentStatus == 'PENDING' ? 'badge bg-warning text-dark' :
-                        (order.paymentStatus == 'FAILED' ? 'badge bg-danger' : 'badge bg-secondary'))
-                    }"
-                          th:text="${order.paymentStatus}">
+                    <span th:class="${order.status == 'SUCCESS' ? 'badge bg-success' :
+                        (order.status == 'PENDING' ? 'badge bg-warning text-dark' :
+                        (order.status == 'FAILED' ? 'badge bg-danger' : 'badge bg-secondary'))}"
+                          th:text="${order.status}">
                     </span>
                 </td>
-                <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
-                <td th:text="${order.paidAt != null ? #temporals.format(order.paidAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
+                <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
             </tr>
             <tr th:if="${orders.isEmpty()}">
-                <td colspan="9" class="no-orders">No orders found.</td>
+                <td colspan="8" class="no-orders">No orders found.</td>
             </tr>
             </tbody>
         </table>
@@ -159,7 +155,7 @@
 
     <!-- 🔹 Nút quay lại Dashboard -->
     <div class="text-center mt-4 mb-5">
-        <a th:href="@{/seller/dashboard}" class="btn btn-outline-primary">
+        <a th:href="@{/seller/tools}" class="btn btn-outline-primary">
             ← Back to Dashboard
         </a>
     </div>

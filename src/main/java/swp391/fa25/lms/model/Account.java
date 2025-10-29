@@ -64,11 +64,12 @@ public class Account {
     private Role role;
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
-    @JsonManagedReference(value = "wallet-account")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"transactions"})
     private Wallet wallet;
 
     // quan hệ với các bảng con
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"account", "license", "tool", "transaction"})
     private List<CustomerOrder> orders;
 
     @OneToMany(mappedBy = "account")
@@ -78,7 +79,7 @@ public class Account {
     private List<Favorite> favorites;
 
     @OneToMany(mappedBy = "seller")
-    @JsonBackReference(value = "tool-seller")
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "tool-seller")
     private List<Tool> tools;
 
     @OneToMany(mappedBy = "uploadedBy")

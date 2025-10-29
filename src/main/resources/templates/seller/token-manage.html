@@ -143,9 +143,17 @@
                 <td th:text="${stat.index + 1}"></td>
                 <td th:text="${token.token}"></td>
                 <td>
-                    <a th:href="@{'/seller/tokens/delete/' + ${token.licenseAccountId}}"
-                       class="btn btn-sm btn-outline-danger"
-                       onclick="return confirm('Delete this token?')">Delete</a>
+                <!-- Nếu token chưa dùng -->
+                <form th:if="${!token.used}"
+                      th:action="@{/seller/tokens/delete}"
+                      method="post" class="d-inline">
+                    <input type="hidden" name="tokenId" th:value="${token.licenseAccountId}">
+                    <input type="hidden" name="toolId" th:value="${tool.toolId}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+
+                <!-- Nếu token đã dùng -->
+                <button th:if="${token.used}" class="btn btn-sm btn-dark" disabled>Delete</button>
                 </td>
             </tr>
 

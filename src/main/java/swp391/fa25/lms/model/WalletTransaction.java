@@ -14,7 +14,8 @@ public class WalletTransaction {
     private Long transactionId;
 
     @ManyToOne
-    @JoinColumn(name = "wallet_id", nullable = false)
+    @JoinColumn(name = "wallet_id")
+    @com.fasterxml.jackson.annotation.JsonBackReference(value = "wallet-trans")
     private Wallet wallet;
 
     @Enumerated(EnumType.STRING)
@@ -29,9 +30,11 @@ public class WalletTransaction {
     private BigDecimal amount;
 
     @OneToMany(mappedBy = "transaction")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"transaction", "wallet"})
     private List<CustomerOrder> customerOrders;
 
     @OneToMany(mappedBy = "transaction")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"transaction"})
     private List<LicenseRenewLog> licenseRenewLogs;
 
     @Column(nullable = false)

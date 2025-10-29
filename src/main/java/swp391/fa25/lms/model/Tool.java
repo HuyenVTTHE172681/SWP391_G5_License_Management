@@ -1,5 +1,6 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -41,7 +42,7 @@ public class Tool {
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
-    @JsonManagedReference(value = "tool-seller")
+    @com.fasterxml.jackson.annotation.JsonBackReference(value = "tool-seller")
     private Account seller;
 
     @Enumerated(EnumType.STRING)
@@ -67,12 +68,16 @@ public class Tool {
     @JsonManagedReference(value = "tool-files")
     private List<ToolFile> files;
 
-    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
-    @JsonManagedReference(value = "tool-licenses")
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"tool", "customerOrders"})
     private List<License> licenses;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties({"tool", "license"})
+    private List<CustomerOrder> orders;
 
     @Column(columnDefinition = "NVARCHAR(255)")
     private String note;
@@ -118,6 +123,14 @@ public class Tool {
 
     public void setToolName(@NotBlank(message = "Tool name cannot be blank") String toolName) {
         this.toolName = toolName;
+    }
+
+    public List<CustomerOrder> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<CustomerOrder> orders) {
+        this.orders = orders;
     }
 
     public String getImage() { return image; }

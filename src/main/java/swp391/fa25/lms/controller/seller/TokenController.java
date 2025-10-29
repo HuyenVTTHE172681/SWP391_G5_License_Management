@@ -299,6 +299,10 @@ public class TokenController {
             redirectAttributes.addFlashAttribute("error", "❌ Không có quyền xóa token này.");
             return "redirect:/seller/tokens/manage/" + toolId;
         }
+        if (token.getUsed()) {
+            redirectAttributes.addFlashAttribute("error", "⚠️ Token này đã được khách hàng sử dụng, không thể xóa.");
+            return "redirect:/seller/tokens/manage/" + toolId;
+        }
 
         licenseAccountRepository.delete(token);
 

@@ -1,5 +1,7 @@
 package swp391.fa25.lms.controller.seller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
@@ -664,7 +666,6 @@ public class ToolController {
         result.put("page", page);
         result.put("totalPages", totalPages);
         result.put("totalElements", total);
-
         return result;
     }
 

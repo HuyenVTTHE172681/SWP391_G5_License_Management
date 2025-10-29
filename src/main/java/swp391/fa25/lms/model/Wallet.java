@@ -25,10 +25,14 @@ public class Wallet {
     private String currency = "VND";
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "wallet")
+    @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "wallet-trans")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"wallet"})
     private List<WalletTransaction> transactions;
 
+
     @OneToMany(mappedBy = "wallet")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"wallet"})
     private List<WithdrawRequest> withdrawRequests;
 
     public Wallet() {
