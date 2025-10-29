@@ -3,216 +3,280 @@
 <head>
     <meta charset="UTF-8"/>
     <title>Admin • Home</title>
-    <style>
-        :root{
-            --bg:#f5f7fb; --card:#ffffff; --muted:#64748b; --text:#0f172a; --border:#e2e8f0;
-            --accent:#2563eb; --accent-2:#16a34a; --warn:#dc2626; --hover:#f1f5f9;
-        }
-        *{ box-sizing:border-box } html,body{ height:100% }
-        body{
-            margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-            background:
-                    radial-gradient(1200px 600px at 20% -10%, #c7d2fe33, transparent 60%),
-                    radial-gradient(1000px 500px at 110% 10%, #bbf7d033, transparent 60%),
-                    var(--bg);
-            color:var(--text); padding:28px;
-        }
-        .wrap{ max-width:1100px; margin:0 auto }
-        .page-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px }
-        .title{ margin:0; font-weight:800; letter-spacing:.2px; line-height:1.1; font-size: clamp(26px, 3vw, 32px); color: var(--text); text-shadow: 0 1px 2px rgba(15,23,42,.06); }
-        .subtitle{ margin:6px 0 0; color:var(--muted); font-size:13px }
 
-        /* Tabs (dùng chung với accounts.html) */
-        .tabs{ display:flex; gap:8px; margin:16px 0 22px; }
-        .tab{
-            display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border);
-            background:#fff; border-radius:10px; text-decoration:none; color:#0f172a; font-weight:600; font-size:14px;
-        }
-        .tab.active{ background:#eef2ff; border-color:#bfdbfe; color:#1e40af }
-
-        /* Userbar + logout */
-        .userbar{ display:flex; align-items:center; gap:10px }
-        .hello{ color:var(--muted); font-size:13px }
-        .btn{
-            appearance:none; border:1px solid var(--border); background:#f8fafc; color:var(--text);
-            padding:8px 12px; border-radius:10px; cursor:pointer; text-decoration:none; font-size:13px;
-            transition: transform .05s ease, background .2s ease, border-color .2s ease;
-        }
-        .btn:hover{ background:#eef2ff; transform:translateY(-1px) }
-        .btn.logout{ border-color:#fecaca; background:#fff1f2; color:#9f1239 }
-        .btn.logout:hover{ background:#ffe4e6 }
-        /* thêm cho đồng bộ với accounts */
-        .btn.update{ border-color:#86efac; background:#ecfdf5; color:#166534 }
-        .btn.update:hover{ background:#dcfce7 }
-        .btn.view{ border-color:#bfdbfe; background:#eff6ff; color:#1e40af }
-        .btn.view:hover{ background:#dbeafe }
-
-        /* KPI cards */
-        .kpis{ display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:14px }
-        .kpi{ background: linear-gradient(180deg, #ffffff, #fbfdff); border:1px solid var(--border); border-radius:14px; padding:16px; }
-        .kpi .label{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.3px; margin-bottom:6px }
-        .kpi .value{ font-weight:800; font-size:24px }
-
-        /* Cards + tables */
-        .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px }
-        .card{ background: linear-gradient(180deg, #ffffff, #fbfdff); border:1px solid var(--border); border-radius:14px; overflow:hidden }
-        .card-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border) }
-        .card-title{ font-weight:700; margin:0; font-size:15px }
-        .table-wrap{ overflow:auto }
-        table{ border-collapse:collapse; width:100% }
-        thead th{
-            position:sticky; top:0; background:#ffffff; border-bottom:1px solid var(--border);
-            color:#334155; font-weight:700; text-align:left; font-size:12px; letter-spacing:.3px; text-transform:uppercase
-        }
-        th,td{ padding:12px 14px; border-bottom:1px solid var(--border) }
-        tbody tr:hover{ background:var(--hover) }
-        td.small{ color:var(--muted); font-size:13px }
-        .badge{ display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid #c7d2fe; background:#eef2ff; color:#1e3a8a; }
-        .empty{ padding:22px; border:1px dashed var(--border); border-radius:12px; color:var(--muted); text-align:center; background:#ffffff80; margin:12px }
-
-        .flash{ padding:10px 12px; margin:10px 0; border:1px solid #86efac; background:#ecfdf5; color:#166534; border-radius:10px; font-size:13px }
-    </style>
+    <!-- CSS cần dùng -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/home.css}" rel="stylesheet">
+    <link th:href="@{/css/admin-home.css}" rel="stylesheet">
 </head>
 <body>
-<div class="wrap" th:with="fixedEmail=${fixedAdminEmail != null ? fixedAdminEmail : 'admin@gmail.com'}">
 
-    <div class="page-head">
-        <div>
-            <h1 class="title">Admin Home</h1>
-            <p class="subtitle">Tổng quan & hoạt động gần đây</p>
+<!-- Header dùng chung -->
+<div th:replace="~{common/header :: header}"></div>
+
+<main class="admin-content">
+    <div class="wrap" th:with="fixedEmail=${fixedAdminEmail != null ? fixedAdminEmail : 'admin@gmail.com'}">
+
+        <!-- Page head -->
+        <div class="page-head">
+            <div>
+                <h1 class="title">Admin Home</h1>
+                <p class="subtitle">Tổng quan &amp; hoạt động gần đây</p>
+            </div>
         </div>
-        <div class="userbar">
-          <span class="hello"
-                th:text="'Xin chào, ' + (${session.loggedInAccount != null ? session.loggedInAccount.fullName : (#httpServletRequest.remoteUser ?: 'Admin')})">
-            Xin chào, Admin
-          </span>
-            <form th:action="@{/logout}" method="post">
-                <div th:if="${_csrf != null}">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <a class="tab" th:classappend="${page}=='home' ? 'active'" th:href="@{/admin/adminhome}">Home</a>
+            <a class="tab" th:classappend="${page}=='accounts' ? 'active'" th:href="@{/admin/accounts}">Accounts</a>
+        </div>
+
+        <!-- Flash message -->
+        <p th:if="${msg != null and !#strings.isEmpty(#strings.trim(msg))}"
+           class="flash" th:text="${msg}" id="flash">Message</p>
+
+        <!-- KPIs -->
+        <div class="kpis">
+            <div class="kpi">
+                <div class="label">Total Users</div>
+                <div class="value" th:text="${#numbers.formatInteger(totalUsers,0)}">0</div>
+            </div>
+            <div class="kpi">
+                <div class="label">Total Sellers</div>
+                <div class="value" th:text="${#numbers.formatInteger(totalSellers,0)}">0</div>
+            </div>
+            <div class="kpi">
+                <div class="label">Total Customers</div>
+                <div class="value" th:text="${#numbers.formatInteger(totalCustomers,0)}">0</div>
+            </div>
+        </div>
+
+        <!-- ========== Section: Latest registrations (TOP) ========== -->
+        <div class="section">
+            <div class="card">
+                <div class="card-head">
+                    <h3 class="card-title">User đăng ký mới nhất</h3>
+
+                    <!-- Bộ lọc Latest (GET /admin/adminhome) -->
+                    <form class="filters" th:action="@{/admin/adminhome}" method="get">
+                        <input type="text" name="q1" placeholder="Search email or name…" th:value="${q1}"/>
+
+                        <select name="sort1">
+                            <option value="createdAt,desc" th:selected="${sort1}=='createdAt,desc'">Newest</option>
+                            <option value="createdAt,asc"  th:selected="${sort1}=='createdAt,asc'">Oldest</option>
+                            <option value="accountId,asc"  th:selected="${sort1}=='accountId,asc'">ID ↑</option>
+                            <option value="accountId,desc" th:selected="${sort1}=='accountId,desc'">ID ↓</option>
+                            <option value="email,asc"      th:selected="${sort1}=='email,asc'">Email A–Z</option>
+                            <option value="email,desc"     th:selected="${sort1}=='email,desc'">Email Z–A</option>
+                            <option value="fullName,asc"   th:selected="${sort1}=='fullName,asc'">Name A–Z</option>
+                            <option value="fullName,desc"  th:selected="${sort1}=='fullName,desc'">Name Z–A</option>
+                        </select>
+
+                        <select name="s1">
+                            <option th:value="5"  th:selected="${(accLatestPage != null ? accLatestPage.size : s1) == 5}">5 / page</option>
+                            <option th:value="10" th:selected="${(accLatestPage != null ? accLatestPage.size : s1) == 10}">10 / page</option>
+                            <option th:value="20" th:selected="${(accLatestPage != null ? accLatestPage.size : s1) == 20}">20 / page</option>
+                        </select>
+
+                        <!-- Giữ state của khối Deactivated khi apply bộ lọc bên Latest -->
+                        <input type="hidden" name="q2"    th:value="${q2}"/>
+                        <input type="hidden" name="sort2" th:value="${sort2}"/>
+                        <input type="hidden" name="p2"    th:value="${p2}"/>
+                        <input type="hidden" name="s2"    th:value="${s2}"/>
+
+                        <button class="btn update" type="submit">Apply</button>
+                        <a class="btn" th:href="@{/admin/adminhome}">Reset</a>
+
+                        <!-- Lối tắt xem tất cả ở trang Accounts -->
+                        <a class="btn" th:href="@{/admin/accounts(sort='createdAt,desc')}">Xem tất cả</a>
+                    </form>
                 </div>
-                <button class="btn logout" type="submit">Đăng xuất</button>
-            </form>
-        </div>
-    </div>
 
-    <!-- Tabs -->
-    <div class="tabs">
-        <a class="tab" th:classappend="${page}=='home' ? 'active'" th:href="@{/admin/adminhome}">Home</a>
-        <a class="tab" th:classappend="${page}=='accounts' ? 'active'" th:href="@{/admin/accounts}">Accounts</a>
-    </div>
+                <!-- Empty -->
+                <div th:if="${accLatestPage == null or accLatestPage.totalElements == 0}" class="empty">Chưa có dữ liệu</div>
 
-    <!-- Flash message (nếu có) -->
-    <p th:if="${msg}" class="flash" th:text="${msg}">Message</p>
+                <!-- List -->
+                <div class="table-wrap" th:if="${accLatestPage != null and accLatestPage.totalElements > 0}">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th style="width:90px">ID</th>
+                            <th>Email</th>
+                            <th>Full name</th>
+                            <th style="width:140px">Role</th>
+                            <th style="width:170px">Created At</th>
+                            <th style="width:140px">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="a : ${accLatestPage.content}">
+                            <td class="small" th:text="${a.accountId}">1</td>
+                            <td th:text="${a.email}">email@example.com</td>
+                            <td th:text="${a.fullName}">Name</td>
+                            <td>
+                                <span th:if="${a.role != null}" class="badge" th:text="${a.role.roleName}">ROLE</span>
+                                <span th:if="${a.role == null}" class="badge">N/A</span>
+                            </td>
+                            <td class="small"
+                                th:text="${a.createdAt != null ? #temporals.format(a.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                            <td>
+                                <a class="btn view" th:href="@{|/admin/accounts/${a.accountId}|}">View</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-    <!-- KPIs -->
-    <div class="kpis">
-        <div class="kpi">
-            <div class="label">Total Users</div>
-            <div class="value" th:text="${#numbers.formatInteger(totalUsers,0)}">0</div>
-        </div>
-        <div class="kpi">
-            <div class="label">Total Sellers</div>
-            <div class="value" th:text="${#numbers.formatInteger(totalSellers,0)}">0</div>
-        </div>
-        <div class="kpi">
-            <div class="label">Total Customers</div>
-            <div class="value" th:text="${#numbers.formatInteger(totalCustomers,0)}">0</div>
-        </div>
-    </div>
+                <!-- Pagination Latest -->
+                <div class="pager" th:if="${accLatestPage != null and accLatestPage.totalPages > 0}">
+                    <div class="subtitle">
+                        Page [[${accLatestPage.number + 1}]] / [[${accLatestPage.totalPages}]] • Total [[${accLatestPage.totalElements}]]
+                    </div>
+                    <ul class="pagination">
+                        <!-- Prev -->
+                        <li th:classappend="${accLatestPage.first} ? 'disabled'">
+                            <a th:if="${!accLatestPage.first}"
+                               th:href="@{/admin/adminhome(
+                                 q1=${q1}, sort1=${sort1}, p1=${accLatestPage.number - 1}, s1=${accLatestPage.size},
+                                 q2=${q2}, sort2=${sort2}, p2=${p2}, s2=${s2}
+                               )}">&laquo; Prev</a>
+                            <span th:if="${accLatestPage.first}">&laquo; Prev</span>
+                        </li>
 
-    <div class="grid">
-        <!-- Latest registrations -->
-        <div class="card">
-            <div class="card-head">
-                <h3 class="card-title">User đăng ký mới nhất</h3>
-                <a class="btn" th:href="@{/admin/accounts(sort='createdAt,desc')}">Xem tất cả</a>
-            </div>
-            <div th:if="${#lists.isEmpty(latestAccounts)}" class="empty">Chưa có dữ liệu</div>
-            <div class="table-wrap" th:if="${!#lists.isEmpty(latestAccounts)}">
-                <table>
-                    <thead>
-                    <tr>
-                        <th style="width:90px">ID</th>
-                        <th>Email</th>
-                        <th>Full name</th>
-                        <th style="width:140px">Role</th>
-                        <th style="width:170px">Created At</th>
-                        <th style="width:140px">Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="a : ${latestAccounts}">
-                        <td class="small" th:text="${a.accountId}">1</td>
-                        <td th:text="${a.email}">email@example.com</td>
-                        <td th:text="${a.fullName}">Name</td>
-                        <td>
-                            <span th:if="${a.role != null}" class="badge" th:text="${a.role.roleName}">ROLE</span>
-                            <span th:if="${a.role == null}" class="badge">N/A</span>
-                        </td>
-                        <td class="small"
-                            th:text="${a.createdAt != null ? #temporals.format(a.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
-                        <td>
-                            <a class="btn view" th:href="@{|/admin/accounts/${a.accountId}|}">View</a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                        <!-- Next -->
+                        <li th:classappend="${accLatestPage.last} ? 'disabled'">
+                            <a th:if="${!accLatestPage.last}"
+                               th:href="@{/admin/adminhome(
+                                 q1=${q1}, sort1=${sort1}, p1=${accLatestPage.number + 1}, s1=${accLatestPage.size},
+                                 q2=${q2}, sort2=${sort2}, p2=${p2}, s2=${s2}
+                               )}">Next &raquo;</a>
+                            <span th:if="${accLatestPage.last}">Next &raquo;</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 
-        <!-- Deactivated users -->
-        <div class="card">
-            <div class="card-head">
-                <h3 class="card-title">User deactivated</h3>
-                <!-- trỏ tới trang Accounts đã lọc DEACTIVATED -->
-                <a class="btn" th:href="@{/admin/accounts(status='DEACTIVATED', sort='updatedAt,desc')}">Xem tất cả</a>
-            </div>
-            <div th:if="${#lists.isEmpty(deactivatedAccounts)}" class="empty">Không có người dùng bị vô hiệu hóa</div>
-            <div class="table-wrap" th:if="${!#lists.isEmpty(deactivatedAccounts)}">
-                <table>
-                    <thead>
-                    <tr>
-                        <th style="width:90px">ID</th>
-                        <th>Email</th>
-                        <th>Full name</th>
-                        <th style="width:120px">Status</th>
-                        <th style="width:170px">Updated At</th>
-                        <th style="width:160px">Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="a : ${deactivatedAccounts}">
-                        <td class="small" th:text="${a.accountId}">1</td>
-                        <td th:text="${a.email}">email@example.com</td>
-                        <td th:text="${a.fullName}">Name</td>
-                        <td>
-                            <span class="badge" style="background:#fee2e2;color:#991b1b;border-color:#fecaca;">DEACTIVATED</span>
-                        </td>
-                        <td class="small"
-                            th:text="${(a.updatedAt != null ? #temporals.format(a.updatedAt, 'yyyy-MM-dd HH:mm') : (a.createdAt != null ? #temporals.format(a.createdAt, 'yyyy-MM-dd HH:mm') : '-'))}">
-                            -
-                        </td>
-                        <td>
-                            <!-- Xem chi tiết -->
-                            <a class="btn view" th:href="@{|/admin/accounts/${a.accountId}|}">View</a>
+        <!-- ========== Section: Deactivated users (BOTTOM) ========== -->
+        <div class="section">
+            <div class="card">
+                <div class="card-head">
+                    <h3 class="card-title">User deactivated</h3>
 
-                            <!-- Reactivate -->
-                            <form class="inline" th:action="@{|/admin/accounts/${a.accountId}/reactivate|}" method="post"
-                                  onsubmit="return confirm('Reactivate this account?');" style="display:inline-block;margin-left:6px">
-                                <div th:if="${_csrf != null}">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                </div>
-                                <button class="btn update" type="submit">Reactivate</button>
-                            </form>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                    <!-- Bộ lọc Deactivated (GET /admin/adminhome) -->
+                    <form class="filters" th:action="@{/admin/adminhome}" method="get">
+                        <input type="text" name="q2" placeholder="Search email or name…" th:value="${q2}"/>
+
+                        <select name="sort2">
+                            <option value="updatedAt,desc" th:selected="${sort2}=='updatedAt,desc'">Latest updated</option>
+                            <option value="updatedAt,asc"  th:selected="${sort2}=='updatedAt,asc'">Oldest updated</option>
+                            <option value="accountId,asc"  th:selected="${sort2}=='accountId,asc'">ID ↑</option>
+                            <option value="accountId,desc" th:selected="${sort2}=='accountId,desc'">ID ↓</option>
+                            <option value="email,asc"      th:selected="${sort2}=='email,asc'">Email A–Z</option>
+                            <option value="email,desc"     th:selected="${sort2}=='email,desc'">Email Z–A</option>
+                            <option value="fullName,asc"   th:selected="${sort2}=='fullName,asc'">Name A–Z</option>
+                            <option value="fullName,desc"  th:selected="${sort2}=='fullName,desc'">Name Z–A</option>
+                        </select>
+
+                        <select name="s2">
+                            <option th:value="5"  th:selected="${(accDeactPage != null ? accDeactPage.size : s2) == 5}">5 / page</option>
+                            <option th:value="10" th:selected="${(accDeactPage != null ? accDeactPage.size : s2) == 10}">10 / page</option>
+                            <option th:value="20" th:selected="${(accDeactPage != null ? accDeactPage.size : s2) == 20}">20 / page</option>
+                        </select>
+
+                        <!-- Giữ state của khối Latest khi apply bộ lọc bên Deactivated -->
+                        <input type="hidden" name="q1"    th:value="${q1}"/>
+                        <input type="hidden" name="sort1" th:value="${sort1}"/>
+                        <input type="hidden" name="p1"    th:value="${p1}"/>
+                        <input type="hidden" name="s1"    th:value="${s1}"/>
+
+                        <button class="btn update" type="submit">Apply</button>
+                        <a class="btn" th:href="@{/admin/adminhome}">Reset</a>
+
+                        <!-- Lối tắt xem tất cả deactivated ở trang Accounts -->
+                        <a class="btn" th:href="@{/admin/accounts(status='DEACTIVATED', sort='updatedAt,desc')}">Xem tất cả</a>
+                    </form>
+                </div>
+
+                <!-- Empty -->
+                <div th:if="${accDeactPage == null or accDeactPage.totalElements == 0}" class="empty">Không có người dùng bị vô hiệu hóa</div>
+
+                <!-- List -->
+                <div class="table-wrap" th:if="${accDeactPage != null and accDeactPage.totalElements > 0}">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th style="width:90px">ID</th>
+                            <th>Email</th>
+                            <th>Full name</th>
+                            <th style="width:120px">Status</th>
+                            <th style="width:170px">Updated At</th>
+                            <th style="width:160px">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="a : ${accDeactPage.content}">
+                            <td class="small" th:text="${a.accountId}">1</td>
+                            <td th:text="${a.email}">email@example.com</td>
+                            <td th:text="${a.fullName}">Name</td>
+                            <td>
+                                <span class="badge" style="background:#fee2e2;color:#991b1b;border-color:#fecaca;">DEACTIVATED</span>
+                            </td>
+                            <td class="small"
+                                th:text="${(a.updatedAt != null ? #temporals.format(a.updatedAt, 'yyyy-MM-dd HH:mm') : (a.createdAt != null ? #temporals.format(a.createdAt, 'yyyy-MM-dd HH:mm') : '-'))}">
+                                -
+                            </td>
+                            <td>
+                                <a class="btn view" th:href="@{|/admin/accounts/${a.accountId}|}">View</a>
+                                <form class="inline ml-6" th:action="@{|/admin/accounts/${a.accountId}/reactivate|}" method="post"
+                                      onsubmit="return confirm('Reactivate this account?');">
+                                    <div th:if="${_csrf != null}">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    </div>
+                                    <button class="btn update" type="submit">Reactivate</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Deactivated -->
+                <div class="pager" th:if="${accDeactPage != null and accDeactPage.totalPages > 0}">
+                    <div class="subtitle">
+                        Page [[${accDeactPage.number + 1}]] / [[${accDeactPage.totalPages}]] • Total [[${accDeactPage.totalElements}]]
+                    </div>
+                    <ul class="pagination">
+                        <!-- Prev -->
+                        <li th:classappend="${accDeactPage.first} ? 'disabled'">
+                            <a th:if="${!accDeactPage.first}"
+                               th:href="@{/admin/adminhome(
+                                 q1=${q1}, sort1=${sort1}, p1=${p1}, s1=${s1},
+                                 q2=${q2}, sort2=${sort2}, p2=${accDeactPage.number - 1}, s2=${accDeactPage.size}
+                               )}">&laquo; Prev</a>
+                            <span th:if="${accDeactPage.first}">&laquo; Prev</span>
+                        </li>
+
+                        <!-- Next -->
+                        <li th:classappend="${accDeactPage.last} ? 'disabled'">
+                            <a th:if="${!accDeactPage.last}"
+                               th:href="@{/admin/adminhome(
+                                 q1=${q1}, sort1=${sort1}, p1=${p1}, s1=${s1},
+                                 q2=${q2}, sort2=${sort2}, p2=${accDeactPage.number + 1}, s2=${accDeactPage.size}
+                               )}">Next &raquo;</a>
+                            <span th:if="${accDeactPage.last}">Next &raquo;</span>
+                        </li>
+                    </ul>
+                </div>
+
             </div>
         </div>
 
     </div>
+</main>
 
-</div>
+<!-- Bootstrap JS để dropdown trong header hoạt động -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
 </body>
 </html>

@@ -146,6 +146,15 @@ public class RoleDataInitializer implements CommandLineRunner {
             customer1.setCreatedAt(LocalDateTime.now().minusDays(10));
             customer1.setRole(customerRole);
 
+            Account customer4 = new Account();
+            customer4.setEmail("customer4@example.com");
+            customer4.setPassword(passwordEncoder.encode("123456"));
+            customer4.setVerified(true);
+            customer4.setFullName("Bùi Duy Ngọc");
+            customer4.setStatus(Account.AccountStatus.ACTIVE);
+            customer4.setCreatedAt(LocalDateTime.now().minusDays(10));
+            customer4.setRole(customerRole);
+
             Account admin = new Account();
             admin.setEmail(FIXED_ADMIN_EMAIL);
             admin.setPassword(passwordEncoder.encode("admin123"));
@@ -164,7 +173,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             mod1.setCreatedAt(LocalDateTime.now().minusDays(10));
             mod1.setRole(modRole);
 
-            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin, mod1));
+            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin, mod1,customer4));
         } else {
             System.out.println("Account already exist, skipping initialization.");
         }

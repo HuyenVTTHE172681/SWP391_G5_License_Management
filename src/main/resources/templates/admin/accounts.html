@@ -30,7 +30,8 @@
             <a class="tab" th:classappend="${page}=='accounts' ? 'active'" th:href="@{/admin/accounts}">Accounts</a>
         </div>
 
-        <p th:if="${msg}" class="flash" th:text="${msg}">Message</p>
+        <p th:if="${msg != null and !#strings.isEmpty(#strings.trim(msg))}"
+           class="flash" th:text="${msg}" id="flash"></p>
 
         <!-- Empty -->
         <div th:if="${accPage == null or accPage.totalElements == 0}" class="empty">No accounts.</div>
@@ -62,7 +63,7 @@
                         <option value="50">50 / page</option>
                     </select>
 
-                    <!-- (Tuỳ chọn) lọc trạng thái -->
+                    <!-- lọc trạng thái -->
                     <select name="status" th:value="${status}">
                         <option value="">All</option>
                         <option value="ACTIVE" th:selected="${status}=='ACTIVE'">Active</option>

@@ -49,14 +49,6 @@ public class Tool {
     @Enumerated(EnumType.STRING)
     @Column(name = "login_method", nullable = false)
     private LoginMethod loginMethod;
-
-    public enum LoginMethod {
-        USER_PASSWORD,
-        TOKEN
-    }
-
-    @Enumerated(EnumType.STRING)
-    private LoginMethod loginMethod;
     public enum LoginMethod {
         USER_PASSWORD,
         TOKEN
@@ -216,14 +208,6 @@ public class Tool {
 
     public void setTotalReviews(Long totalReviews) {
         this.totalReviews = totalReviews;
-    }
-
-    public LoginMethod getLoginMethod() {
-        return loginMethod;
-    }
-
-    public void setLoginMethod(LoginMethod loginMethod) {
-        this.loginMethod = loginMethod;
     }
 
     public Integer getQuantity() {

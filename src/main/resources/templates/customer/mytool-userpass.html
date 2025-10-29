@@ -1,22 +1,140 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>USER PASSWORD</title>
+    <title>Tài khoản dịch vụ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div class="container mt-5">
-    <h3>🧰 Tool: <span th:text="${tool.toolName}"></span></h3>
-    <p>Phương thức: USER_PASSWORD</p>
-    <div class="alert alert-info">
-        <p><strong>Username:</strong> <span th:text="${username}"></span></p>
-        <p><strong>Password:</strong> <span th:text="${password}"></span></p>
+<div class="container mt-4" th:object="${acc}">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">🧰 Tool: <span th:text="${tool.toolName}">Tool</span></h4>
+            <small class="text-muted">Phương thức: USER_PASSWORD · Mã đơn: <span th:text="${order.orderId}">0</span></small>
+        </div>
+        <div class="d-flex gap-2">
+            <!-- Nút Edit mở modal -->
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editModal">Edit</button>
+
+            <!-- Renew -->
+            <form method="post" th:action="@{|/my-tools/${order.orderId}/renew|}">
+                <!-- <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/> -->
+                <button class="btn btn-success" type="submit">
+                    Renew (+<span th:text="${order.license != null ? order.license.durationDays : 30}">30</span>d)
+                </button>
+            </form>
+        </div>
     </div>
-    <a href="/orders" class="btn btn-secondary">Quay lại đơn hàng</a>
+
+    <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
+    <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+    <!-- BẢNG THÔNG TIN TÀI KHOẢN -->
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <tbody>
+            <tr><th style="width:260px">License Account ID</th><td th:text="*{licenseAccountId}">-</td></tr>
+            <tr><th>Login method</th><td>USER_PASSWORD</td></tr>
+            <tr>
+                <th>Username</th>
+                <td class="d-flex align-items-center gap-2">
+                    <span id="uVal" th:text="*{username}">user</span>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="copyText('uVal')">Copy</button>
+                </td>
+            </tr>
+            <tr>
+                <th>Password</th>
+                <td class="d-flex align-items-center gap-2">
+                    <code id="pVal" th:text="*{password}">******</code>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="togglePwd()">Hiện/Ẩn</button>
+                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="copyText('pVal')">Copy</button>
+                </td>
+            </tr>
+            <tr><th>Status</th><td><span class="badge text-bg-success" th:text="*{status}">ACTIVE</span></td></tr>
+            <tr>
+                <th>Hiệu lực</th>
+                <td>
+                    <span th:text="${acc.startDate != null ? #temporals.format(acc.startDate,'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                    →
+                    <span th:text="${acc.endDate != null ? #temporals.format(acc.endDate,'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                </td>
+            </tr>
+            <tr><th>Lần đăng nhập gần nhất</th><td th:text="${acc.lastLogin != null ? #temporals.format(acc.lastLogin,'dd/MM/yyyy HH:mm') : '-'}">-</td></tr>
+            <tr><th>Thiết bị</th><td th:text="*{deviceInfo != null ? deviceInfo : '-'}">-</td></tr>
+            <tr><th>Max devices</th><td th:text="*{maxDevices}">1</td></tr>
+            <tr><th>Đã kích hoạt</th>
+                <td>
+                    <span th:text="*{used} ? 'Yes' : 'No'">No</span>
+                    <span th:if="*{activatedAt != null}"> · <span th:text="${#temporals.format(acc.activatedAt,'dd/MM/yyyy HH:mm')}">-</span></span>
+                </td>
+            </tr>
+            <tr><th>License gói</th><td th:text="${order.license != null ? order.license.name : '-'}">-</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- LỊCH SỬ GIA HẠN -->
+    <div class="card mt-4">
+        <div class="card-header"><strong>Lịch sử gia hạn</strong></div>
+        <div class="card-body p-0">
+            <table class="table mb-0">
+                <thead><tr><th>Thời điểm gia hạn</th><th>Hạn mới</th><th>Số tiền</th></tr></thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(acc.renewAcc)}">
+                    <td colspan="3" class="text-center text-muted">Chưa có lần gia hạn nào</td>
+                </tr>
+                <tr th:each="r : ${acc.renewAcc}">
+                    <td th:text="${#temporals.format(r.renewDate,'dd/MM/yyyy HH:mm')}">-</td>
+                    <td th:text="${#temporals.format(r.newEndDate,'dd/MM/yyyy HH:mm')}">-</td>
+                    <td th:text="${r.amountPaid != null ? #numbers.formatDecimal(r.amountPaid,0,'COMMA',0,'POINT') : 0} + ' VND'">0 VND</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <a href="/orders" class="btn btn-link mt-3">« Quay lại đơn hàng</a>
 </div>
 
+<!-- Modal Edit (USER_PASSWORD) -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="post" th:action="@{|/my-tools/${order.orderId}/account|}">
+            <!-- <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/> -->
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa tài khoản</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" th:object="${acc}">
+                <div class="mb-2">
+                    <label class="form-label">Username</label>
+                    <input class="form-control" name="username" th:value="*{username}" required minlength="3" maxlength="100"/>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Password</label>
+                    <input class="form-control" type="text" name="password" th:value="*{password}" required minlength="4" maxlength="100"/>
+                    <div class="form-text">Nếu hệ thống dùng hash, hãy encode ở server trước khi lưu.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Hủy</button>
+                <button class="btn btn-primary" type="submit">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function togglePwd(){
+        const el = document.getElementById('pVal');
+        if (el.dataset.real === '1') { el.textContent = '******'; el.dataset.real='0'; }
+        else { el.textContent = el.textContent; el.dataset.real='1'; }
+    }
+    function copyText(id){
+        const t = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(t).then(()=>alert('Đã copy'));
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
