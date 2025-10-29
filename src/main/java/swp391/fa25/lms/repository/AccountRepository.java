@@ -42,7 +42,9 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Page<Account> search(@Param("q") String q,
                          @Param("status") AccountStatus status,
                          Pageable pageable);
+    Optional<Long> findIdByEmail(String email);
 
 
     List<Account> findTop8ByStatusOrderByUpdatedAtDesc(AccountStatus status);
+
 }

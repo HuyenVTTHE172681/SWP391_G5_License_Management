@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import swp391.fa25.lms.model.Feedback;
+import swp391.fa25.lms.model.FeedbackReply;
 import swp391.fa25.lms.model.Tool;
 
 import java.util.List;
@@ -41,4 +42,5 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     @Query("SELECT COUNT(f) FROM Feedback f WHERE f.tool.toolId = :toolId")
     Long countByToolId(Long toolId);
+
 }

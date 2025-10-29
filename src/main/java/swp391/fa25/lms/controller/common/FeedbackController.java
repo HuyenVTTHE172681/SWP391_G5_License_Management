@@ -1,58 +1,163 @@
+// src/main/java/swp391/fa25/lms/controller/common/FeedbackController.java
 package swp391.fa25.lms.controller.common;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import swp391.fa25.lms.model.CustomerOrder;
 import swp391.fa25.lms.model.Feedback;
-import swp391.fa25.lms.repository.FeedbackRepository;
-import swp391.fa25.lms.repository.ToolRepository;
+import swp391.fa25.lms.repository.*;
 
-import java.util.Optional;
+import java.security.Principal;
+import java.time.LocalDateTime;
 
 @Controller
-@RequestMapping("/feedback")
+@Validated
 public class FeedbackController {
 
-    private final ToolRepository toolRepo;
+    private final CustomerOrderRepository orderRepo;
     private final FeedbackRepository feedbackRepo;
+    private final FeedBackReplyRepository feedbackReplyRepo;
+    private final AccountRepository accountRepo;
 
-    public FeedbackController(ToolRepository toolRepo, FeedbackRepository feedbackRepo) {
-        this.toolRepo = toolRepo;
+    public FeedbackController(CustomerOrderRepository orderRepo,
+                              FeedbackRepository feedbackRepo,
+                              FeedBackReplyRepository feedbackReplyRepo,
+                              AccountRepository accountRepo) {
+        this.orderRepo = orderRepo;
         this.feedbackRepo = feedbackRepo;
+        this.feedbackReplyRepo = feedbackReplyRepo;
+        this.accountRepo = accountRepo;
     }
-    @GetMapping("/tool/{toolId}")
-    public String viewToolFeedback(@PathVariable Long toolId,
-                                   @RequestParam(defaultValue = "0") int page,
-                                   @RequestParam(defaultValue = "10") int size,
-                                   Model model, RedirectAttributes ra) {
-        var toolOpt = toolRepo.findById(toolId);
-        if (toolOpt.isEmpty()) {
-            ra.addFlashAttribute("msg", "Tool không tồn tại");
-            return "redirect:/";
+
+    private CustomerOrder loadOrderOr404(Long orderId) {
+        return orderRepo.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
+    }
+
+    /** Lấy accountId hiện tại từ Principal (email/username) */
+    private Long getCurrentAccountId(Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập.");
         }
-        page = Math.max(page, 0);
-        size = Math.min(Math.max(size, 1), 50);
+        String usernameOrEmail = principal.getName();
+        return accountRepo.findIdByEmail(usernameOrEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không tìm thấy tài khoản."));
+    }
 
-        var tool = toolOpt.get();
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Feedback> fbPage = feedbackRepo.findByTool(tool, pageable);
+    // ================== CREATE (theo đơn hàng) ==================
 
-        double avg = Optional.ofNullable(feedbackRepo.findAverageRatingByTool(toolId)).orElse(0.0);
-        long total = feedbackRepo.countByTool(tool);
+    /** Hiển thị form feedback cho 1 đơn */
+    @GetMapping("/orders/{orderId}/feedback")
+    @Transactional(readOnly = true)
+    public String showFeedbackForm(@PathVariable Long orderId, Model model) {
+        var order = loadOrderOr404(orderId);
+        if (order.getOrderStatus() != CustomerOrder.OrderStatus.SUCCESS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ đơn thành công mới được đánh giá.");
+        }
+        model.addAttribute("order", order);
+        model.addAttribute("tool", order.getTool());
+        return "customer/feedback-form";
+    }
 
-        model.addAttribute("tool", tool);
-        model.addAttribute("fbPage", fbPage);
-        model.addAttribute("avgRating", avg);
-        model.addAttribute("totalReviews", total);
-        model.addAttribute("pageSize", size);
-        model.addAttribute("currentPage", page);
+    /** Tạo feedback mới (một người mua có thể feedback nhiều lần) */
+    @PostMapping("/orders/{orderId}/feedback")
+    @Transactional
+    public String submitFeedback(@PathVariable Long orderId,
+                                 @RequestParam @Min(1) @Max(5) Integer rating,
+                                 @RequestParam(required = false) @Size(max = 100) String comment,
+                                 RedirectAttributes ra) {
+        var order = loadOrderOr404(orderId);
+        if (order.getOrderStatus() != CustomerOrder.OrderStatus.SUCCESS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ đơn thành công mới được đánh giá.");
+        }
 
-        return "common/feedback";
+        var fb = new Feedback();
+        fb.setAccount(order.getAccount());
+        fb.setTool(order.getTool());
+        fb.setRating(rating);
+        fb.setComment(comment == null ? "" : comment.trim());
+        fb.setCreatedAt(LocalDateTime.now());
+
+        feedbackRepo.save(fb);
+
+        ra.addFlashAttribute("ok", "Cảm ơn bạn! Đánh giá đã được ghi nhận.");
+        return "redirect:/orders"; // quay về danh sách đơn hoặc tuỳ bạn muốn điều hướng
+    }
+
+    // ================== EDIT/DELETE (không cần orderId) ==================
+
+    /** Form sửa feedback của chính chủ */
+    @GetMapping("/feedback/{feedbackId}/edit")
+    @Transactional(readOnly = true)
+    public String editFeedbackForm(@PathVariable Long feedbackId,
+                                   Model model, Principal principal) {
+        var fb = feedbackRepo.findById(feedbackId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy feedback"));
+
+        Long currentAccId = getCurrentAccountId(principal);
+        if (!fb.getAccount().getAccountId().equals(currentAccId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền.");
+        }
+
+        model.addAttribute("order", fb.getAccount().getOrders()); // nếu entity Feedback không có order, có thể bỏ
+        model.addAttribute("tool", fb.getTool());
+        model.addAttribute("fb", fb);
+        return "customer/feedback-edit-form";
+    }
+
+    /** Cập nhật feedback của chính chủ */
+    @PostMapping("/feedback/{feedbackId}/edit")
+    @Transactional
+    public String updateFeedback(@PathVariable Long feedbackId,
+                                 @RequestParam @Min(1) @Max(5) Integer rating,
+                                 @RequestParam(required = false) @Size(max = 100) String comment,
+                                 RedirectAttributes ra,
+                                 Principal principal) {
+        var fb = feedbackRepo.findById(feedbackId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy feedback"));
+
+        Long currentAccId = getCurrentAccountId(principal);
+        if (!fb.getAccount().getAccountId().equals(currentAccId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền.");
+        }
+
+        fb.setRating(rating);
+        fb.setComment(comment == null ? "" : comment.trim());
+        // nếu có updatedAt: fb.setUpdatedAt(LocalDateTime.now());
+        feedbackRepo.save(fb);
+
+        ra.addFlashAttribute("ok", "Đã cập nhật đánh giá.");
+        return "redirect:/tools/" + fb.getTool().getToolId() + "#review";
+    }
+
+    /** Xoá feedback của chính chủ (xoá kèm reply để tránh FK) */
+    @PostMapping("/feedback/{feedbackId}/delete")
+    @Transactional
+    public String deleteFeedback(@PathVariable Long feedbackId,
+                                 RedirectAttributes ra,
+                                 Principal principal) {
+        var fb = feedbackRepo.findById(feedbackId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy feedback"));
+
+        Long currentAccId = getCurrentAccountId(principal);
+        if (!fb.getAccount().getAccountId().equals(currentAccId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền.");
+        }
+
+        Long toolId = fb.getTool().getToolId();
+        feedbackReplyRepo.deleteByFeedback_FeedbackId(fb.getFeedbackId()); // xoá reply theo feedback
+        feedbackRepo.delete(fb);
+
+        ra.addFlashAttribute("ok", "Đã xoá đánh giá.");
+        return "redirect:/tools/" + toolId + "#review";
     }
 }
-

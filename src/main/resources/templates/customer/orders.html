@@ -119,12 +119,14 @@
     <div id="orderTableContainer" th:fragment="orderTableFragment">
 
         <!-- Nếu không có dữ liệu -->
-        <div th:if="${ordersPage.empty}" class="alert alert-warning text-center">
+        <div th:if="${ordersPage == null or ordersPage.isEmpty()}"
+             class="alert alert-warning text-center">
             Không có đơn hàng nào phù hợp với bộ lọc.
         </div>
 
         <!-- Nếu có dữ liệu, hiển thị bảng -->
-        <table th:if="${!ordersPage.empty}" class="table table-bordered table-hover align-middle">
+        <table th:if="${ordersPage != null and !ordersPage.isEmpty()}"
+               class="table table-bordered table-hover align-middle">
             <thead class="table-primary text-center">
             <tr>
                 <th>Mã đơn hàng</th>
@@ -151,19 +153,42 @@
                     <span th:case="'FAILED'" class="badge bg-danger">Thất bại</span>
                     <span th:case="*">Không xác định</span>
                 </span>
-                </td>
                 <td class="text-center">
-                    <button class="btn btn-sm btn-primary" title="Xem chi tiết">
+
+                    <!-- Xem chi tiết (tuỳ bạn gắn URL) -->
+                    <a class="btn btn-sm btn-primary" title="Xem chi tiết"
+                       th:href="@{|/orders/${order.orderId}|}">
                         <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-warning" th:disabled="${!order.canFeedbackOrReport}">Feedback</button>
-                    <button class="btn btn-sm btn-danger" th:disabled="${!order.canFeedbackOrReport}">Report</button>
-                    <a th:href="@{'/my-tools/' + ${order.orderId}}"
-                       class="btn btn-sm btn-success"
-                       th:disabled="${!order.canFeedbackOrReport}">
-                        <i class="bi bi-arrow-right"></i> Dùng dịch vụ
                     </a>
 
+                    <!-- Feedback -->
+                    <span th:if="${order.canFeedbackOrReport}">
+                      <a class="btn btn-sm btn-warning"
+                      th:href="@{|/orders/${order.orderId}/feedback|}">
+                      Feedback
+                      </a>
+                    </span>
+                    <span th:unless="${order.canFeedbackOrReport}">
+                    <button class="btn btn-sm btn-warning" disabled>Feedback</button>
+                     </span>
+
+                    <!-- Report (nếu sau này có trang report) -->
+                    <span th:if="${order.canFeedbackOrReport}">
+                    <a class="btn btn-sm btn-danger"
+                    th:href="@{|/orders/${order.orderId}/report|}">
+                    Report
+                     </a>
+                   </span>
+                    <span th:unless="${order.canFeedbackOrReport}">
+                      <button class="btn btn-sm btn-danger" disabled>Report</button>
+                    </span>
+
+                    <!-- Dùng dịch vụ -->
+                    <a th:href="@{|/my-tools/${order.orderId}|}"
+                       class="btn btn-sm btn-success"
+                       th:classappend="${!order.canFeedbackOrReport} ? ' disabled'">
+                        <i class="bi bi-arrow-right"></i> Dùng dịch vụ
+                    </a>
                 </td>
             </tr>
             </tbody>
