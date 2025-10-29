@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Feedback Reports - Moderator Panel</title>
+    <link rel="stylesheet" th:href="@{/css/moderator-feedback.css}">
+</head>
+<body>
+
+<h1>📋 Feedback Reports</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Feedback Content</th>
+        <th>Reported By</th>
+        <th>Reason</th>
+        <th>Comment</th>
+        <th>Status</th>
+        <th>Reported At</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <p th:if="${feedbackReports} == null"> null</p>
+    <tr th:each="report : ${feedbackReports}">
+        <td th:text="${report.feedbackReportId}">1</td>
+        <td th:text="${report.feedback.comment}">Some feedback...</td>
+        <td th:text="${report.reportedBy.fullName}">John Doe</td>
+        <td th:text="${report.reason}">SPAM</td>
+        <td th:text="${report.comment}">Contains links</td>
+        <td><span th:text="${report.status}" th:class="'status ' + ${report.status}">PENDING</span></td>
+        <td th:text="${#temporals.format(report.reportedAt, 'yyyy-MM-dd HH:mm')}">2025-10-29</td>
+        <td>
+            <form th:action="@{'/moderator/feedback/' + ${report.feedbackReportId} + '/approve'}"
+                  method="post" style="display:inline">
+                <button type="submit" class="btn btn-approve">Approve</button>
+            </form>
+            <form th:action="@{'/moderator/feedback/' + ${report.feedbackReportId} + '/reject'}"
+                  method="post" style="display:inline">
+                <button type="submit" class="btn btn-reject">Reject</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

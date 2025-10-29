@@ -1,0 +1,83 @@
+body {
+    font-family: "Segoe UI", sans-serif;
+    background-color: #f6f8fa;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 25px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+th {
+    background-color: #2c3e50;
+    color: white;
+    font-weight: 600;
+}
+
+tr:hover {
+    background-color: #f2f6ff;
+}
+
+/* STATUS */
+.status {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.status.PENDING {
+    color: #c98200;
+    background-color: #fff4cc;
+}
+
+.status.APPROVED {
+    color: #1f7a1f;
+    background-color: #d6f5d6;
+}
+
+.status.REJECTED {
+    color: #b30000;
+    background-color: #ffe6e6;
+}
+
+/* BUTTONS */
+.btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    font-size: 0.9rem;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.btn-approve {
+    background-color: #28a745;
+}
+
+.btn-reject {
+    background-color: #dc3545;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
