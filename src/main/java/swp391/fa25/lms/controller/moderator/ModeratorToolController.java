@@ -15,6 +15,7 @@ import swp391.fa25.lms.service.moderator.ToolReportService;
 import swp391.fa25.lms.service.moderator.ToolService;
 import swp391.fa25.lms.service.used.CategoryService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -149,9 +150,9 @@ public class ModeratorToolController {
             @RequestParam(required = false) Long toolId,
             @RequestParam(required = false) Long reporterId,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate fromDate,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate toDate,
             Model model) {
 
         List<ToolReport> reports = toolReportService.filterReports(status, toolId, reporterId, fromDate, toDate);
@@ -163,6 +164,18 @@ public class ModeratorToolController {
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", toDate);
 
-        return "moderator/toolReport";
+        return "moderator/tool-report";
+    }
+    @PostMapping("/tool/report/{id}/approve")
+    public String approveReport(@PathVariable Long id, RedirectAttributes redirect) {
+        toolReportService.updateStatus(id, ToolReport.Status.APPROVED);
+        redirect.addFlashAttribute("success", "✅ Report approved successfully!");
+        return "redirect:/moderator/tool/report";
+    }
+    @PostMapping("/tool/report/{id}/reject")
+    public String rejectReport(@PathVariable Long id, RedirectAttributes redirect) {
+        toolReportService.updateStatus(id, ToolReport.Status.REJECTED);
+        redirect.addFlashAttribute("error", "Report rejected.");
+        return "redirect:/moderator/tool/report";
     }
 }

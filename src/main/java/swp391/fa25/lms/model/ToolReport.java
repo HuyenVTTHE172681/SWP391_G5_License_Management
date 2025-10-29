@@ -3,6 +3,8 @@ package swp391.fa25.lms.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -29,46 +31,37 @@ public class ToolReport {
     @Column(nullable = false, length = 50)
     private Reason reason;
 
-    @Column(columnDefinition = "NVARCHAR(500)")
-    private String comment;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Status status = Status.PENDING;
 
     @Column(nullable = false)
-    private LocalDateTime reportedAt = LocalDateTime.now();
+    private LocalDate reportedAt = LocalDate.now();
 
     public enum Status {
         PENDING, APPROVED, REJECTED
     }
 
     public enum Reason {
-        SPAM("Tool chứa nội dung spam hoặc quảng cáo"),
-        MALICIOUS_CONTENT("Nội dung độc hại, chứa virus, hoặc liên kết nguy hiểm"),
-        COPYRIGHT_VIOLATION("Vi phạm bản quyền hoặc sao chép từ tool khác"),
-        INAPPROPRIATE_CONTENT("Nội dung không phù hợp hoặc trái đạo đức"),
-        MISLEADING_INFO("Thông tin mô tả sai lệch về chức năng"),
-        IRRELEVANT_CATEGORY("Tool bị đăng sai danh mục"),
-        OTHER("Khác (người dùng nhập mô tả)");
+        SPAM,
+        MALICIOUS_CONTENT,
+        COPYRIGHT_VIOLATION,
+        INAPPROPRIATE_CONTENT,
+        MISLEADING_INFO,
+        IRRELEVANT_CATEGORY,
+        OTHER;
+    }
+        private String description;
 
-        private final String description;
-        Reason(String description) {
-            this.description = description;
-        }
-        public String getDescription() {
-            return description;
-        }
+    public ToolReport() {
     }
 
-    public ToolReport() {}
-
-    public ToolReport(Account reporter, Tool tool, Reason reason, String comment) {
+    public ToolReport(Account reporter, Tool tool, Reason reason, String description) {
         this.reporter = reporter;
         this.tool = tool;
         this.reason = reason;
-        this.comment = comment;
-        this.reportedAt = LocalDateTime.now();
+        this.description = description;
+        this.reportedAt = LocalDate.now();
         this.status = Status.PENDING;
     }
 
@@ -105,12 +98,12 @@ public class ToolReport {
         this.reason = reason;
     }
 
-    public String getComment() {
-        return comment;
+    public String getDescription() {
+        return description;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Status getStatus() {
@@ -121,11 +114,11 @@ public class ToolReport {
         this.status = status;
     }
 
-    public LocalDateTime getReportedAt() {
+    public LocalDate getReportedAt() {
         return reportedAt;
     }
 
-    public void setReportedAt(LocalDateTime reportedAt) {
+    public void setReportedAt(LocalDate reportedAt) {
         this.reportedAt = reportedAt;
     }
 }

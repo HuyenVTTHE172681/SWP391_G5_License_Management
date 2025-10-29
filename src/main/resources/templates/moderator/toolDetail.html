@@ -22,6 +22,9 @@
             <p class="desc" th:text="${tool.description}"></p>
 
             <div class="meta">
+                <p><strong>Tool ID:</strong>
+                    <span th:text="${tool.toolId}"></span>
+                </p>
                 <p><strong>Category:</strong>
                     <span th:text="${tool.category != null ? tool.category.categoryName : 'N/A'}"></span>
                 </p>
