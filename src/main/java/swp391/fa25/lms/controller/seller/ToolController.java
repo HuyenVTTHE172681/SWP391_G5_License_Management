@@ -9,9 +9,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.*;
 import swp391.fa25.lms.repository.CategoryRepository;
@@ -19,10 +21,13 @@ import swp391.fa25.lms.repository.LicenseToolRepository;
 import swp391.fa25.lms.repository.ToolFileRepository;
 import swp391.fa25.lms.service.seller.CategoryService;
 import swp391.fa25.lms.service.seller.ToolService;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -43,7 +48,7 @@ public class ToolController {
 
     private Account getCurrentSeller(HttpServletRequest request) {
         Account account = (Account) request.getSession().getAttribute("loggedInAccount");
-        if (account == null) throw new RuntimeException("Bạn chưa đăng nhập");
+        if (account == null)    throw new RuntimeException("Bạn chưa đăng nhập");
         if (account.getRole() == null || account.getRole().getRoleName() != Role.RoleName.SELLER)
             throw new RuntimeException("Tài khoản không phải là seller");
         return account;
@@ -141,7 +146,9 @@ public class ToolController {
 
     @GetMapping("/add")
     public String showAddForm(Model model) throws IOException {
-        model.addAttribute("tool", new Tool());
+        if (!model.containsAttribute("tool")) {
+            model.addAttribute("tool", new Tool());
+        }
         reloadFormData(model);
         return "seller/tool-add";
     }
@@ -154,25 +161,77 @@ public class ToolController {
                           @RequestParam(value = "loginMethod", required = false) String loginMethod,
                           @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
                           @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
+                          @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
                           RedirectAttributes redirectAttributes,
                           Model model) throws Exception {
-
-        if (tool.getImage() == null || tool.getImage().isBlank()) {
-            model.addAttribute("errorImage", "Please select an image.");
+        // ✅ Validate file upload
+        if (imageFile == null || imageFile.isEmpty()) {
+            model.addAttribute("errorImage", "Please upload an image.");
             reloadFormData(model);
             return "seller/tool-add";
         }
 
+        // ✅ Check file type (only JPG, JPEG, PNG)
+        String contentType = imageFile.getContentType();
+        if (contentType == null || !contentType.matches("image/(jpeg|jpg|png)")) {
+            model.addAttribute("errorImage", "Only JPG, JPEG, or PNG files are allowed.");
+            reloadFormData(model);
+            return "seller/tool-add";
+        }
+
+        // ✅ Check file size (≤ 2MB)
+        if (imageFile.getSize() > 2 * 1024 * 1024) {
+            model.addAttribute("errorImage", "Image size must be smaller than 2MB.");
+            reloadFormData(model);
+            return "seller/tool-add";
+        }
+
+        // ✅ Save image outside classpath (allow same name, overwrite)
+        try {
+            Path uploadPath = Paths.get("uploads/tools");
+            if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
+
+            // Lấy đúng tên file, chặn path traversal
+            String originalFileName = imageFile.getOriginalFilename();
+            if (originalFileName == null || originalFileName.isBlank()) {
+                model.addAttribute("errorImage", "Invalid file name.");
+                reloadFormData(model);
+                return "seller/tool-add";
+            }
+
+            // chỉ giữ phần tên (bỏ mọi thư mục nếu có) và loại bỏ kí tự / \
+            String safeName = Paths.get(originalFileName).getFileName().toString()
+                    .replaceAll("[\\\\/]+", "");
+
+            Path filePath = uploadPath.resolve(safeName);
+
+            // ✅ Ghi đè nếu trùng tên
+            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // ✅ Lưu đúng tên file thực vào DB (không thêm hậu tố)
+            tool.setImage(safeName);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            model.addAttribute("errorImage", "Error saving image. Please try again.");
+            reloadFormData(model);
+            return "seller/tool-add";
+        }
+        // ✅ Now check bindingResult after image is set
         if (bindingResult.hasErrors()) {
+            System.out.println("❌ bindingResult has errors: " + bindingResult.getAllErrors());
             reloadFormData(model);
             return "seller/tool-add";
         }
 
+        // ✅ Validate login method
         if (loginMethod == null || loginMethod.isBlank()) {
             model.addAttribute("errorLoginMethod", "Please select a login method.");
             reloadFormData(model);
             return "seller/tool-add";
         }
+
+        // ✅ Validate category
         if (tool.getCategory() == null || tool.getCategory().getCategoryId() == null) {
             model.addAttribute("errorCategory", "Please select a category.");
             reloadFormData(model);
@@ -243,58 +302,121 @@ public class ToolController {
     @Transactional
     public String updateTool(@PathVariable Long id,
                              HttpServletRequest request,
-                             @ModelAttribute Tool tool,
-                             @RequestParam(value = "selectedImage", required = false) String selectedImage,
-                             @RequestParam(value = "loginMethod", required = false) String loginMethod,
+                             @Valid @ModelAttribute("tool") Tool tool,
+                             BindingResult bindingResult,
+                             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
                              @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
                              @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
-                             RedirectAttributes redirectAttributes) {
+                             RedirectAttributes redirectAttributes,
+                             Model model) {
 
         try {
             Account seller = getCurrentSeller(request);
             Tool existingTool = toolService.getToolById(id);
-            if (existingTool == null) throw new RuntimeException("Tool not found");
+            if (existingTool == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Tool not found.");
+                return "redirect:/seller/tools";
+            }
 
+            // 🔒 Check quyền chỉnh sửa
             if (!existingTool.getSeller().getAccountId().equals(seller.getAccountId())) {
-                throw new RuntimeException("You are not allowed to edit this tool");
+                redirectAttributes.addFlashAttribute("errorMessage", "You are not allowed to edit this tool.");
+                return "redirect:/seller/tools";
             }
 
-            if (selectedImage != null && !selectedImage.isBlank()) {
-                existingTool.setImage(selectedImage);
+            // ⚠️ Validate thủ công giống addTool()
+            if (bindingResult.hasErrors()) {
+                System.out.println("❌ Binding errors: " + bindingResult.getAllErrors());
+                reloadEditData(model, tool); // ⚡ đổi lại đây
+                return "seller/tool-edit";
+            }
+            // ✅ Validate category
+            if (tool.getCategory() == null || tool.getCategory().getCategoryId() == null) {
+                model.addAttribute("errorCategory", "Please select a category.");
+                reloadEditData(model, existingTool);
+                return "seller/tool-edit";
             }
 
-            if (tool.getCategory() != null && tool.getCategory().getCategoryId() != null) {
-                categoryRepo.findById(tool.getCategory().getCategoryId())
-                        .ifPresent(existingTool::setCategory);
+            // ✅ Handle image upload (nếu có upload ảnh mới)
+            if (imageFile != null && !imageFile.isEmpty()) {
+                String contentType = imageFile.getContentType();
+                if (contentType == null || !contentType.matches("image/(jpeg|jpg|png)")) {
+                    model.addAttribute("errorImage", "Only JPG, JPEG, or PNG files are allowed.");
+                    reloadEditData(model, existingTool);
+                    return "seller/tool-edit";
+                }
+                if (imageFile.getSize() > 2 * 1024 * 1024) {
+                    model.addAttribute("errorImage", "Image size must be smaller than 2MB.");
+                    reloadEditData(model, existingTool);
+                    return "seller/tool-edit";
+                }
+
+                try {
+                    Path uploadPath = Paths.get("uploads/tools/");
+                    if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
+
+                    String originalFileName = StringUtils.cleanPath(imageFile.getOriginalFilename());
+                    Path filePath = uploadPath.resolve(originalFileName);
+                    int count = 1;
+                    String newFileName = originalFileName;
+
+                    while (Files.exists(filePath)) {
+                        String baseName = FilenameUtils.getBaseName(originalFileName);
+                        String extension = FilenameUtils.getExtension(originalFileName);
+                        newFileName = baseName + "_" + count + "." + extension;
+                        filePath = uploadPath.resolve(newFileName);
+                        count++;
+                    }
+
+                    Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                    existingTool.setImage(newFileName);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    model.addAttribute("errorImage", "Error saving image. Please try again.");
+                    reloadEditData(model, existingTool);
+                    return "seller/tool-edit";
+                }
             }
 
-            if (loginMethod != null && !loginMethod.isBlank()) {
-                existingTool.setLoginMethod(Tool.LoginMethod.valueOf(loginMethod));
+            // 🧩 Nếu không upload ảnh mới → giữ ảnh cũ
+            else if (existingTool.getImage() == null || existingTool.getImage().isBlank()) {
+                model.addAttribute("errorImage", "Please select an image.");
+                reloadEditData(model, existingTool);
+                return "seller/tool-edit";
             }
 
+            // ✅ Cập nhật dữ liệu chính
             existingTool.setToolName(tool.getToolName());
             existingTool.setDescription(tool.getDescription());
             existingTool.setQuantity(tool.getQuantity());
             existingTool.setStatus(Tool.Status.PENDING);
             existingTool.setUpdatedAt(LocalDateTime.now());
 
+            // Không cho đổi login method
+            existingTool.setLoginMethod(existingTool.getLoginMethod());
+
+            Category category = categoryRepo.findById(tool.getCategory().getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Invalid category selected"));
+            existingTool.setCategory(category);
+
             toolService.save(existingTool);
 
-            // Xóa license cũ và thêm mới
+            // ✅ Cập nhật license
             if (licenseDays != null && licensePrices != null) {
                 licenseRepo.deleteAll(licenseRepo.findByToolToolId(existingTool.getToolId()));
-                for (int i = 0; i < licenseDays.size(); i++) {
-                    Integer days = licenseDays.get(i);
-                    Double price = licensePrices.get(i);
-                    if (days == null || price == null || days <= 0 || price < 0) continue;
+                for (int i = 0; i < Math.min(licenseDays.size(), licensePrices.size()); i++) {
+                    Integer d = licenseDays.get(i);
+                    Double p = licensePrices.get(i);
+                    if (d == null || p == null || d <= 0 || p < 0) continue;
 
-                    License newLicense = new License();
-                    newLicense.setTool(existingTool);
-                    newLicense.setDurationDays(days);
-                    newLicense.setPrice(price);
-                    newLicense.setName("License " + days + " days");
-                    newLicense.setCreatedAt(LocalDateTime.now());
-                    licenseRepo.save(newLicense);
+                    License l = new License();
+                    l.setTool(existingTool);
+                    l.setDurationDays(d);
+                    l.setPrice(p);
+                    l.setName("License " + d + " days");
+                    l.setCreatedAt(LocalDateTime.now());
+                    licenseRepo.save(l);
                 }
             }
 
@@ -307,6 +429,8 @@ public class ToolController {
             return "redirect:/seller/tools/edit/" + id;
         }
     }
+
+
 
     // ================== TOGGLE TOOL STATUS ==================
 
@@ -374,4 +498,44 @@ public class ToolController {
 
         return tools;
     }
+    private void reloadEditData(Model model, Tool tool) {
+        // 🔹 Lấy tool gốc từ DB để giữ lại dữ liệu không bị mất (ảnh, seller, loginMethod, v.v.)
+        Tool existingTool = toolService.getToolById(tool.getToolId());
+        if (existingTool != null) {
+            // Nếu người dùng chưa upload ảnh mới → giữ ảnh cũ
+            if (tool.getImage() == null || tool.getImage().isBlank()) {
+                tool.setImage(existingTool.getImage());
+            }
+
+            // Giữ lại loginMethod (edit không được phép sửa)
+            tool.setLoginMethod(existingTool.getLoginMethod());
+
+            // Giữ lại seller (tránh null khi re-render)
+            tool.setSeller(existingTool.getSeller());
+
+            // Giữ lại licenses nếu form chưa có
+            if (tool.getLicenses() == null || tool.getLicenses().isEmpty()) {
+                tool.setLicenses(existingTool.getLicenses());
+            }
+        }
+
+        // 🔹 Nạp lại categories
+        model.addAttribute("categories", categoryRepo.findAll());
+
+        // 🔹 Nạp lại danh sách ảnh có sẵn (nếu bạn hiển thị để chọn)
+        try {
+            Path imageDir = Paths.get("src/main/resources/static/images/tools");
+            List<String> imageFiles = Files.list(imageDir)
+                    .filter(Files::isRegularFile)
+                    .map(f -> f.getFileName().toString())
+                    .toList();
+            model.addAttribute("imageFiles", imageFiles);
+        } catch (IOException e) {
+            model.addAttribute("imageFiles", List.of());
+        }
+
+        // 🔹 Cuối cùng add lại chính tool hiện tại (đã merge dữ liệu cũ)
+        model.addAttribute("tool", tool);
+    }
+
 }

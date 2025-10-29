@@ -86,7 +86,6 @@
             color: #dc2626;
             font-size: 0.85rem;
             margin-top: 4px;
-            display: none;
         }
 
         .error-border {
@@ -136,7 +135,29 @@
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
+        .license-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
+        .remove-btn {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #dc2626;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            transition: 0.2s;
+            flex-shrink: 0; /* để nút không co lại */
+        }
+        .remove-btn:hover {
+            background-color: #dc2626;
+            color: white;
+        }
         .submit-btn:hover { background-color: #15803d; }
     </style>
 </head>
@@ -156,20 +177,25 @@
         <div class="form-group">
             <label class="form-label">Tool Name</label>
             <input type="text" th:field="*{toolName}" id="toolName" class="form-input" placeholder="Enter tool name">
-            <small class="error-message" id="error-toolName">Tool name is required.</small>
+            <small class="error-message text-danger"
+                   th:if="${#fields.hasErrors('toolName')}"
+                   th:errors="*{toolName}"></small>
         </div>
 
-        <!-- 🖼 Image Gallery -->
+        <!-- 🖼 Upload Image -->
         <div class="form-group">
-            <label class="form-label">Select Image</label>
-            <div class="image-gallery" id="imageGallery">
-                <img th:each="img : ${imageFiles}"
-                     th:src="@{'/images/tools/' + ${img}}"
-                     th:alt="${img}"
-                     onclick="selectImage(this)">
+            <label class="form-label">Upload Image</label>
+            <input type="file" name="imageFile" id="imageFile" class="form-input" accept="image/*">
+
+            <!-- Preview -->
+            <div id="previewContainer" style="margin-top:10px;">
+                <img id="previewImage" src="#" alt="Preview"
+                     style="max-width:150px; display:none; border-radius:8px; border:1px solid #ccc;">
             </div>
-            <input type="hidden" th:field="*{image}" id="selectedImage">
-            <small class="error-message" id="error-selectedImage">Please select an image.</small>
+
+            <small class="error-message text-danger"
+                   th:if="${errorImage != null}"
+                   th:text="${errorImage}"></small>
         </div>
 
         <!-- 🗂 Category -->
@@ -177,16 +203,24 @@
             <label class="form-label">Category</label>
             <select th:field="*{category.categoryId}" id="category" class="form-select">
                 <option value="">-- Select category --</option>
-                <option th:each="c : ${categories}" th:value="${c.categoryId}" th:text="${c.categoryName}"></option>
+                <option th:each="c : ${categories}"
+                        th:value="${c.categoryId}"
+                        th:text="${c.categoryName}"></option>
             </select>
-            <small class="error-message" id="error-category">Please select a category.</small>
+            <small class="error-message text-danger"
+                   th:if="${#fields.hasErrors('category')}"
+                   th:errors="*{category}"></small>
         </div>
 
         <!-- 📝 Description -->
         <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea th:field="*{description}" id="description" rows="4" class="form-textarea" placeholder="Enter description"></textarea>
-            <small class="error-message" id="error-description">Description is required.</small>
+            <textarea th:field="*{description}" id="description"
+                      rows="4" class="form-textarea"
+                      placeholder="Enter description"></textarea>
+            <small class="error-message text-danger"
+                   th:if="${#fields.hasErrors('description')}"
+                   th:errors="*{description}"></small>
         </div>
 
         <!-- 🔐 Tool Login Method -->
@@ -202,33 +236,48 @@
                     Token (Key-based)
                 </option>
             </select>
+            <small class="text-danger" th:if="${errorLoginMethod}" th:text="${errorLoginMethod}"></small>
         </div>
 
         <!-- 🔢 Quantity -->
         <div class="form-group">
             <label class="form-label">Tool Quantity</label>
-            <input type="number" th:field="*{quantity}" id="quantity" class="form-input" min="1" placeholder="Enter quantity">
-            <small class="error-message" id="error-quantity">Quantity must be at least 1.</small>
+            <input type="number" th:field="*{quantity}" id="quantity"
+                   class="form-input" min="1" placeholder="Enter quantity">
+            <small class="error-message text-danger"
+                   th:if="${#fields.hasErrors('quantity')}"
+                   th:errors="*{quantity}"></small>
         </div>
 
         <!-- 💰 License Pricing -->
         <div class="form-group">
             <label class="form-label">Pricing Options</label>
+
             <div id="licenseContainer">
-                <div class="d-flex gap-2 mb-2" style="display:flex; gap:10px;">
-                    <input type="number" name="licenseDays" min="1" placeholder="Số ngày" class="form-input" style="width:48%;">
-                    <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" class="form-input" style="width:48%;">
+                <!-- 🔹 Dòng đầu tiên PHẢI có class license-row -->
+                <div class="license-row d-flex align-items-center mb-2" style="gap:10px;">
+                    <input type="number" name="licenseDays" min="1"
+                           placeholder="Days" class="form-input flex-fill" style="max-width:45%;">
+                    <input type="number" name="licensePrices" min="0"
+                           placeholder="Price (VNĐ)" class="form-input flex-fill" style="max-width:45%;">
+                    <button type="button" class="remove-btn" onclick="removeLicenseRow(this)">×</button>
                 </div>
             </div>
-            <button type="button" class="submit-btn" style="background:#e5e7eb; color:#374151; margin-top:0.5rem;"
+
+            <button type="button" class="submit-btn"
+                    style="background:#e5e7eb; color:#374151; margin-top:0.5rem;"
                     onclick="addLicenseRow()">+ Add another</button>
+
+            <small id="error-license" class="text-danger error-message" style="display:none;">
+                Please complete all pricing rows correctly.
+            </small>
         </div>
+
 
         <!-- ✅ Submit -->
         <div class="form-actions">
             <button type="submit" id="saveToolBtn" class="submit-btn">Save Tool</button>
         </div>
-
     </form>
 </section>
 
@@ -244,16 +293,101 @@
         console.log('Selected image file:', filename);
 
     }
-    // ✅ Add License Rows
+    // ✅ Thêm dòng mới
     function addLicenseRow() {
-        const c = document.getElementById('licenseContainer');
-        c.insertAdjacentHTML('beforeend', `
-      <div class="d-flex gap-2 mb-2" style="display:flex; gap:10px;">
-        <input type="number" name="licenseDays" min="1" placeholder="Số ngày" class="form-input" style="width:48%;">
-        <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" class="form-input" style="width:48%;">
-      </div>
-    `);
+        const container = document.getElementById('licenseContainer');
+        const row = document.createElement('div');
+        row.className = 'd-flex gap-2 mb-2 license-row';
+        row.style.display = 'flex';
+        row.style.gap = '10px';
+        row.innerHTML = `
+        <input type="number" name="licenseDays" min="1" placeholder="Days" class="form-input" style="width:45%;">
+        <input type="number" name="licensePrices" min="0" placeholder="Price (VNĐ)" class="form-input" style="width:45%;">
+        <button type="button" class="btn btn-outline-danger remove-btn" onclick="removeLicenseRow(this)">×</button>
+    `;
+        container.appendChild(row);
     }
+
+    function removeLicenseRow(btn) {
+        const container = document.getElementById('licenseContainer');
+        const rows = container.querySelectorAll('.license-row');
+
+        // luôn để lại ít nhất 1 dòng
+        if (rows.length > 1) {
+            const row = btn.closest('.license-row');
+            if (row) row.remove(); // tránh lỗi null
+        }
+    }
+
+    // ✅ Validate toàn form trước submit
+    document.getElementById('toolForm').addEventListener('submit', function (e) {
+        let valid = true;
+
+        // kiểm tra từng hàng trong pricing
+        const rows = document.querySelectorAll('#licenseContainer .license-row');
+        const errorEl = document.getElementById('error-license');
+        errorEl.style.display = 'none';
+
+        for (const row of rows) {
+            const day = row.querySelector('input[name="licenseDays"]').value.trim();
+            const price = row.querySelector('input[name="licensePrices"]').value.trim();
+
+            if ((day && !price) || (!day && price)) {
+                valid = false;
+                errorEl.style.display = 'block';
+                row.querySelectorAll('input').forEach(i => i.classList.add('error-border'));
+            } else {
+                row.querySelectorAll('input').forEach(i => i.classList.remove('error-border'));
+            }
+        }
+
+        if (!valid) {
+            e.preventDefault();
+            window.scrollTo({ top: 100, behavior: 'smooth' });
+        }
+    });
+
+    document.getElementById('imageFile').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('previewImage');
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = ev => {
+                preview.src = ev.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "#";
+            preview.style.display = 'none';
+        }
+    });
+    // ⚠️ Kiểm tra định dạng và dung lượng trước khi submit
+    document.getElementById('toolForm').addEventListener('submit', function (e) {
+        const fileInput = document.getElementById('imageFile');
+        const file = fileInput.files[0];
+        const errorMsg = document.querySelector('.error-message.text-danger');
+
+        if (!file) return; // để server validate nếu trống
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            e.preventDefault();
+            errorMsg.textContent = 'Only JPG, JPEG, or PNG files are allowed.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            e.preventDefault();
+            errorMsg.textContent = 'Image must be smaller than 2MB.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
+    });
+
 
     // ✅ Validate trước khi submit
     document.getElementById('toolForm').addEventListener('submit', function(e) {

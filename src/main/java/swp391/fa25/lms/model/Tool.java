@@ -26,6 +26,10 @@ public class Tool {
     @NotBlank(message = "Tool name cannot be blank")
     @Size(max = 100, message = "Tool name must be less than 100 characters")
     @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
+    @Pattern(
+            regexp = "^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$",
+            message = "Tool name can only contain letters and numbers, separated by a single space"
+    )
     private String toolName;
 
 
@@ -125,13 +129,8 @@ public class Tool {
         this.toolName = toolName;
     }
 
-    public @NotBlank(message = "Image cannot be blank") String getImage() {
-        return image;
-    }
-
-    public void setImage(@NotBlank(message = "Image cannot be blank") String image) {
-        this.image = image;
-    }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
 
     public @NotBlank(message = "Description cannot be blank") String getDescription() {
         return description;
