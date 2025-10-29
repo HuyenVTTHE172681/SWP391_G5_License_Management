@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Category;
 import swp391.fa25.lms.model.Tool;
+import swp391.fa25.lms.model.ToolReport;
 import swp391.fa25.lms.service.moderator.ToolFileService;
+import swp391.fa25.lms.service.moderator.ToolReportService;
 import swp391.fa25.lms.service.moderator.ToolService;
 import swp391.fa25.lms.service.used.CategoryService;
 
@@ -18,8 +20,11 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/moderator")
-public class ModeratorDashboardController {
+public class ModeratorToolController {
 
+    @Autowired
+    @Qualifier("moderatorToolReportService")
+    private ToolReportService toolReportService;
     @Autowired
     @Qualifier("moderatorToolService")
     private ToolService toolService;
@@ -138,4 +143,26 @@ public class ModeratorDashboardController {
         return "redirect:/moderator/uploadRequest";
     }
 
+    @GetMapping("/tool/report")
+    public String viewToolReports(
+            @RequestParam(required = false) ToolReport.Status status,
+            @RequestParam(required = false) Long toolId,
+            @RequestParam(required = false) Long reporterId,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+            Model model) {
+
+        List<ToolReport> reports = toolReportService.filterReports(status, toolId, reporterId, fromDate, toDate);
+
+        model.addAttribute("reports", reports);
+        model.addAttribute("status", status);
+        model.addAttribute("toolId", toolId);
+        model.addAttribute("reporterId", reporterId);
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
+
+        return "moderator/toolReport";
+    }
 }
