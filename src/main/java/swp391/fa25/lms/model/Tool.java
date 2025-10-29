@@ -20,6 +20,8 @@ public class Tool {
     @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
     private String toolName;
 
+    private String reviewedBy;
+
     @NotBlank(message = "Image cannot be blank")
     @Column(nullable = false)
     private String image;
@@ -39,13 +41,14 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED }
+    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED,  VIOLATED}
 
     @OneToMany(mappedBy = "tool")
     private List<ToolFile> files;
 
     @OneToMany(mappedBy = "tool")
     private List<License> licenses;
+
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -184,5 +187,13 @@ public class Tool {
 
     public void setTotalReviews(Long totalReviews) {
         this.totalReviews = totalReviews;
+    }
+
+    public String getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(String reviewedBy) {
+        this.reviewedBy = reviewedBy;
     }
 }

@@ -1,0 +1,71 @@
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filter-form input,
+.filter-form select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+}
+
+.btn {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-filter { background-color: #2563eb; }
+.btn-reset { background-color: #64748b; }
+.btn-view { background-color: #16a34a; }
+.btn-filter:hover { background-color: #1d4ed8; }
+.btn-reset:hover { background-color: #475569; }
+.btn-view:hover { background-color: #15803d; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+thead {
+    background-color: #1e293b;
+    color: white;
+}
+
+th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.status {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+.status.APPROVED { background: #e6f4ea; color: #137333; }
+.status.REJECTED { background: #fce8e6; color: #a50e0e; }
+.status.PUBLISHED { background: #e0f2fe; color: #0369a1; }
+.status.PENDING { background: #fff4e5; color: #b26a00; }

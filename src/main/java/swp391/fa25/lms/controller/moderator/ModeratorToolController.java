@@ -1,5 +1,6 @@
 package swp391.fa25.lms.controller.moderator;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Category;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.model.ToolReport;
@@ -115,13 +117,15 @@ public class ModeratorToolController {
 
     //  Approve tool
     @PostMapping("/tool/{id}/approve")
-    public String approveTool(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+    public String approveTool(@PathVariable("id") Long id, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         Tool tool = toolService.findById(id);
+        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
+
         if (tool == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Tool not found");
             return "redirect:/moderator/uploadRequest";
         }
-        toolService.approveTool(tool);
+        toolService.approveTool(tool, account.getRole().getRoleName().toString());
 
         redirectAttributes.addFlashAttribute("successMessage", "Approved");
         return "redirect:/moderator/uploadRequest";
@@ -131,14 +135,16 @@ public class ModeratorToolController {
     @PostMapping("/tool/{id}/reject")
     public String rejectTool(@PathVariable("id") Long id,
                              @RequestParam("reason") String reason,
-                             RedirectAttributes redirectAttributes) {
+                             RedirectAttributes redirectAttributes,
+                             HttpServletRequest request) {
         Tool tool = toolService.findById(id);
+        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
         if (tool == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Tool not found.");
             return "redirect:/moderator/uploadRequest";
         }
 
-        toolService.rejectTool(tool, reason);
+        toolService.rejectTool(tool, reason, account.getRole().getRoleName().toString());
 
         redirectAttributes.addFlashAttribute("errorMessage", "Rejected because" + reason);
         return "redirect:/moderator/uploadRequest";
