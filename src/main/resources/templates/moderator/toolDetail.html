@@ -8,7 +8,7 @@
 <body>
 
 <div class="container">
-    <h1>🧰 Tool Detail</h1>
+    <h1>Tool Detail</h1>
 
     <div class="tool-card">
         <!-- Hình ảnh tool -->
@@ -49,8 +49,8 @@
             <div class="files-section">
                 <h3>📎 File đính kèm</h3>
 
-                <ul class="file-list" th:if="${toolFiles != null and !#lists.isEmpty(toolFiles)}">
-                    <li th:each="file : ${toolFiles}">
+                <ul class="file-list" th:if="${tool.files != null and !#lists.isEmpty(tool.files)}">
+                    <li th:each="file : ${tool.files}">
                         <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
                             <span th:text="${file.filePath}"></span>
                         </a>
@@ -58,7 +58,7 @@
                     </li>
                 </ul>
 
-                <p th:if="${toolFiles == null or #lists.isEmpty(toolFiles)}" class="no-file">
+                <p th:if="${tool.files == null or #lists.isEmpty(tool.files)}" class="no-file">
                     Không có file đính kèm.
                 </p>
             </div>
@@ -72,23 +72,28 @@
                 <button type="button" class="btn-reject" onclick="toggleReject()">Reject</button>
             </div>
 
-                <!-- Form reject -->
-                <form id="rejectForm"
-                      th:action="@{'/moderator/tool/' + ${tool.toolId} + '/reject'}"
-                      method="post"
-                      class="reject-form hidden">
-                    <input type="text" name="reason" placeholder="Reason..." required>
-                    <div class="reject-actions">
-                        <button type="submit" class="btn-confirm">Submit</button>
-                        <button type="button" class="btn-cancel" onclick="toggleReject()">Cancel</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Quay lại -->
-            <a th:href="@{/moderator/uploadRequest}" class="back-link">← Back</a>
+            <!-- Form reject -->
+            <form id="rejectForm"
+                  th:action="@{'/moderator/tool/' + ${tool.toolId} + '/reject'}"
+                  method="post"
+                  class="reject-form hidden">
+                <input type="text" name="reason" placeholder="Reason..." required>
+                <div class="reject-actions">
+                    <button type="submit" class="btn-confirm">Submit</button>
+                    <button type="button" class="btn-cancel" onclick="toggleReject()">Cancel</button>
+                </div>
+            </form>
         </div>
+
+        <a th:if="${tool.status.name() == 'PENDING'}"
+           th:href="@{/moderator/uploadRequest}"
+           class="back-link">← Back</a>
+
+        <a th:unless="${tool.status.name() == 'PENDING'}"
+           th:href="@{/moderator/history}"
+           class="back-link">← Back</a>
     </div>
+</div>
 </div>
 
 <script>

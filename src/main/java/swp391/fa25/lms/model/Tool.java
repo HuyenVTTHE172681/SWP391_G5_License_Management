@@ -39,7 +39,7 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED }
+    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED }
 
     @OneToMany(mappedBy = "tool")
     private List<ToolFile> files;

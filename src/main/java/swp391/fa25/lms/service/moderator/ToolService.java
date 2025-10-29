@@ -27,9 +27,6 @@ public class ToolService {
     public void save(Tool tool) {
         toolRepository.save(tool);
     }
-    public List<Tool> getPendingTools() {
-        return toolRepository.findByStatus(Tool.Status.PENDING);
-    }
     public List<Tool> filterPendingTools(
             Long sellerId,
             Long categoryId,
@@ -65,20 +62,17 @@ public class ToolService {
 
         return toolRepository.findAll(spec);
     }
-    public void approveTool(Tool tool) {
-        tool.setStatus(Tool.Status.APPROVED);
-        tool.setUpdatedAt(LocalDateTime.now());
-        tool.setNote(null);
-        toolRepository.save(tool);
-    }
+
     public void rejectTool(Tool tool, String reason) {
         tool.setStatus(Tool.Status.REJECTED);
         tool.setNote(reason);
         tool.setUpdatedAt(LocalDateTime.now());
         toolRepository.save(tool);
     }
-    public List<Tool> getNonPendingTools() {
-        return toolRepository.findByStatusNot(Tool.Status.PENDING);
+    public void approveTool(Tool tool) {
+        tool.setStatus(Tool.Status.APPROVED);
+        tool.setUpdatedAt(LocalDateTime.now());
+        toolRepository.save(tool);
     }
 
     public List<Tool> filterNonPendingTools(

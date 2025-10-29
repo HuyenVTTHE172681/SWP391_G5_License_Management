@@ -103,7 +103,7 @@
                 <td th:text="${tool.toolName}"></td>
                 <td th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></td>
                 <td th:text="${tool.category != null ? tool.category.categoryName : 'N/A'}"></td>
-                <td th:text="${#temporals.format(tool.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+                <td th:text="${#temporals.format(tool.updatedAt, 'dd-MM-yyyy HH:mm')}"></td>
                 <td class="status" th:classappend="${tool.status}">
                     <span class="status-badge" th:text="${tool.status}"></span>
                 </td>
