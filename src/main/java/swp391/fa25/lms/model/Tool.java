@@ -8,13 +8,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
 
 @Entity
 @Table(name = "Tool")
-@JsonIgnoreProperties({"seller", "toolFiles"})
+@JsonIgnoreProperties({ "toolFiles"})
 public class Tool {
 
     @Id
@@ -65,7 +64,7 @@ public class Tool {
     public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, DEACTIVE }
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference(value = "tool-files")
     private List<ToolFile> files;
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)

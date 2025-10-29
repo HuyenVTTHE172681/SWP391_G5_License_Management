@@ -51,5 +51,14 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     @EntityGraph(attributePaths = {"licenses", "seller", "category"})
     Optional<Tool> findByToolIdAndStatus(Long toolId, Tool.Status status);
     Optional<Tool> findById(Long toolId);
-
+    @Query("""
+       SELECT t FROM Tool t
+       WHERE t.seller.accountId = :sellerId
+         AND (:keyword IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+         AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+       """)
+    Page<Tool> findBySellerAndFilter(@Param("sellerId") Long sellerId,
+                                     @Param("keyword") String keyword,
+                                     @Param("categoryId") Long categoryId,
+                                     Pageable pageable);
 }

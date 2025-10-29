@@ -198,6 +198,14 @@
                    th:text="${errorImage}"></small>
         </div>
 
+        <!-- 💾 Upload Tool File -->
+        <div class="form-group">
+            <label class="form-label">Upload Tool File (.exe, .zip, .rar, .7z)</label>
+            <input type="file" name="toolFile" id="toolFile" accept=".exe,.zip,.rar,.7z" class="form-input">
+            <small class="form-text text-muted">Only .exe, .zip, .rar, .7z — Max 100MB.</small>
+            <small id="fileError" class="error-message text-danger"></small>
+        </div>
+
         <!-- 🗂 Category -->
         <div class="form-group">
             <label class="form-label">Category</label>
@@ -425,7 +433,26 @@
             window.scrollTo({ top: 100, behavior: 'smooth' });
         }
     });
+    document.getElementById("toolFile").addEventListener("change", function () {
+        const file = this.files[0];
+        const errorEl = document.getElementById("fileError");
+        errorEl.textContent = "";
 
+        if (!file) return;
+
+        const allowed = [".exe", ".zip", ".rar", ".7z"];
+        const lower = file.name.toLowerCase();
+        if (!allowed.some(ext => lower.endsWith(ext))) {
+            errorEl.textContent = "❌ Invalid file type. Only .exe, .zip, .rar, .7z allowed.";
+            this.value = "";
+            return;
+        }
+
+        if (file.size > 100 * 1024 * 1024) {
+            errorEl.textContent = "❌ File too large (max 100MB).";
+            this.value = "";
+        }
+    });
 </script>
 </body>
 </html>

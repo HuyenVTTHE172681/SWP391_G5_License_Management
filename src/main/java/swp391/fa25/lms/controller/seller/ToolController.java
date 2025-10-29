@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -19,36 +20,45 @@ import swp391.fa25.lms.model.*;
 import swp391.fa25.lms.repository.CategoryRepository;
 import swp391.fa25.lms.repository.LicenseToolRepository;
 import swp391.fa25.lms.repository.ToolFileRepository;
+import swp391.fa25.lms.repository.ToolRepository;
 import swp391.fa25.lms.service.seller.CategoryService;
 import swp391.fa25.lms.service.seller.ToolService;
 import org.apache.commons.io.FilenameUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/seller/tools")
 public class ToolController {
-
-    @Autowired private CategoryRepository categoryRepo;
-    @Autowired @Qualifier("seller1") private CategoryService categoryService;
-    @Autowired @Qualifier("seller") private ToolService toolService;
-    @Autowired private LicenseToolRepository licenseRepo;
-    @Autowired private ToolFileRepository toolFileRepository;
+    @Autowired
+    private ToolRepository toolRepository;
+    @Autowired
+    private CategoryRepository categoryRepo;
+    @Autowired
+    @Qualifier("seller1")
+    private CategoryService categoryService;
+    @Autowired
+    @Qualifier("seller")
+    private ToolService toolService;
+    @Autowired
+    private LicenseToolRepository licenseRepo;
+    @Autowired
+    private ToolFileRepository toolFileRepository;
 
     // ================== COMMON ==================
 
     private Account getCurrentSeller(HttpServletRequest request) {
         Account account = (Account) request.getSession().getAttribute("loggedInAccount");
-        if (account == null)    throw new RuntimeException("Bạn chưa đăng nhập");
+        if (account == null) throw new RuntimeException("Bạn chưa đăng nhập");
         if (account.getRole() == null || account.getRole().getRoleName() != Role.RoleName.SELLER)
             throw new RuntimeException("Tài khoản không phải là seller");
         return account;
@@ -89,7 +99,9 @@ public class ToolController {
                             @RequestParam(required = false) Long categoryId,
                             @RequestParam(required = false) Double min,
                             @RequestParam(required = false) Double max,
-                            @RequestParam(required = false, defaultValue = "newest") String sort) {
+                            @RequestParam(required = false, defaultValue = "newest") String sort,
+                            @RequestParam(defaultValue = "0") int page,
+                            @RequestParam(defaultValue = "6") int size) {
 
         Account seller = getCurrentSeller(request);
         List<Tool> tools = toolService.getToolsBySeller(seller);
@@ -162,6 +174,7 @@ public class ToolController {
                           @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
                           @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
                           @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                          @RequestParam(value = "toolFile", required = false) MultipartFile toolFile, // 🧩 thêm dòng này
                           RedirectAttributes redirectAttributes,
                           Model model) throws Exception {
         // ✅ Validate file upload
@@ -191,7 +204,6 @@ public class ToolController {
             Path uploadPath = Paths.get("uploads/tools");
             if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
 
-            // Lấy đúng tên file, chặn path traversal
             String originalFileName = imageFile.getOriginalFilename();
             if (originalFileName == null || originalFileName.isBlank()) {
                 model.addAttribute("errorImage", "Invalid file name.");
@@ -199,16 +211,11 @@ public class ToolController {
                 return "seller/tool-add";
             }
 
-            // chỉ giữ phần tên (bỏ mọi thư mục nếu có) và loại bỏ kí tự / \
             String safeName = Paths.get(originalFileName).getFileName().toString()
                     .replaceAll("[\\\\/]+", "");
 
             Path filePath = uploadPath.resolve(safeName);
-
-            // ✅ Ghi đè nếu trùng tên
             Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            // ✅ Lưu đúng tên file thực vào DB (không thêm hậu tố)
             tool.setImage(safeName);
 
         } catch (IOException e) {
@@ -217,6 +224,7 @@ public class ToolController {
             reloadFormData(model);
             return "seller/tool-add";
         }
+
         // ✅ Now check bindingResult after image is set
         if (bindingResult.hasErrors()) {
             System.out.println("❌ bindingResult has errors: " + bindingResult.getAllErrors());
@@ -237,12 +245,12 @@ public class ToolController {
             reloadFormData(model);
             return "seller/tool-add";
         }
+
         HttpSession session = request.getSession();
         if ("TOKEN".equalsIgnoreCase(loginMethod)) {
             Category category = categoryRepo.findById(tool.getCategory().getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Invalid category selected"));
             tool.setCategory(category);
-            // Lưu dữ liệu tạm vào session thay vì tạo tool luôn
             session.setAttribute("tempTool", tool);
             session.setAttribute("licenseDays", licenseDays);
             session.setAttribute("licensePrices", licensePrices);
@@ -262,6 +270,38 @@ public class ToolController {
 
         Tool saved = toolService.addTool(tool, seller);
 
+        // 🧩 TOOL FILE UPLOAD START — thêm phần upload file .exe / .zip
+        if (toolFile != null && !toolFile.isEmpty()) {
+            try {
+                String uploadDir =  "uploads/toolfiles/";
+                File dir = new File(uploadDir);
+                if (!dir.exists()) dir.mkdirs();
+
+                String originalName = toolFile.getOriginalFilename();
+                String safeFileName = Paths.get(originalName).getFileName().toString().replaceAll("[\\\\/]+", "");
+                String storedName = UUID.randomUUID() + "_" + safeFileName;
+
+                Path savePath = Paths.get(uploadDir + storedName);
+                Files.copy(toolFile.getInputStream(), savePath, StandardCopyOption.REPLACE_EXISTING);
+
+                ToolFile tf = new ToolFile();
+                tf.setTool(saved);
+                tf.setFilePath("/uploads/toolfiles/" + uploadDir + storedName);
+                tf.setFileType(ToolFile.FileType.ORIGINAL);
+                tf.setUploadedBy(seller);
+                tf.setCreatedAt(LocalDateTime.now());
+                toolFileRepository.save(tf);
+
+                System.out.println("✅ Tool file uploaded: " + storedName);
+            } catch (IOException e) {
+                e.printStackTrace();
+                model.addAttribute("errorFile", "Error uploading tool file.");
+                reloadFormData(model);
+                return "seller/tool-add";
+            }
+        }
+        // 🧩 TOOL FILE UPLOAD END
+
         if (licenseDays != null && licensePrices != null) {
             for (int i = 0; i < Math.min(licenseDays.size(), licensePrices.size()); i++) {
                 Integer d = licenseDays.get(i);
@@ -277,6 +317,7 @@ public class ToolController {
                 licenseRepo.save(l);
             }
         }
+
         redirectAttributes.addFlashAttribute("success", "Tool added successfully!");
         return "redirect:/seller/tools";
     }
@@ -305,6 +346,7 @@ public class ToolController {
                              @Valid @ModelAttribute("tool") Tool tool,
                              BindingResult bindingResult,
                              @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                             @RequestParam(value = "toolFile", required = false) MultipartFile toolFile, // 🧩 thêm dòng này
                              @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
                              @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
                              RedirectAttributes redirectAttributes,
@@ -327,9 +369,10 @@ public class ToolController {
             // ⚠️ Validate thủ công giống addTool()
             if (bindingResult.hasErrors()) {
                 System.out.println("❌ Binding errors: " + bindingResult.getAllErrors());
-                reloadEditData(model, tool); // ⚡ đổi lại đây
+                reloadEditData(model, tool);
                 return "seller/tool-edit";
             }
+
             // ✅ Validate category
             if (tool.getCategory() == null || tool.getCategory().getCategoryId() == null) {
                 model.addAttribute("errorCategory", "Please select a category.");
@@ -360,13 +403,11 @@ public class ToolController {
                     int count = 1;
                     String newFileName = originalFileName;
 
-                    while (Files.exists(filePath)) {
-                        String baseName = FilenameUtils.getBaseName(originalFileName);
-                        String extension = FilenameUtils.getExtension(originalFileName);
-                        newFileName = baseName + "_" + count + "." + extension;
-                        filePath = uploadPath.resolve(newFileName);
-                        count++;
+                    if (existingTool.getImage() != null) {
+                        Path oldFile = uploadPath.resolve(existingTool.getImage());
+                        Files.deleteIfExists(oldFile);
                     }
+
 
                     Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
                     existingTool.setImage(newFileName);
@@ -377,10 +418,7 @@ public class ToolController {
                     reloadEditData(model, existingTool);
                     return "seller/tool-edit";
                 }
-            }
-
-            // 🧩 Nếu không upload ảnh mới → giữ ảnh cũ
-            else if (existingTool.getImage() == null || existingTool.getImage().isBlank()) {
+            } else if (existingTool.getImage() == null || existingTool.getImage().isBlank()) {
                 model.addAttribute("errorImage", "Please select an image.");
                 reloadEditData(model, existingTool);
                 return "seller/tool-edit";
@@ -393,7 +431,6 @@ public class ToolController {
             existingTool.setStatus(Tool.Status.PENDING);
             existingTool.setUpdatedAt(LocalDateTime.now());
 
-            // Không cho đổi login method
             existingTool.setLoginMethod(existingTool.getLoginMethod());
 
             Category category = categoryRepo.findById(tool.getCategory().getCategoryId())
@@ -401,6 +438,65 @@ public class ToolController {
             existingTool.setCategory(category);
 
             toolService.save(existingTool);
+
+            // 🧩 TOOL FILE UPLOAD START
+            if (toolFile != null && !toolFile.isEmpty()) {
+                String originalName = toolFile.getOriginalFilename();
+                if (originalName == null || originalName.isBlank()) {
+                    model.addAttribute("errorFile", "Invalid file name.");
+                    reloadFormData(model);
+                    return "seller/tool-add";
+                }
+
+                String lowerName = originalName.toLowerCase();
+                if (!(lowerName.endsWith(".exe") || lowerName.endsWith(".zip") || lowerName.endsWith(".rar") || lowerName.endsWith(".7z"))) {
+                    model.addAttribute("errorFile", "Only .exe, .zip, .rar, or .7z files are allowed.");
+                    reloadFormData(model);
+                    return "seller/tool-add";
+                }
+
+                if (toolFile.getSize() > 100 * 1024 * 1024) { // 100MB
+                    model.addAttribute("errorFile", "File size must be ≤ 100MB.");
+                    reloadFormData(model);
+                    return "seller/tool-add";
+                }
+                try {
+                    String uploadDir =  "uploads/toolfiles/";
+                    File dir = new File(uploadDir);
+                    if (!dir.exists()) dir.mkdirs();
+                    String safeFileName = Paths.get(originalName).getFileName().toString().replaceAll("[\\\\/]+", "");
+                    String storedName = UUID.randomUUID() + "_" + safeFileName;
+
+                    Path savePath = Paths.get(uploadDir + storedName);
+                    Files.copy(toolFile.getInputStream(), savePath, StandardCopyOption.REPLACE_EXISTING);
+
+                    // Xóa file cũ (nếu muốn)
+                    toolFileRepository.findByTool(existingTool).forEach(oldFile -> {
+                        try {
+                            Files.deleteIfExists(Paths.get(oldFile.getFilePath().substring(1)));
+                            toolFileRepository.delete(oldFile);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+
+                    ToolFile tf = new ToolFile();
+                    tf.setTool(existingTool);
+                    tf.setFilePath("/uploads/toolfiles/" + uploadDir + storedName);
+                    tf.setFileType(ToolFile.FileType.ORIGINAL);
+                    tf.setUploadedBy(seller);
+                    tf.setCreatedAt(LocalDateTime.now());
+                    toolFileRepository.save(tf);
+
+                    System.out.println("✅ Tool file updated: " + storedName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    model.addAttribute("errorFile", "Error uploading tool file.");
+                    reloadEditData(model, existingTool);
+                    return "seller/tool-edit";
+                }
+            }
+            // 🧩 TOOL FILE UPLOAD END
 
             // ✅ Cập nhật license
             if (licenseDays != null && licensePrices != null) {
@@ -430,8 +526,6 @@ public class ToolController {
         }
     }
 
-
-
     // ================== TOGGLE TOOL STATUS ==================
 
     @PostMapping("/toggle/{id}")
@@ -445,17 +539,24 @@ public class ToolController {
 
     @GetMapping("/api")
     @ResponseBody
-    public List<Tool> getToolsJson(HttpServletRequest request,
-                                   @RequestParam(required = false) String q,
-                                   @RequestParam(required = false) Long categoryId,
-                                   @RequestParam(required = false) Double minPrice,
-                                   @RequestParam(required = false) Double maxPrice,
-                                   @RequestParam(required = false, defaultValue = "newest") String sort,
-                                   @RequestParam(required = false) String status) {
+    public Map<String, Object> getToolsJson(HttpServletRequest request,
+                                            @RequestParam(defaultValue = "0") int page,
+                                            @RequestParam(defaultValue = "6") int size,
+                                            @RequestParam(required = false) String q,
+                                            @RequestParam(required = false) Long categoryId,
+                                            @RequestParam(required = false) Double minPrice,
+                                            @RequestParam(required = false) Double maxPrice,
+                                            @RequestParam(required = false, defaultValue = "newest") String sort,
+                                            @RequestParam(required = false) String loginMethod,
+                                            @RequestParam(required = false) String status) {
 
         Account seller = getCurrentSeller(request);
         List<Tool> tools = toolService.getToolsBySeller(seller);
 
+
+        // =============================
+        // 🔍 BỘ LỌC
+        // =============================
         if (q != null && !q.isBlank()) {
             tools = tools.stream()
                     .filter(t -> t.getToolName().toLowerCase().contains(q.toLowerCase()))
@@ -464,7 +565,8 @@ public class ToolController {
 
         if (categoryId != null) {
             tools = tools.stream()
-                    .filter(t -> t.getCategory() != null && t.getCategory().getCategoryId().equals(categoryId))
+                    .filter(t -> t.getCategory() != null &&
+                            t.getCategory().getCategoryId().equals(categoryId))
                     .collect(Collectors.toList());
         }
 
@@ -473,7 +575,8 @@ public class ToolController {
             double max = (maxPrice != null) ? maxPrice : Double.MAX_VALUE;
             tools = tools.stream()
                     .filter(t -> licenseRepo.findByToolToolId(t.getToolId())
-                            .stream().anyMatch(l -> l.getPrice() >= min && l.getPrice() <= max))
+                            .stream()
+                            .anyMatch(l -> l.getPrice() >= min && l.getPrice() <= max))
                     .collect(Collectors.toList());
         }
 
@@ -483,21 +586,88 @@ public class ToolController {
                 tools = tools.stream()
                         .filter(t -> t.getStatus() == st)
                         .collect(Collectors.toList());
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        if (loginMethod != null && !loginMethod.isBlank() && !"all".equalsIgnoreCase(loginMethod)) {
+            try {
+                Tool.LoginMethod lm = Tool.LoginMethod.valueOf(loginMethod.toUpperCase());
+                tools = tools.stream()
+                        .filter(t -> t.getLoginMethod() == lm)
+                        .collect(Collectors.toList());
+            } catch (IllegalArgumentException ignored) {
+            }
         }
 
-        Comparator<Tool> byCreated = Comparator.comparing(Tool::getCreatedAt).reversed();
+        // =============================
+        // 🔽 SORT LOGIC (PRICE + DEFAULT)
+        // =============================
+
         Comparator<Tool> byPrice = Comparator.comparingDouble(t ->
                 licenseRepo.findByToolToolId(t.getToolId())
-                        .stream().mapToDouble(License::getPrice)
-                        .min().orElse(Double.MAX_VALUE));
+                        .stream()
+                        .mapToDouble(License::getPrice)
+                        .min()
+                        .orElse(Double.MAX_VALUE)
+        );
 
-        if ("price_asc".equalsIgnoreCase(sort)) tools.sort(byPrice);
-        else if ("price_desc".equalsIgnoreCase(sort)) tools.sort(byPrice.reversed());
-        else tools.sort(byCreated);
+        switch (sort.toLowerCase()) {
+            case "price_asc":
+                tools.sort(byPrice);
+                break;
 
-        return tools;
+            case "price_desc":
+                tools.sort(byPrice.reversed());
+                break;
+
+            case "oldest":
+                tools.sort(
+                        Comparator.comparing(
+                                Tool::getUpdatedAt,
+                                Comparator.nullsLast(Comparator.naturalOrder())
+                        )
+                );
+                break;
+
+            case "newest":
+                tools.sort(
+                        Comparator.comparing(
+                                Tool::getUpdatedAt,
+                                Comparator.nullsLast(Comparator.reverseOrder())
+                        )
+                );
+                break;
+
+            default:
+                tools.sort(
+                        Comparator.comparing(
+                                Tool::getCreatedAt,
+                                Comparator.nullsLast(Comparator.reverseOrder())
+                        )
+                );
+                break;
+        }
+        // =============================
+        // 📖 PHÂN TRANG THỦ CÔNG
+        // =============================
+        int total = tools.size();
+        int totalPages = (int) Math.ceil((double) total / size);
+        int fromIndex = Math.min(page * size, total);
+        int toIndex = Math.min(fromIndex + size, total);
+        List<Tool> paged = tools.subList(fromIndex, toIndex);
+
+        // =============================
+        // 🧩 KẾT QUẢ TRẢ VỀ
+        // =============================
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", paged);
+        result.put("page", page);
+        result.put("totalPages", totalPages);
+        result.put("totalElements", total);
+
+        return result;
     }
+
     private void reloadEditData(Model model, Tool tool) {
         // 🔹 Lấy tool gốc từ DB để giữ lại dữ liệu không bị mất (ảnh, seller, loginMethod, v.v.)
         Tool existingTool = toolService.getToolById(tool.getToolId());
@@ -538,4 +708,22 @@ public class ToolController {
         model.addAttribute("tool", tool);
     }
 
+    @PostMapping("/toggle-status/{id}")
+    public ResponseEntity<?> toggleToolStatus(@PathVariable Long id) {
+        Optional<Tool> toolOpt = toolRepository.findById(id);
+        if (toolOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        Tool tool = toolOpt.get();
+
+        if (tool.getStatus() == Tool.Status.PUBLISHED) {
+            tool.setStatus(Tool.Status.DEACTIVE);
+        } else if (tool.getStatus() == Tool.Status.DEACTIVE) {
+            tool.setStatus(Tool.Status.PUBLISHED);
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("error", "Không thể đổi trạng thái từ " + tool.getStatus()));
+        }
+
+        toolRepository.save(tool);
+        return ResponseEntity.ok(Map.of("status", tool.getStatus().toString()));
+    }
 }
