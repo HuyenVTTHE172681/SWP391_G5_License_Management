@@ -8,5 +8,8 @@ import java.util.List;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category,Long> {
-    List<Category> findByCategoryId(Long categoryId);
-}
+    Category findByCategoryId(Long categoryId);
+    List<Category> findByCategoryName(String categoryName);
+    List<Category> findByCategoryNameContainingIgnoreCase(String name);
+    List<Category> findByStatus(Category.Status status);
+    List<Category> findByCategoryNameContainingIgnoreCaseAndStatus(String name, Category.Status status);}

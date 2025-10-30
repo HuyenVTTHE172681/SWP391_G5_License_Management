@@ -14,5 +14,27 @@ public class CategoryService {
     public List<Category> getAllCategories() {
         return categoryRepo.findAll();
     }
+    public List<Category> searchByName(String name) {
+        return categoryRepo.findByCategoryName(name);
+    }
+    public void save(Category category) {
+        categoryRepo.save(category);
+    }
+    public List<Category> filter(String name, Category.Status status) {
+        if ((name == null || name.isBlank()) && status == null)
+            return categoryRepo.findAll();
 
+        if (status == null)
+            return categoryRepo.findByCategoryNameContainingIgnoreCase(name);
+
+        if (name == null || name.isBlank())
+            return categoryRepo.findByStatus(status);
+
+        return categoryRepo.findByCategoryNameContainingIgnoreCaseAndStatus(name, status);
+    }
+
+    public Category findById(Long id) {
+        return categoryRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid category ID: " + id));
+    }
 }

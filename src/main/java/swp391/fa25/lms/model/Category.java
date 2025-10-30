@@ -2,6 +2,7 @@ package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+
 import java.util.List;
 
 @Entity
@@ -21,6 +22,11 @@ public class Category {
 
     @OneToMany(mappedBy = "category")
     private List<Tool> tools;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    public enum Status {ACTIVE, DEACTIVATED}
 
     private String icon;
 
@@ -73,5 +79,13 @@ public class Category {
 
     public void setIcon(String icon) {
         this.icon = icon;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 }

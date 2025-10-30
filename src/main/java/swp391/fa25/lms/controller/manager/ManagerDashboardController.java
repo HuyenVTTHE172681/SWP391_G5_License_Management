@@ -1,18 +1,20 @@
 package swp391.fa25.lms.controller.manager;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Category;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.service.moderator.CategoryService;
-import swp391.fa25.lms.service.moderator.ToolService;
+import swp391.fa25.lms.service.manager.ToolService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,8 +22,9 @@ import java.util.List;
 @Controller
 @RequestMapping("/manager")
 public class ManagerDashboardController {
+
     @Autowired
-    @Qualifier("moderatorToolService")
+    @Qualifier("manageToolService")
     private ToolService toolService;
 
     @Autowired
@@ -67,6 +70,7 @@ public class ManagerDashboardController {
 
         return "manager/upload-tool";
     }
+
     @GetMapping("/tool/{id}")
     public String viewToolDetail(@PathVariable Long id, Model model) {
         Tool tool = toolService.findById(id);
@@ -155,5 +159,72 @@ public class ManagerDashboardController {
         model.addAttribute("status", status);
 
         return "manager/tool-list";
+    }
+
+    @GetMapping("/category/list")
+    public String listCategories(@RequestParam(required = false) String name,
+                                 @RequestParam(required = false) Category.Status status,
+                                 Model model) {
+        List<Category> categories = categoryService.filter(name, status);
+
+        model.addAttribute("categories", categories);
+        model.addAttribute("searchName", name);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("newCategory", new Category());
+        return "manager/category-list";
+    }
+
+    @GetMapping("/category/create")
+    public String createForm(Model model) {
+        model.addAttribute("newCategory", new Category());
+        return "manager/category-create";
+    }
+
+    @PostMapping("/category/create")
+    public String createCategory(@Valid @ModelAttribute("newCategory") Category category,
+                                 BindingResult result,
+                                 Model model) {
+        if (result.hasErrors()) {
+            model.addAttribute("categories", categoryService.getAllCategories());
+            return "manager/category-create";
+        }
+        category.setStatus(Category.Status.ACTIVE);
+        categoryService.save(category);
+        return "redirect:/manager/category/list";
+    }
+
+    @GetMapping("/category/edit/{id}")
+    public String editCategoryForm(@PathVariable("id") Long id, Model model) {
+        Category category = categoryService.findById(id);
+        model.addAttribute("category", category);
+        return "manager/category-edit";
+    }
+
+    @PostMapping("/category/edit/{id}")
+    public String updateCategory(@PathVariable("id") Long id,
+                                 @Valid @ModelAttribute("category") Category category,
+                                 BindingResult result) {
+        if (result.hasErrors()) {
+            return "manager/category-edit";
+        }
+        category.setCategoryId(id);
+        categoryService.save(category);
+        return "redirect:/manager/category/list";
+    }
+
+    @GetMapping("/category/delete/{id}")
+    public String deactivateCategory(@PathVariable("id") Long id) {
+        Category category = categoryService.findById(id);
+        category.setStatus(Category.Status.DEACTIVATED);
+        categoryService.save(category);
+        return "redirect:/manager/category/list";
+    }
+
+    @GetMapping("/category/restore/{id}")
+    public String restoreCategory(@PathVariable("id") Long id) {
+        Category category = categoryService.findById(id);
+        category.setStatus(Category.Status.ACTIVE);
+        categoryService.save(category);
+        return "redirect:/manager/category/list";
     }
 }

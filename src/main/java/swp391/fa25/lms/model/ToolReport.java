@@ -16,17 +16,14 @@ public class ToolReport {
     @Column(name = "tool_report_id")
     private Long toolReportId;
 
-    // Người report
     @ManyToOne(optional = false)
     @JoinColumn(name = "reporter_id", nullable = false)
     private Account reporter;
 
-    // Tool bị report
     @ManyToOne(optional = false)
     @JoinColumn(name = "tool_id", nullable = false)
     private Tool tool;
 
-    // Lý do report
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private Reason reason;
@@ -51,7 +48,8 @@ public class ToolReport {
         IRRELEVANT_CATEGORY,
         OTHER;
     }
-        private String description;
+    @Column(columnDefinition = "NVARCHAR(100)")
+    private String description;
 
     public ToolReport() {
     }
@@ -65,7 +63,6 @@ public class ToolReport {
         this.status = Status.PENDING;
     }
 
-    // --- Getters & Setters ---
     public Long getToolReportId() {
         return toolReportId;
     }
