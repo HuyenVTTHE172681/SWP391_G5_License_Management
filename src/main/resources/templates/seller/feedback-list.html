@@ -13,7 +13,7 @@
 <div class="container py-4">
     <div class="page-header d-flex align-items-center justify-content-between mb-3">
         <h3 class="mb-0">Feedback từ khách hàng</h3>
-        <a class="btn btn-outline-secondary" th:href="@{/seller}">
+        <a class="btn btn-outline-secondary" th:href="@{/seller/tools}">
             <i class="bi bi-arrow-left"></i>
             <span class="d-none d-sm-inline">Quay lại</span>
         </a>
@@ -33,7 +33,9 @@
         </div>
     </form>
 
-    <div class="card shadow-sm">
+    <!-- backUrl = URL trang hiện tại (giữ toolId nếu đang lọc) -->
+    <div class="card shadow-sm"
+         th:with="backUrl=${toolId != null} ? @{/seller/feedback(toolId=${toolId})} : @{/seller/feedback}">
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle feedback-table">
                 <thead class="table-light">
@@ -51,7 +53,7 @@
 
                     <td>
                         <div class="tool-line">
-                            <a th:href="@{|/tools/${fb.tool.toolId}|}"
+                            <a th:href="@{/tools/{id}(id=${fb.tool.toolId})}"
                                th:text="${fb.tool != null ? fb.tool.toolName : 'Tool'}">Tool name</a>
                         </div>
                         <div class="text-muted small">
@@ -92,7 +94,12 @@
                                     <div class="mt-2" th:text="${r.content}">Nội dung phản hồi…</div>
 
                                     <form class="mt-2 d-inline"
-                                          th:action="@{|/seller/feedback/${fb.feedbackId}/reply/delete|}" method="post">
+                                          th:action="@{/seller/feedback/{fid}/reply/delete(fid=${fb.feedbackId})}"
+                                          method="post">
+                                        <input th:if="${_csrf != null}" type="hidden"
+                                               th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <!-- Ở lại trang hiện tại -->
+                                        <input type="hidden" name="redirect" th:value="${backUrl}"/>
                                         <button class="btn btn-sm btn-outline-danger"
                                                 onclick="return confirm('Xóa phản hồi này?')">
                                             <i class="bi bi-trash"></i> Xóa phản hồi
@@ -103,8 +110,14 @@
                                 <!-- Form sửa -->
                                 <details class="mt-2">
                                     <summary class="text-primary pointer">Sửa phản hồi</summary>
-                                    <form class="mt-2" th:action="@{|/seller/feedback/${fb.feedbackId}/reply|}" method="post">
-                                        <textarea name="content" class="form-control" rows="3" maxlength="500"
+                                    <form class="mt-2"
+                                          th:action="@{/seller/feedback/{fid}/reply(fid=${fb.feedbackId})}"
+                                          method="post">
+                                        <input th:if="${_csrf != null}" type="hidden"
+                                               th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <!-- Ở lại trang hiện tại -->
+                                        <input type="hidden" name="redirect" th:value="${backUrl}"/>
+                                        <textarea name="content" class="form-control" rows="3" maxlength="200"
                                                   th:text="${r.content}"></textarea>
                                         <div class="text-end mt-2">
                                             <button class="btn btn-sm btn-primary">
@@ -117,8 +130,12 @@
 
                             <!-- CHƯA CÓ REPLY -->
                             <div th:if="${r == null}">
-                                <form th:action="@{|/seller/feedback/${fb.feedbackId}/reply|}" method="post">
-                                    <textarea name="content" class="form-control" rows="3" maxlength="500"
+                                <form th:action="@{/seller/feedback/{fid}/reply(fid=${fb.feedbackId})}" method="post">
+                                    <input th:if="${_csrf != null}" type="hidden"
+                                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <!-- Ở lại trang hiện tại -->
+                                    <input type="hidden" name="redirect" th:value="${backUrl}"/>
+                                    <textarea name="content" class="form-control" rows="3" maxlength="200"
                                               placeholder="Nhập phản hồi cho feedback này…"></textarea>
                                     <div class="text-end mt-2">
                                         <button class="btn btn-sm btn-primary">
@@ -144,5 +161,35 @@
 </div>
 
 <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+<script>
+    function looksSpacedOutText(s){
+        s = (s || "").trim().replace(/\s+/g," ");
+        if (s.length < 9) return false;
+        const parts = s.split(" ");
+        if (parts.length < 5) return false;
+        return parts.every(p => /^[\p{L}\p{N}]$/u.test(p));
+    }
+
+    // Bắt tất cả form gửi reply của seller
+    document.querySelectorAll('form[action*="/seller/feedback/"][action$="/reply"]').forEach(f=>{
+        f.addEventListener('submit', (e)=>{
+            const ta = f.querySelector('textarea[name="content"],input[name="content"]');
+            if (!ta) return;
+            const v = (ta.value || "").trim();
+            if (looksSpacedOutText(v)) {
+                e.preventDefault();
+                ta.classList.add('is-invalid');
+                if (!ta.nextElementSibling || !ta.nextElementSibling.classList.contains('invalid-feedback')) {
+                    const fb = document.createElement('div');
+                    fb.className = 'invalid-feedback';
+                    fb.textContent = 'Vui lòng không chèn khoảng trắng giữa từng ký tự.';
+                    ta.after(fb);
+                }
+                ta.focus();
+                setTimeout(()=>ta.classList.remove('is-invalid'), 2000);
+            }
+        });
+    });
+</script>
 </body>
 </html>

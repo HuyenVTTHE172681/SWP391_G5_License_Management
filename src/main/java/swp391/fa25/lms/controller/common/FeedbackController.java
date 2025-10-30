@@ -68,7 +68,7 @@ public class FeedbackController {
         return "customer/feedback-form";
     }
 
-    /** Tạo feedback mới (một người mua có thể feedback nhiều lần) */
+    /** Tạo feedback mới  **/
     @PostMapping("/orders/{orderId}/feedback")
     @Transactional
     public String submitFeedback(@PathVariable Long orderId,
@@ -79,27 +79,29 @@ public class FeedbackController {
         if (order.getOrderStatus() != CustomerOrder.OrderStatus.SUCCESS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ đơn thành công mới được đánh giá.");
         }
-
+        String cmt = collapseSpaces(comment);          // <— CHUẨN HOÁ
+        if (looksSpacedOutText(cmt)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Nội dung không hợp lệ: không chèn khoảng trắng giữa từng ký tự.");
+        }
         var fb = new Feedback();
         fb.setAccount(order.getAccount());
         fb.setTool(order.getTool());
         fb.setRating(rating);
-        fb.setComment(comment == null ? "" : comment.trim());
+        fb.setComment(cmt);
         fb.setCreatedAt(LocalDateTime.now());
-
         feedbackRepo.save(fb);
 
         ra.addFlashAttribute("ok", "Cảm ơn bạn! Đánh giá đã được ghi nhận.");
         return "redirect:/tools/" + order.getTool().getToolId() + "#review";
     }
 
-    // ================== EDIT/DELETE (không cần orderId) ==================
-
-    /** Form sửa feedback của chính chủ */
+    // ======== EDIT FORM (GET) ========
     @GetMapping("/feedback/{feedbackId}/edit")
     @Transactional(readOnly = true)
     public String editFeedbackForm(@PathVariable Long feedbackId,
-                                   Model model, Principal principal) {
+                                   Model model,
+                                   Principal principal) {
         var fb = feedbackRepo.findById(feedbackId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy feedback"));
 
@@ -108,12 +110,16 @@ public class FeedbackController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền.");
         }
 
+        // Không cập nhật DB ở GET – chỉ chuẩn hoá để hiển thị nếu muốn
+        String normalized = collapseSpaces(fb.getComment());
+
         model.addAttribute("tool", fb.getTool());
         model.addAttribute("fb", fb);
-        return "customer/feedback-edit-form";
+        model.addAttribute("fbComment", normalized); // dùng nếu bạn muốn bind riêng
+        return "customer/feedback-edit-form";        // đúng tên file .html của bạn
     }
 
-    /** Cập nhật feedback của chính chủ */
+    // ======== UPDATE (POST) ========
     @PostMapping("/feedback/{feedbackId}/edit")
     @Transactional
     public String updateFeedback(@PathVariable Long feedbackId,
@@ -129,15 +135,20 @@ public class FeedbackController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền.");
         }
 
+        String cmt = collapseSpaces(comment);           // gộp khoảng trắng
+        if (looksSpacedOutText(cmt)) {                  // chặn “c h ữ”
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Nội dung không hợp lệ: không chèn khoảng trắng giữa từng ký tự.");
+        }
+
         fb.setRating(rating);
-        fb.setComment(comment == null ? "" : comment.trim());
+        fb.setComment(cmt);
         feedbackRepo.save(fb);
 
         ra.addFlashAttribute("ok", "Đã cập nhật đánh giá.");
         return "redirect:/tools/" + fb.getTool().getToolId() + "#review";
     }
-
-    /** Xoá feedback của chính chủ (xoá kèm reply để tránh FK) */
+    /** Xoá feedback của chính chủ  */
     @PostMapping("/feedback/{feedbackId}/delete")
     @Transactional
     public String deleteFeedback(@PathVariable Long feedbackId,
@@ -158,4 +169,32 @@ public class FeedbackController {
         ra.addFlashAttribute("ok", "Đã xoá đánh giá.");
         return "redirect:/tools/" + toolId + "#review";
     }
+    private static boolean isSpacedOutText(String s) {
+        if (s == null) return false;
+        String t = s.trim().replaceAll("\\s+", " ");
+
+        if (t.length() < 9) return false;
+        String[] parts = t.split(" ");
+        if (parts.length < 5) return false;
+        for (String p : parts) {
+            if (!p.matches("[\\p{L}\\p{N}]")) {
+                return false;
+            }
+        }
+        return true;
+    }
+    private static String collapseSpaces(String s) {
+        if (s == null) return "";
+        return s.replaceAll("\\s+", " ").trim(); // gộp mọi khoảng trắng về 1
+    }
+    private static boolean looksSpacedOutText(String s) {
+        if (s == null) return false;
+        String t = s.trim().replaceAll("\\s+", " ");
+        if (t.length() < 9) return false;                 // "a a a a a" tối thiểu
+        String[] parts = t.split(" ");
+        if (parts.length < 5) return false;
+        for (String p : parts) if (!p.matches("[\\p{L}\\p{N}]")) return false;
+        return true;
+    }
+
 }

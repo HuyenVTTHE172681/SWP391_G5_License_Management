@@ -43,5 +43,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     @Query("SELECT COUNT(f) FROM Feedback f WHERE f.tool.toolId = :toolId")
     Long countByToolId(Long toolId);
+    List<Feedback> findByTool_Seller_AccountIdOrderByCreatedAtDesc(Long sellerId);
+    List<Feedback> findByTool_Seller_AccountIdAndTool_ToolIdOrderByCreatedAtDesc(Long sellerId, Long toolId);
 
 }

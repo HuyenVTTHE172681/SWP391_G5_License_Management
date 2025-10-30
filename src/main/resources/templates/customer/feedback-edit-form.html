@@ -39,8 +39,7 @@
             <div class="card shadow-sm">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h5 class="mb-0">Sửa đánh giá</h5>
-                    <a class="btn btn-outline-secondary btn-sm"
-                       th:href="@{|/tools/${tool.toolId}#review|}">
+                    <a class="btn btn-outline-secondary btn-sm" th:href="@{|/tools/${tool.toolId}#review|}">
                         <i class="bi bi-arrow-left"></i> Quay về tool
                     </a>
                 </div>
@@ -48,34 +47,26 @@
 
                     <!-- Form UPDATE -->
                     <form id="update-form" th:action="@{|/feedback/${fb.feedbackId}/edit|}" method="post" novalidate>
-                        <input th:if="${_csrf != null}"
-                               type="hidden"
-                               th:name="${_csrf.parameterName}"
-                               th:value="${_csrf.token}"/>
+                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                         <!-- Rating (1-5 sao) -->
                         <div class="mb-3">
                             <label class="form-label">Đánh giá</label>
                             <div class="star-group">
                                 <div class="star-row">
-                                    <input type="radio" id="r5" name="rating" value="5"
-                                           th:checked="${fb.rating != null and fb.rating == 5}"/>
+                                    <input type="radio" id="r5" name="rating" value="5" th:checked="${fb.rating != null and fb.rating == 5}"/>
                                     <label for="r5" title="Rất tốt"><i class="bi bi-star-fill"></i></label>
 
-                                    <input type="radio" id="r4" name="rating" value="4"
-                                           th:checked="${fb.rating != null and fb.rating == 4}"/>
+                                    <input type="radio" id="r4" name="rating" value="4" th:checked="${fb.rating != null and fb.rating == 4}"/>
                                     <label for="r4" title="Tốt"><i class="bi bi-star-fill"></i></label>
 
-                                    <input type="radio" id="r3" name="rating" value="3"
-                                           th:checked="${fb.rating != null and fb.rating == 3}"/>
+                                    <input type="radio" id="r3" name="rating" value="3" th:checked="${fb.rating != null and fb.rating == 3}"/>
                                     <label for="r3" title="Bình thường"><i class="bi bi-star-fill"></i></label>
 
-                                    <input type="radio" id="r2" name="rating" value="2"
-                                           th:checked="${fb.rating != null and fb.rating == 2}"/>
+                                    <input type="radio" id="r2" name="rating" value="2" th:checked="${fb.rating != null and fb.rating == 2}"/>
                                     <label for="r2" title="Chưa tốt"><i class="bi bi-star-fill"></i></label>
 
-                                    <input type="radio" id="r1" name="rating" value="1"
-                                           th:checked="${fb.rating != null and fb.rating == 1}"/>
+                                    <input type="radio" id="r1" name="rating" value="1" th:checked="${fb.rating != null and fb.rating == 1}"/>
                                     <label for="r1" title="Tệ"><i class="bi bi-star-fill"></i></label>
                                 </div>
                             </div>
@@ -86,10 +77,11 @@
                         <div class="mb-3">
                             <label for="comment" class="form-label">Nhận xét (không bắt buộc)</label>
                             <textarea id="comment" name="comment" class="form-control"
-                                      maxlength="100" rows="3"
+                                      maxlength="100" rows="3" spellcheck="false"
                                       placeholder="Viết nhận xét tối đa 100 ký tự..."
                                       th:text="${fb.comment}"></textarea>
-                            <div class="d-flex justify-content-between">
+                            <div class="invalid-feedback">Vui lòng không chèn khoảng trắng giữa từng ký tự.</div>
+                            <div class="d-flex justify-content-between mt-1">
                                 <div class="form-text">Tối đa 100 ký tự.</div>
                                 <div class="form-text"><span id="cc">0</span>/100</div>
                             </div>
@@ -99,10 +91,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save"></i> Lưu thay đổi
                             </button>
-                            <a class="btn btn-outline-secondary"
-                               th:href="@{|/tools/${tool.toolId}#review|}">
-                                Hủy
-                            </a>
+                            <a class="btn btn-outline-secondary" th:href="@{|/tools/${tool.toolId}#review|}">Hủy</a>
                         </div>
                     </form>
 
@@ -111,10 +100,7 @@
                     <!-- Form DELETE -->
                     <form th:action="@{|/feedback/${fb.feedbackId}/delete|}" method="post"
                           onsubmit="return confirm('Bạn chắc chắn xoá đánh giá này?');">
-                        <input th:if="${_csrf != null}"
-                               type="hidden"
-                               th:name="${_csrf.parameterName}"
-                               th:value="${_csrf.token}"/>
+                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <button type="submit" class="btn btn-outline-danger">
                             <i class="bi bi-trash3"></i> Xoá đánh giá
                         </button>
@@ -128,28 +114,83 @@
 
 <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
 <script>
-    // Đếm ký tự
-    (function () {
-        const ta = document.getElementById('comment');
-        const cc = document.getElementById('cc');
-        if (ta && cc) {
-            const update = () => { cc.textContent = (ta.value || '').length; };
-            ta.addEventListener('input', update);
-            update();
-        }
-    })();
-
-    // Bắt buộc chọn rating cho form UPDATE (không ảnh hưởng form DELETE)
     (function () {
         const form = document.getElementById('update-form');
-        if (!form) return;
-        form.addEventListener('submit', function (e) {
-            const checked = form.querySelector('input[name="rating"]:checked');
-            if (!checked) {
+        const ta   = document.getElementById('comment');
+        const cc   = document.getElementById('cc');
+
+        // Gộp mọi khoảng trắng liên tiếp thành 1 (kể cả dán)
+        function collapseSpaces(s) {
+            return (s || '')
+                .replace(/\u00A0/g, ' ')      // NBSP -> space
+                .replace(/[\t\f\v\r]+/g, ' ') // tab/khác -> space
+                .replace(/\s{2,}/g, ' ')      // 2+ spaces -> 1
+                .trimStart();                 // bỏ space đầu
+        }
+
+        // Phát hiện kiểu “c h ữ  c á c h 1 space”
+        function looksSpacedOutText(s){
+            s = (s || '').trim().replace(/\s+/g,' ');
+            if (s.length < 9) return false;        // tối thiểu "a a a a a"
+            const parts = s.split(' ');
+            if (parts.length < 5) return false;
+            return parts.every(p => /^[\p{L}\p{N}]$/u.test(p));
+        }
+
+        // Cập nhật bộ đếm
+        function updateCounter() { if (cc && ta) cc.textContent = (ta.value || '').length; }
+
+        if (ta) {
+            // Chuẩn hoá ngay khi load (nếu DB đang có nhiều space)
+            ta.value = collapseSpaces(ta.value);
+            updateCounter();
+
+            // Khi nhập
+            ta.addEventListener('input', () => {
+                const collapsed = collapseSpaces(ta.value);
+                if (collapsed !== ta.value) ta.value = collapsed;
+                ta.classList.remove('is-invalid');
+                updateCounter();
+            });
+
+            // Khi dán
+            ta.addEventListener('paste', e => {
                 e.preventDefault();
-                alert('Vui lòng chọn số sao đánh giá.');
-            }
-        });
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                const start = ta.selectionStart, end = ta.selectionEnd;
+                const before = ta.value.slice(0, start);
+                const after  = ta.value.slice(end);
+                const insert = collapseSpaces(text);
+                ta.value = before + insert + after;
+                ta.selectionStart = ta.selectionEnd = (before + insert).length;
+                ta.classList.remove('is-invalid');
+                updateCounter();
+            });
+        }
+
+        // Bắt buộc chọn rating + validate comment
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                const checked = form.querySelector('input[name="rating"]:checked');
+                if (!checked) {
+                    e.preventDefault();
+                    alert('Vui lòng chọn số sao đánh giá.');
+                    return;
+                }
+
+                if (ta) {
+                    ta.value = collapseSpaces(ta.value).trim(); // chuẩn hoá lần cuối
+                    updateCounter();
+                    // Cho phép rỗng, nhưng nếu có nội dung thì cấm kiểu “c h ữ”
+                    if (ta.value && looksSpacedOutText(ta.value)) {
+                        e.preventDefault();
+                        ta.classList.add('is-invalid');
+                        ta.focus();
+                        return;
+                    }
+                }
+            });
+        }
     })();
 </script>
 </body>

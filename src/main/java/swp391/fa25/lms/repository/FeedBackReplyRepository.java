@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 import swp391.fa25.lms.model.FeedbackReply;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface FeedBackReplyRepository extends JpaRepository<FeedbackReply, Long> {
@@ -15,5 +16,6 @@ public interface FeedBackReplyRepository extends JpaRepository<FeedbackReply, Lo
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional // <- dùng org.springframework.transaction.annotation.Transactional
     @Query("DELETE FROM FeedbackReply fr WHERE fr.feedback.feedbackId = :feedbackId")
-    int deleteByFeedback_FeedbackId(Long feedbackId); // hoặc dùng void nếu không cần số lượng
+    int deleteByFeedback_FeedbackId(Long feedbackId);
+    List<FeedbackReply> findByFeedback_FeedbackIdIn(java.util.Collection<Long> feedbackIds);
 }

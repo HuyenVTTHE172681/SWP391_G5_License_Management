@@ -1,4 +1,3 @@
-<!-- src/main/resources/templates/customer/feedback-form.html -->
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,9 +5,7 @@
     <title>Gửi đánh giá</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .star {
-            font-size: 28px; cursor: pointer; color: #ccc;
-        }
+        .star { font-size: 28px; cursor: pointer; color: #ccc; }
         .star.active, .star.hover { color: #f5c518; }
     </style>
 </head>
@@ -36,8 +33,13 @@
 
                 <div class="mb-3">
                     <label class="form-label">Nhận xét (tối đa 100 ký tự)</label>
-                    <textarea class="form-control" name="comment" rows="3" maxlength="100"
+                    <textarea id="comment" class="form-control"
+                              name="comment" rows="3" maxlength="100" spellcheck="false"
                               placeholder="Viết ngắn gọn trải nghiệm của bạn..."></textarea>
+                    <div class="d-flex justify-content-between">
+                        <div class="invalid-feedback">Vui lòng không chèn khoảng trắng giữa từng ký tự.</div>
+                        <small class="text-muted"><span id="cc">0</span>/100</small>
+                    </div>
                 </div>
 
                 <div class="d-flex gap-2">
@@ -50,24 +52,72 @@
 </div>
 
 <script>
-    // sao mặc định = 5
+    // Sao mặc định = 5
     const stars = document.querySelectorAll('.star');
     const ratingInput = document.getElementById('rating');
-    function render(val){
-        stars.forEach(s=>{
-            const v = +s.dataset.v;
-            s.classList.toggle('active', v <= val);
-        });
-    }
+    function render(val){ stars.forEach(s => s.classList.toggle('active', +s.dataset.v <= val)); }
     render(+ratingInput.value);
     stars.forEach(s=>{
-        s.addEventListener('mouseover', ()=>{ render(+s.dataset.v); });
-        s.addEventListener('mouseout', ()=>{ render(+ratingInput.value); });
-        s.addEventListener('click', ()=>{
-            ratingInput.value = s.dataset.v;
-            render(+ratingInput.value);
-        });
+        s.addEventListener('mouseover', ()=>render(+s.dataset.v));
+        s.addEventListener('mouseout',  ()=>render(+ratingInput.value));
+        s.addEventListener('click',     ()=>{ ratingInput.value = s.dataset.v; render(+ratingInput.value); });
     });
+
+    (function () {
+        const ta = document.getElementById('comment');
+        const cc = document.getElementById('cc');
+        if (!ta) return;
+
+        // Gộp mọi khoảng trắng liên tiếp thành 1 (kể cả dán)
+        function collapseSpaces(s) {
+            return s.replace(/\u00A0/g, ' ')      // non-breaking space -> space
+                .replace(/\s{2,}/g, ' ')      // 2+ spaces -> 1
+                .replace(/[\t\f\v\r]+/g, ' ') // tab -> space
+                .trimStart();                 // tránh space đầu
+        }
+
+        // Phát hiện kiểu “c h ữ  c á c h 1 space”
+        function looksSpacedOutText(s){
+            s = (s || '').trim().replace(/\s+/g,' ');
+            if (s.length < 9) return false;            // tối thiểu như "a a a a a"
+            const parts = s.split(' ');
+            if (parts.length < 5) return false;
+            return parts.every(p => /^[\p{L}\p{N}]$/u.test(p));
+        }
+
+        // Cập nhật bộ đếm + gộp space khi nhập
+        const onInput = () => {
+            const collapsed = collapseSpaces(ta.value);
+            if (collapsed !== ta.value) ta.value = collapsed;
+            cc.textContent = ta.value.length;
+            ta.classList.remove('is-invalid');
+        };
+        ta.addEventListener('input', onInput);
+        ta.addEventListener('paste', e => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            const start = ta.selectionStart, end = ta.selectionEnd;
+            const before = ta.value.slice(0, start);
+            const after  = ta.value.slice(end);
+            ta.value = before + collapseSpaces(text) + after;
+            ta.selectionStart = ta.selectionEnd = (before + collapseSpaces(text)).length;
+            onInput();
+        });
+        onInput();
+
+        // Validate trước khi submit
+        ta.form?.addEventListener('submit', (e) => {
+            ta.value = collapseSpaces(ta.value).trim(); // chuẩn hoá lần cuối
+            cc.textContent = ta.value.length;
+
+            // Cho phép rỗng, nhưng nếu có nội dung thì cấm kiểu “c h ữ”
+            if (ta.value && looksSpacedOutText(ta.value)) {
+                e.preventDefault();
+                ta.classList.add('is-invalid');
+                ta.focus();
+            }
+        });
+    })();
 </script>
 </body>
 </html>

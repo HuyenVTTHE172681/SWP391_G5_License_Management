@@ -26,7 +26,7 @@ public class MyToolController {
     private static final Pattern USERNAME_PATTERN =
             Pattern.compile("^[A-Za-z0-9._-]{3,100}$");
     private static final Pattern PASSWORD_PATTERN =
-            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9])\\S{8,}$");
+            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)\\S{8,}$");
 
     private final CustomerOrderRepository orderRepo;
     private final LicenseAccountRepository accRepo;
@@ -243,7 +243,7 @@ public class MyToolController {
 
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
             ra.addFlashAttribute("err",
-                    "Mật khẩu phải ≥ 8 ký tự, có ít nhất 1 chữ thường, 1 CHỮ HOA, 1 chữ số, 1 ký tự đặc biệt và không chứa khoảng trắng.");
+                    "Mật khẩu phải ≥ 8 ký tự, có ít nhất 1 chữ thường, 1 CHỮ HOA, 1 chữ số và không có khoảng trắng (không bắt buộc ký tự đặc biệt).");
             return "redirect:/my-tools/" + orderId;
         }
 

@@ -1,6 +1,9 @@
 package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,6 +22,8 @@ public class Feedback {
     @JoinColumn(name = "tool_id")
     private Tool tool;
 
+    @Min(1) @Max(5)
+    @Column(nullable = false)
     private Integer rating;
 
     @Column(columnDefinition = "NVARCHAR(100)")
