@@ -62,7 +62,7 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, DEACTIVE }
+    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, DEACTIVATED }
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
