@@ -12,8 +12,26 @@
 </head>
 <body>
 
-<!-- Header dùng chung -->
-<div th:replace="~{common/header :: header}"></div>
+<!-- Header mini riêng cho Admin -->
+<div class="sticky-top bg-white border-bottom">
+    <div class="container-fluid py-2 d-flex justify-content-between align-items-center">
+        <!-- Brand -->
+        <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" th:href="@{/admin/adminhome}">
+            <i class="bi bi-speedometer2"></i>
+            <span>Admin</span>
+        </a>
+
+        <!-- Actions -->
+        <div class="d-flex align-items-center gap-2">
+            <a class="btn btn-outline-dark btn-sm" th:href="@{/profile}">
+                <i class="bi bi-person-circle me-1"></i> View Profile
+            </a>
+
+            <!-- Logout (POST + CSRF) -->
+            <a href="/logout" class="nav-link text-danger">Logout</a>
+        </div>
+    </div>
+</div>
 
 <main class="admin-content">
     <div class="wrap" th:with="fixedEmail=${fixedAdminEmail != null ? fixedAdminEmail : 'admin@gmail.com'}">

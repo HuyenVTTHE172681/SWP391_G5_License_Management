@@ -3,12 +3,14 @@ package swp391.fa25.lms.controller.admin;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriUtils;
@@ -36,6 +38,13 @@ public class DashBoardAdminController {
                                     AdminAccountService adminAccountService) {
         this.adminHomeService = adminHomeService;
         this.adminAccountService = adminAccountService;
+    }
+    @InitBinder("acc")
+    public void initBinderForAcc(WebDataBinder binder) {
+        // Trim và convert "" -> null
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
+        // Tránh tham số filter "status" trên URL/hidden input bị bind vào acc.status (enum)
+        binder.setDisallowedFields("status");
     }
 
     @GetMapping({"", "/"})

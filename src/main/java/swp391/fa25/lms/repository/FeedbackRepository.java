@@ -11,7 +11,10 @@ import org.springframework.stereotype.Repository;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.FeedbackReply;
 import swp391.fa25.lms.model.Tool;
+import swp391.fa25.lms.model.*;
 
+
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,5 +48,4 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     Long countByToolId(Long toolId);
     List<Feedback> findByTool_Seller_AccountIdOrderByCreatedAtDesc(Long sellerId);
     List<Feedback> findByTool_Seller_AccountIdAndTool_ToolIdOrderByCreatedAtDesc(Long sellerId, Long toolId);
-
 }
