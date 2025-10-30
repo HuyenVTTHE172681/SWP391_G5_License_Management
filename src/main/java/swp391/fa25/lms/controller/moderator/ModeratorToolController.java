@@ -65,6 +65,7 @@ public class ModeratorToolController {
                 uploadTo,
                 approvedFrom,
                 approvedTo,
+                "CUSTOMER",
                 status
         );
 

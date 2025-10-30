@@ -84,6 +84,7 @@ public class ToolService {
             LocalDateTime uploadTo,
             LocalDateTime approvedFrom,
             LocalDateTime approvedTo,
+            String reviewedBy,
             String status
     ) {
         Specification<Tool> spec = (root, query, cb) -> {
@@ -112,15 +113,19 @@ public class ToolService {
             } else if (approvedTo != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("updatedAt"), approvedTo));
             }
-
+            if (reviewedBy != null && !reviewedBy.isBlank()) {
+                if (reviewedBy.equalsIgnoreCase("NULL")) {
+                    predicates.add(cb.isNull(root.get("reviewedBy")));
+                } else {
+                    predicates.add(cb.equal(root.get("reviewedBy"), reviewedBy));
+                }
+            }
 
             if (status != null && !status.isEmpty()) {
                 predicates.add(cb.equal(root.get("status"), Tool.Status.valueOf(status)));
             }
 
-            // Loại bỏ các tool đang chờ duyệt (PENDING)
             predicates.add(cb.notEqual(root.get("status"), Tool.Status.PENDING));
-            predicates.add(cb.equal(root.get("reviewedBy"), "MOD"));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 

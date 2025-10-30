@@ -45,7 +45,6 @@ public class ManagerDashboardController {
                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedTo,
                          Model model) {
 
-        // 🔹 Gọi service lọc tool đã được approved
         List<Tool> toolList = toolService.filterApprovedTools(
                 sellerId,
                 categoryId,
@@ -57,7 +56,6 @@ public class ManagerDashboardController {
 
         List<Category> categories = categoryService.getAllCategories();
 
-        // 🔹 Gửi dữ liệu sang view
         model.addAttribute("toolList", toolList);
         model.addAttribute("categories", categories);
         model.addAttribute("sellerId", sellerId);
@@ -81,7 +79,6 @@ public class ManagerDashboardController {
         return "manager/tool-detail";
     }
 
-    // ✅ Publish tool (không cần note)
     @PostMapping("/tool/{id}/publish")
     public String publishTool(@PathVariable Long id, RedirectAttributes redirect, HttpServletRequest request) {
         Tool tool = toolService.findById(id);
@@ -95,7 +92,6 @@ public class ManagerDashboardController {
         return "redirect:/manager/tool/" + id;
     }
 
-    // ✅ Set Pending tool (có note)
     @PostMapping("/tool/{id}/pending")
     public String pendingTool(@PathVariable Long id,
                               @RequestParam("note") String note,
@@ -106,7 +102,7 @@ public class ManagerDashboardController {
         if (tool != null) {
             tool.setStatus(Tool.Status.PENDING);
             tool.setNote(note);
-            tool.setReviewedBy(account.getRole().toString());
+            tool.setReviewedBy(account.getRole().getRoleName().toString());
             tool.setUpdatedAt(LocalDateTime.now());
             toolService.save(tool);
             redirect.addFlashAttribute("info", "Tool has been set to Pending.");
@@ -114,7 +110,6 @@ public class ManagerDashboardController {
         return "redirect:/manager/tool/" + id;
     }
 
-    // ✅ Reject tool (có note)
     @PostMapping("/tool/{id}/reject")
     public String rejectTool(@PathVariable Long id,
                              @RequestParam("note") String note,
@@ -125,11 +120,40 @@ public class ManagerDashboardController {
         if (tool != null) {
             tool.setStatus(Tool.Status.REJECTED);
             tool.setNote(note);
-            tool.setReviewedBy(account.getRole().toString());
+            tool.setReviewedBy(account.getRole().getRoleName().toString());
             tool.setUpdatedAt(LocalDateTime.now());
             toolService.save(tool);
             redirect.addFlashAttribute("error", "Tool has been rejected.");
         }
         return "redirect:/manager/tool/" + id;
+    }
+
+    @GetMapping("/tool/list")
+    public String listTools(
+            @RequestParam(required = false) Long sellerId,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedTo,
+            @RequestParam(required = false) String reviewedBy,
+            @RequestParam(required = false) String status,
+            Model model
+    ) {
+        List<Tool> tools = toolService.filterNonPendingTools(
+                sellerId, categoryId, uploadFrom, uploadTo, approvedFrom, approvedTo, reviewedBy, status
+        );
+
+        model.addAttribute("tools", tools);
+        model.addAttribute("selectedSellerId", sellerId);
+        model.addAttribute("selectedCategoryId", categoryId);
+        model.addAttribute("uploadFrom", uploadFrom);
+        model.addAttribute("uploadTo", uploadTo);
+        model.addAttribute("approvedFrom", approvedFrom);
+        model.addAttribute("approvedTo", approvedTo);
+        model.addAttribute("reviewedBy", reviewedBy);
+        model.addAttribute("status", status);
+
+        return "manager/tool-list";
     }
 }
