@@ -25,15 +25,15 @@ public class Tool {
     @NotBlank(message = "Tool name cannot be blank")
     @Size(max = 100, message = "Tool name must be less than 100 characters")
     @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
-    @Pattern(
-            regexp = "^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$",
-            message = "Tool name can only contain letters and numbers, separated by a single space"
-    )
+//    @Pattern(
+//            regexp = "^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$",
+//            message = "Tool name can only contain letters and numbers, separated by a single space"
+//    )
     private String toolName;
 
 
-    @Column(nullable = false)
-    private String image;
+     @Column(nullable = false)
+     private String image;
 
     @NotBlank(message = "Description cannot be blank")
     @Size(max = 500, message = "Description must be under 500 characters")
