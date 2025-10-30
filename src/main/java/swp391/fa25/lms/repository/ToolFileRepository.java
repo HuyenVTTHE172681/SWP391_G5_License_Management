@@ -13,11 +13,12 @@ import java.util.List;
 import java.util.List;
 
 @Repository
-public interface ToolFileRepository extends JpaRepository<ToolFile, Integer> {
+public interface ToolFileRepository extends JpaRepository<ToolFile, Long> {
     List<ToolFile> findByTool(Tool tool);
 
     @Modifying
     @Transactional
     @Query("DELETE FROM ToolFile tf WHERE tf.tool.toolId = :toolId")
     void deleteAllByToolToolId(Long toolId);
+    List<ToolFile> findByTool_ToolIdOrderByCreatedAtDesc(Long toolId);
 }
