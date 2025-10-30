@@ -28,20 +28,34 @@ public class SellerService {
         return packageRepo.findAll();
     }
 
-    public Account renewSeller(String email, int packageId){
-        Account account = accountRepo.findByEmail(email).
-                orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
+    public Account renewSeller(String email, int packageId) {
+        Account account = accountRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
 
-        SellerPackage selectedPackage = packageRepo.findById(packageId).
-                orElseThrow(() -> new RuntimeException("Không tìm thấy gói"));
+        SellerPackage selectedPackage = packageRepo.findById(packageId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy gói"));
 
-        LocalDateTime startDate = LocalDateTime.now();
-        LocalDateTime endDate = startDate.plusMonths(selectedPackage.getDurationInMonths());
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startDate;
+        LocalDateTime endDate;
+
+        // ✅ Nếu còn hạn → nối tiếp, nếu hết hạn → tính lại từ ngày hiện tại
+        if (account.getSellerExpiryDate() != null && account.getSellerExpiryDate().isAfter(now)) {
+            startDate = account.getSellerExpiryDate();
+        } else {
+            startDate = now;
+        }
+
+        endDate = startDate.plusMonths(selectedPackage.getDurationInMonths());
+
+        // ✅ Cập nhật account
         account.setSellerPackage(selectedPackage);
         account.setSellerActive(true);
         account.setSellerExpiryDate(endDate);
+        account.setStatus(Account.AccountStatus.ACTIVE); // đảm bảo seller được kích hoạt
         accountRepo.save(account);
 
+        // ✅ Tạo lịch sử gia hạn
         SellerSubscription subscription = new SellerSubscription();
         subscription.setAccount(account);
         subscription.setSellerPackage(selectedPackage);
@@ -51,6 +65,12 @@ public class SellerService {
         subscription.setActive(true);
 
         sellerSubs.save(subscription);
+
+        System.out.printf(
+                "✅ Seller %s gia hạn thêm %d tháng. Bắt đầu từ: %s, hết hạn: %s%n",
+                email, selectedPackage.getDurationInMonths(), startDate, endDate
+        );
+
         return account;
     }
 
