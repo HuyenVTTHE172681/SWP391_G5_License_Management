@@ -30,7 +30,7 @@ public class CustomerOrder {
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", nullable = false)
     private OrderStatus orderStatus;
-    public enum OrderStatus { SUCCESS, FAILED }
+    public enum OrderStatus { PENDING, SUCCESS, FAILED }
 
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
@@ -161,6 +161,11 @@ public class CustomerOrder {
 
     public void setLicenseAccount(LicenseAccount licenseAccount) {
         this.licenseAccount = licenseAccount;
+    }
+
+//    Thêm method helper để check retryable
+    public boolean isPending() {
+        return OrderStatus.PENDING.equals(orderStatus);
     }
 }
 
