@@ -97,4 +97,13 @@ public class AdminAccountService {
         List<Account> lst = accountRepo.findTop8ByStatusOrderByUpdatedAtDesc(Account.AccountStatus.DEACTIVATED);
         return lst.size() > limit ? lst.subList(0, limit) : lst;
     }
+
+    public void updateBasicInfo(long id, String fullName, String phone, String address) {
+        Account acc = accountRepo.findById(id).orElseThrow(() -> new RuntimeException("Account not found"));
+        acc.setFullName(fullName);
+        acc.setPhone(phone);
+        acc.setAddress(address);
+        acc.setUpdatedAt(java.time.LocalDateTime.now());
+        accountRepo.save(acc); // sẽ trigger validate theo annotation trong Account
+    }
 }

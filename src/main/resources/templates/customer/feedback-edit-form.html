@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sửa đánh giá</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/feedback-edit.css}" rel="stylesheet"/>
+    <link th:href="@{/css/home.css}" rel="stylesheet">
+    <style>
+        .star-group input[type="radio"] { display: none; }
+        .star-group label { font-size: 1.8rem; cursor: pointer; margin: 0 .1rem; color: #ccc; }
+        .star-group input[type="radio"]:checked ~ label { color: #ccc; }
+        .star-group label:hover, .star-group label:hover ~ label { color: #f4c150; }
+        .star-group input[type="radio"]:checked + label,
+        .star-group input[type="radio"]:checked + label ~ label { color: #f4c150; }
+        .star-row { direction: rtl; }
+        .star-row > label { direction: ltr; }
+    </style>
+</head>
+<body>
+<div th:replace="common/header :: header"></div>
+
+<main class="container my-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+            <li class="breadcrumb-item">
+                <a th:href="@{|/tools/${tool.toolId}|}" th:text="${tool.toolName}">Tool</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Sửa đánh giá</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0">Sửa đánh giá</h5>
+                    <a class="btn btn-outline-secondary btn-sm"
+                       th:href="@{|/tools/${tool.toolId}#review|}">
+                        <i class="bi bi-arrow-left"></i> Quay về tool
+                    </a>
+                </div>
+                <div class="card-body">
+
+                    <!-- Form UPDATE -->
+                    <form id="update-form" th:action="@{|/feedback/${fb.feedbackId}/edit|}" method="post" novalidate>
+                        <input th:if="${_csrf != null}"
+                               type="hidden"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}"/>
+
+                        <!-- Rating (1-5 sao) -->
+                        <div class="mb-3">
+                            <label class="form-label">Đánh giá</label>
+                            <div class="star-group">
+                                <div class="star-row">
+                                    <input type="radio" id="r5" name="rating" value="5"
+                                           th:checked="${fb.rating != null and fb.rating == 5}"/>
+                                    <label for="r5" title="Rất tốt"><i class="bi bi-star-fill"></i></label>
+
+                                    <input type="radio" id="r4" name="rating" value="4"
+                                           th:checked="${fb.rating != null and fb.rating == 4}"/>
+                                    <label for="r4" title="Tốt"><i class="bi bi-star-fill"></i></label>
+
+                                    <input type="radio" id="r3" name="rating" value="3"
+                                           th:checked="${fb.rating != null and fb.rating == 3}"/>
+                                    <label for="r3" title="Bình thường"><i class="bi bi-star-fill"></i></label>
+
+                                    <input type="radio" id="r2" name="rating" value="2"
+                                           th:checked="${fb.rating != null and fb.rating == 2}"/>
+                                    <label for="r2" title="Chưa tốt"><i class="bi bi-star-fill"></i></label>
+
+                                    <input type="radio" id="r1" name="rating" value="1"
+                                           th:checked="${fb.rating != null and fb.rating == 1}"/>
+                                    <label for="r1" title="Tệ"><i class="bi bi-star-fill"></i></label>
+                                </div>
+                            </div>
+                            <div class="form-text">Chọn từ 1 đến 5 sao.</div>
+                        </div>
+
+                        <!-- Comment (≤100 ký tự) -->
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Nhận xét (không bắt buộc)</label>
+                            <textarea id="comment" name="comment" class="form-control"
+                                      maxlength="100" rows="3"
+                                      placeholder="Viết nhận xét tối đa 100 ký tự..."
+                                      th:text="${fb.comment}"></textarea>
+                            <div class="d-flex justify-content-between">
+                                <div class="form-text">Tối đa 100 ký tự.</div>
+                                <div class="form-text"><span id="cc">0</span>/100</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Lưu thay đổi
+                            </button>
+                            <a class="btn btn-outline-secondary"
+                               th:href="@{|/tools/${tool.toolId}#review|}">
+                                Hủy
+                            </a>
+                        </div>
+                    </form>
+
+                    <hr class="my-4"/>
+
+                    <!-- Form DELETE -->
+                    <form th:action="@{|/feedback/${fb.feedbackId}/delete|}" method="post"
+                          onsubmit="return confirm('Bạn chắc chắn xoá đánh giá này?');">
+                        <input th:if="${_csrf != null}"
+                               type="hidden"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash3"></i> Xoá đánh giá
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+<script>
+    // Đếm ký tự
+    (function () {
+        const ta = document.getElementById('comment');
+        const cc = document.getElementById('cc');
+        if (ta && cc) {
+            const update = () => { cc.textContent = (ta.value || '').length; };
+            ta.addEventListener('input', update);
+            update();
+        }
+    })();
+
+    // Bắt buộc chọn rating cho form UPDATE (không ảnh hưởng form DELETE)
+    (function () {
+        const form = document.getElementById('update-form');
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            const checked = form.querySelector('input[name="rating"]:checked');
+            if (!checked) {
+                e.preventDefault();
+                alert('Vui lòng chọn số sao đánh giá.');
+            }
+        });
+    })();
+</script>
+</body>
+</html>

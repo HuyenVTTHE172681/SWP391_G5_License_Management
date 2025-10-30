@@ -1,5 +1,6 @@
 package swp391.fa25.lms.controller.admin;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.*;
@@ -7,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriUtils;
@@ -40,36 +42,25 @@ public class DashBoardAdminController {
     public String root() {
         return "redirect:/admin/adminhome";
     }
+
     private static final java.util.Set<String> ALLOWED_SORT_FIELDS = java.util.Set.of(
             "accountId", "email", "fullName", "createdAt", "updatedAt"
     );
+
     private Sort parseSort(String sortStr, String fallbackProp, Sort.Direction fallbackDir) {
-        // nếu chuỗi rỗng → dùng fallback
         if (!org.springframework.util.StringUtils.hasText(sortStr)) {
             return Sort.by(fallbackDir, fallbackProp);
         }
-
         String[] parts = sortStr.split(",", 2);
-        String prop = parts.length > 0 && org.springframework.util.StringUtils.hasText(parts[0])
-                ? parts[0].trim()
-                : fallbackProp;
-
-        // chỉ cho phép sort theo field hợp lệ
-        if (!ALLOWED_SORT_FIELDS.contains(prop)) {
-            prop = fallbackProp;
-        }
-
-        String dirStr = (parts.length > 1 && org.springframework.util.StringUtils.hasText(parts[1]))
-                ? parts[1].trim()
-                : fallbackDir.name();
-
+        String prop = (parts.length > 0 && org.springframework.util.StringUtils.hasText(parts[0])) ? parts[0].trim() : fallbackProp;
+        if (!ALLOWED_SORT_FIELDS.contains(prop)) prop = fallbackProp;
+        String dirStr = (parts.length > 1 && org.springframework.util.StringUtils.hasText(parts[1])) ? parts[1].trim() : fallbackDir.name();
         Sort.Direction dir;
         try {
             dir = Sort.Direction.fromString(dirStr);
         } catch (Exception e) {
             dir = fallbackDir;
         }
-
         return Sort.by(dir, prop);
     }
 
@@ -79,78 +70,62 @@ public class DashBoardAdminController {
             Model model,
             @ModelAttribute("msg") String msg,
 
-            // Khối 1: Latest registrations
+            // Chỉ còn khối Latest registrations
             @RequestParam(name = "q1", defaultValue = "") String q1,
             @RequestParam(name = "sort1", defaultValue = "createdAt,desc") String sort1,
             @RequestParam(name = "p1", defaultValue = "0") int p1,
-            @RequestParam(name = "s1", defaultValue = "5") int s1,
-
-            // Khối 2: Deactivated users
-            @RequestParam(name = "q2", defaultValue = "") String q2,
-            @RequestParam(name = "sort2", defaultValue = "updatedAt,desc") String sort2,
-            @RequestParam(name = "p2", defaultValue = "0") int p2,
-            @RequestParam(name = "s2", defaultValue = "5") int s2
+            @RequestParam(name = "s1", defaultValue = "5") int s1
     ) {
-
         // KPIs
         var kpis = adminHomeService.kpis();
         model.addAttribute("totalUsers", kpis.get("totalUsers"));
         model.addAttribute("totalSellers", kpis.get("totalSellers"));
         model.addAttribute("totalCustomers", kpis.get("totalCustomers"));
 
-        // Parse sort1, sort2 (an toàn)
+        // Parse sort cho Latest
         Sort sortLatest = parseSort(sort1, "createdAt", Sort.Direction.DESC);
-        Sort sortDeact  = parseSort(sort2, "updatedAt", Sort.Direction.DESC);
-
-        // Pageable
         Pageable pageableLatest = PageRequest.of(Math.max(p1, 0), Math.max(s1, 1), sortLatest);
-        Pageable pageableDeact  = PageRequest.of(Math.max(p2, 0), Math.max(s2, 1), sortDeact);
 
-        // Gọi search chung bên AdminAccountService
         // Latest registrations: không filter status (null)
         Page<Account> accLatestPage = adminAccountService.search(q1, pageableLatest, null);
 
-        // Deactivated: filter status = DEACTIVATED
-        Page<Account> accDeactPage = adminAccountService.search(
-                q2, pageableDeact, Account.AccountStatus.DEACTIVATED);
-
-        // Model attributes
+        // Gắn model
         model.addAttribute("accLatestPage", accLatestPage);
-        model.addAttribute("accDeactPage", accDeactPage);
-
         model.addAttribute("q1", q1);
         model.addAttribute("sort1", sort1);
         model.addAttribute("p1", p1);
         model.addAttribute("s1", s1);
 
-        model.addAttribute("q2", q2);
-        model.addAttribute("sort2", sort2);
-        model.addAttribute("p2", p2);
-        model.addAttribute("s2", s2);
-
         model.addAttribute("fixedAdminEmail", FIXED_ADMIN_EMAIL);
         model.addAttribute("page", "home");
 
-        if (StringUtils.hasText(msg)) {
+        if (org.springframework.util.StringUtils.hasText(msg)) {
             model.addAttribute("msg", msg);
         }
         return "admin/adminhome";
     }
+
     // ===== Tab 2: ACCOUNTS (CRUD + filter/search) =====
     @GetMapping("/accounts")
     public String list(
             @RequestParam(defaultValue = "") String q,
-            @RequestParam(defaultValue = "ACTIVE") String status,
+            @RequestParam(defaultValue = "") String status, // đổi: mặc định All
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "accountId,asc") String sort,
             Model model,
             @ModelAttribute("msg") String msg) {
-        String[] s = sort.split(",");
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(s[1]), s[0]));
+
+        String[] s = sort.split(",", 2);
+        Sort.Direction dir = (s.length > 1 ? Sort.Direction.fromString(s[1]) : Sort.Direction.ASC);
+        String prop = s.length > 0 ? s[0] : "accountId";
+        Pageable pageable = PageRequest.of(page, size, Sort.by(dir, prop));
+
         Account.AccountStatus st = null;
-        try { st = (status == null || status.isBlank()) ? null : Account.AccountStatus.valueOf(status); }
-        catch (Exception ignored) {}
+        try {
+            st = (status == null || status.isBlank()) ? null : Account.AccountStatus.valueOf(status);
+        } catch (Exception ignored) {
+        }
 
         Page<Account> accPage = adminAccountService.search(q, pageable, st);
 
@@ -161,28 +136,83 @@ public class DashBoardAdminController {
         model.addAttribute("roles", RoleName.values());
         model.addAttribute("fixedAdminEmail", FIXED_ADMIN_EMAIL);
         model.addAttribute("page", "accounts");
-        if (StringUtils.hasText(msg)) {
+        if (org.springframework.util.StringUtils.hasText(msg)) {
             model.addAttribute("msg", msg);
         }
         return "admin/accounts";
     }
 
+    // GET: chi tiết
     @GetMapping("/accounts/{id}")
-    public String detail(@PathVariable long id, Model model, RedirectAttributes ra) {
-        try {
-            model.addAttribute("acc", adminAccountService.get(id));
+    public String detail(@PathVariable long id,
+                         @RequestParam(defaultValue="") String q,
+                         @RequestParam(defaultValue="") String status,
+                         @RequestParam(defaultValue="0") int page,
+                         @RequestParam(defaultValue="10") int size,
+                         @RequestParam(defaultValue="accountId,asc") String sort,
+                         @RequestParam(required=false) Integer edit,
+                         Model model, RedirectAttributes ra) {
+        var acc = adminAccountService.get(id);
+        model.addAttribute("acc", acc);
+        model.addAttribute("roles", RoleName.values());
+        model.addAttribute("fixedAdminEmail", FIXED_ADMIN_EMAIL);
+        model.addAttribute("q", q); model.addAttribute("status", status);
+        model.addAttribute("page", page); model.addAttribute("size", size);
+        model.addAttribute("sort", sort);
+        model.addAttribute("edit", edit != null);
+        return "admin/account-details"; // KHÔNG redirect ở đây
+    }
+
+    // POST: cập nhật
+    @PostMapping("/accounts/{id}/update")
+    public String update(@PathVariable long id,
+                         @Valid @ModelAttribute("acc") Account acc,
+                         BindingResult br,
+                         @RequestParam(defaultValue="") String q,
+                         @RequestParam(defaultValue="") String status,
+                         @RequestParam(defaultValue="0") int page,
+                         @RequestParam(defaultValue="10") int size,
+                         @RequestParam(defaultValue="accountId,asc") String sort,
+                         Model model, RedirectAttributes ra) {
+
+        if (br.hasErrors()) {
+            model.addAttribute("roles", RoleName.values());
             model.addAttribute("fixedAdminEmail", FIXED_ADMIN_EMAIL);
-            model.addAttribute("page", "accounts");
+            model.addAttribute("q", q); model.addAttribute("status", status);
+            model.addAttribute("page", page); model.addAttribute("size", size);
+            model.addAttribute("sort", sort);
+            model.addAttribute("edit", true);
             return "admin/account-details";
-        } catch (Exception ex) {
-            ra.addFlashAttribute("msg", ex.getMessage());
-            return "redirect:/admin/accounts";
         }
+
+        adminAccountService.updateBasicInfo(
+                id,
+                acc.getFullName(),
+                (acc.getPhone()!=null && !acc.getPhone().isBlank()) ? acc.getPhone().trim() : null,
+                acc.getAddress()
+        );
+
+        ra.addFlashAttribute("msg", "Updated profile");
+
+        // ✅ để Spring tự encode mọi thứ
+        ra.addAttribute("id", id);
+        ra.addAttribute("q", q);
+        ra.addAttribute("status", status);
+        ra.addAttribute("page", page);
+        ra.addAttribute("size", size);
+        ra.addAttribute("sort", sort);
+        return "redirect:/admin/accounts/{id}";
     }
 
     @PostMapping("/accounts/{id}/role")
     public String changeRole(@PathVariable long id,
                              @RequestParam("role") RoleName newRole,
+                             @RequestParam(defaultValue = "list") String _return,
+                             @RequestParam(defaultValue = "") String q,
+                             @RequestParam(defaultValue = "") String status,
+                             @RequestParam(defaultValue = "0") int page,
+                             @RequestParam(defaultValue = "10") int size,
+                             @RequestParam(defaultValue = "accountId,asc") String sort,
                              RedirectAttributes ra) {
         try {
             adminAccountService.changeRole(id, newRole);
@@ -190,13 +220,24 @@ public class DashBoardAdminController {
         } catch (Exception ex) {
             ra.addFlashAttribute("msg", ex.getMessage());
         }
-        return "redirect:/admin/accounts";
+        if ("detail".equalsIgnoreCase(_return)) {
+            return "redirect:/admin/accounts/" + id
+                    + "?q=" + UriUtils.encode(q, StandardCharsets.UTF_8)
+                    + "&status=" + UriUtils.encode(status, StandardCharsets.UTF_8)
+                    + "&page=" + page + "&size=" + size
+                    + "&sort=" + UriUtils.encode(sort, StandardCharsets.UTF_8);
+        }
+        return "redirect:/admin/accounts?q=" + UriUtils.encode(q, StandardCharsets.UTF_8)
+                + "&status=" + UriUtils.encode(status, StandardCharsets.UTF_8)
+                + "&page=" + page + "&size=" + size
+                + "&sort=" + UriUtils.encode(sort, StandardCharsets.UTF_8);
     }
 
     @PostMapping("/accounts/{id}/delete")
     public String delete(@PathVariable long id,
+                         @RequestParam(defaultValue = "list") String _return,
                          @RequestParam(defaultValue = "") String q,
-                         @RequestParam(defaultValue = "ACTIVE") String status,
+                         @RequestParam(defaultValue = "") String status,
                          @RequestParam(defaultValue = "0") int page,
                          @RequestParam(defaultValue = "10") int size,
                          @RequestParam(defaultValue = "accountId,asc") String sort,
@@ -212,12 +253,27 @@ public class DashBoardAdminController {
         } catch (Exception ex) {
             ra.addFlashAttribute("msg", ex.getMessage());
         }
+        if ("detail".equalsIgnoreCase(_return)) {
+            return "redirect:/admin/accounts/" + id
+                    + "?q=" + UriUtils.encode(q, StandardCharsets.UTF_8)
+                    + "&status=" + UriUtils.encode(status, StandardCharsets.UTF_8)
+                    + "&page=" + page + "&size=" + size
+                    + "&sort=" + UriUtils.encode(sort, StandardCharsets.UTF_8);
+        }
         return "redirect:/admin/accounts?q=" + UriUtils.encode(q, StandardCharsets.UTF_8)
-                + "&status=" + status + "&page=" + page + "&size=" + size + "&sort=" + UriUtils.encode(sort, StandardCharsets.UTF_8);
+                + "&status=" + UriUtils.encode(status, StandardCharsets.UTF_8)
+                + "&page=" + page + "&size=" + size
+                + "&sort=" + UriUtils.encode(sort, StandardCharsets.UTF_8);
     }
 
     @PostMapping("/accounts/{id}/reactivate")
     public String reactivate(@PathVariable long id,
+                             @RequestParam(defaultValue = "list") String _return,
+                             @RequestParam(defaultValue = "") String q,
+                             @RequestParam(defaultValue = "") String status,
+                             @RequestParam(defaultValue = "0") int page,
+                             @RequestParam(defaultValue = "10") int size,
+                             @RequestParam(defaultValue = "accountId,asc") String sort,
                              RedirectAttributes ra) {
         try {
             adminAccountService.reactivate(id);
@@ -225,6 +281,17 @@ public class DashBoardAdminController {
         } catch (Exception ex) {
             ra.addFlashAttribute("msg", ex.getMessage());
         }
-        return "redirect:/admin/adminhome";
+        if ("detail".equalsIgnoreCase(_return)) {
+            return "redirect:/admin/accounts/" + id
+                    + "?q=" + UriUtils.encode(q, StandardCharsets.UTF_8)
+                    + "&status=" + UriUtils.encode(status, StandardCharsets.UTF_8)
+                    + "&page=" + page + "&size=" + size
+                    + "&sort=" + UriUtils.encode(sort, StandardCharsets.UTF_8);
+        }
+        return "redirect:/admin/accounts?q=" + UriUtils.encode(q, StandardCharsets.UTF_8)
+                + "&status=" + UriUtils.encode(status, StandardCharsets.UTF_8)
+                + "&page=" + page + "&size=" + size
+                + "&sort=" + UriUtils.encode(sort, StandardCharsets.UTF_8);
     }
+
 }

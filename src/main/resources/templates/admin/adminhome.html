@@ -79,18 +79,12 @@
                             <option th:value="20" th:selected="${(accLatestPage != null ? accLatestPage.size : s1) == 20}">20 / page</option>
                         </select>
 
-                        <!-- Giữ state của khối Deactivated khi apply bộ lọc bên Latest -->
-                        <input type="hidden" name="q2"    th:value="${q2}"/>
-                        <input type="hidden" name="sort2" th:value="${sort2}"/>
-                        <input type="hidden" name="p2"    th:value="${p2}"/>
-                        <input type="hidden" name="s2"    th:value="${s2}"/>
-
                         <button class="btn update" type="submit">Apply</button>
                         <a class="btn" th:href="@{/admin/adminhome}">Reset</a>
 
-                        <!-- Lối tắt xem tất cả ở trang Accounts -->
                         <a class="btn" th:href="@{/admin/accounts(sort='createdAt,desc')}">Xem tất cả</a>
                     </form>
+
                 </div>
 
                 <!-- Empty -->
@@ -159,119 +153,119 @@
         </div>
 
         <!-- ========== Section: Deactivated users (BOTTOM) ========== -->
-        <div class="section">
-            <div class="card">
-                <div class="card-head">
-                    <h3 class="card-title">User deactivated</h3>
+<!--        <div class="section">-->
+<!--            <div class="card">-->
+<!--                <div class="card-head">-->
+<!--                    <h3 class="card-title">User deactivated</h3>-->
 
-                    <!-- Bộ lọc Deactivated (GET /admin/adminhome) -->
-                    <form class="filters" th:action="@{/admin/adminhome}" method="get">
-                        <input type="text" name="q2" placeholder="Search email or name…" th:value="${q2}"/>
+<!--                    &lt;!&ndash; Bộ lọc Deactivated (GET /admin/adminhome) &ndash;&gt;-->
+<!--                    <form class="filters" th:action="@{/admin/adminhome}" method="get">-->
+<!--                        <input type="text" name="q2" placeholder="Search email or name…" th:value="${q2}"/>-->
 
-                        <select name="sort2">
-                            <option value="updatedAt,desc" th:selected="${sort2}=='updatedAt,desc'">Latest updated</option>
-                            <option value="updatedAt,asc"  th:selected="${sort2}=='updatedAt,asc'">Oldest updated</option>
-                            <option value="accountId,asc"  th:selected="${sort2}=='accountId,asc'">ID ↑</option>
-                            <option value="accountId,desc" th:selected="${sort2}=='accountId,desc'">ID ↓</option>
-                            <option value="email,asc"      th:selected="${sort2}=='email,asc'">Email A–Z</option>
-                            <option value="email,desc"     th:selected="${sort2}=='email,desc'">Email Z–A</option>
-                            <option value="fullName,asc"   th:selected="${sort2}=='fullName,asc'">Name A–Z</option>
-                            <option value="fullName,desc"  th:selected="${sort2}=='fullName,desc'">Name Z–A</option>
-                        </select>
+<!--                        <select name="sort2">-->
+<!--                            <option value="updatedAt,desc" th:selected="${sort2}=='updatedAt,desc'">Latest updated</option>-->
+<!--                            <option value="updatedAt,asc"  th:selected="${sort2}=='updatedAt,asc'">Oldest updated</option>-->
+<!--                            <option value="accountId,asc"  th:selected="${sort2}=='accountId,asc'">ID ↑</option>-->
+<!--                            <option value="accountId,desc" th:selected="${sort2}=='accountId,desc'">ID ↓</option>-->
+<!--                            <option value="email,asc"      th:selected="${sort2}=='email,asc'">Email A–Z</option>-->
+<!--                            <option value="email,desc"     th:selected="${sort2}=='email,desc'">Email Z–A</option>-->
+<!--                            <option value="fullName,asc"   th:selected="${sort2}=='fullName,asc'">Name A–Z</option>-->
+<!--                            <option value="fullName,desc"  th:selected="${sort2}=='fullName,desc'">Name Z–A</option>-->
+<!--                        </select>-->
 
-                        <select name="s2">
-                            <option th:value="5"  th:selected="${(accDeactPage != null ? accDeactPage.size : s2) == 5}">5 / page</option>
-                            <option th:value="10" th:selected="${(accDeactPage != null ? accDeactPage.size : s2) == 10}">10 / page</option>
-                            <option th:value="20" th:selected="${(accDeactPage != null ? accDeactPage.size : s2) == 20}">20 / page</option>
-                        </select>
+<!--                        <select name="s2">-->
+<!--                            <option th:value="5"  th:selected="${(accDeactPage != null ? accDeactPage.size : s2) == 5}">5 / page</option>-->
+<!--                            <option th:value="10" th:selected="${(accDeactPage != null ? accDeactPage.size : s2) == 10}">10 / page</option>-->
+<!--                            <option th:value="20" th:selected="${(accDeactPage != null ? accDeactPage.size : s2) == 20}">20 / page</option>-->
+<!--                        </select>-->
 
-                        <!-- Giữ state của khối Latest khi apply bộ lọc bên Deactivated -->
-                        <input type="hidden" name="q1"    th:value="${q1}"/>
-                        <input type="hidden" name="sort1" th:value="${sort1}"/>
-                        <input type="hidden" name="p1"    th:value="${p1}"/>
-                        <input type="hidden" name="s1"    th:value="${s1}"/>
+<!--                        &lt;!&ndash; Giữ state của khối Latest khi apply bộ lọc bên Deactivated &ndash;&gt;-->
+<!--                        <input type="hidden" name="q1"    th:value="${q1}"/>-->
+<!--                        <input type="hidden" name="sort1" th:value="${sort1}"/>-->
+<!--                        <input type="hidden" name="p1"    th:value="${p1}"/>-->
+<!--                        <input type="hidden" name="s1"    th:value="${s1}"/>-->
 
-                        <button class="btn update" type="submit">Apply</button>
-                        <a class="btn" th:href="@{/admin/adminhome}">Reset</a>
+<!--                        <button class="btn update" type="submit">Apply</button>-->
+<!--                        <a class="btn" th:href="@{/admin/adminhome}">Reset</a>-->
 
-                        <!-- Lối tắt xem tất cả deactivated ở trang Accounts -->
-                        <a class="btn" th:href="@{/admin/accounts(status='DEACTIVATED', sort='updatedAt,desc')}">Xem tất cả</a>
-                    </form>
-                </div>
+<!--                        &lt;!&ndash; Lối tắt xem tất cả deactivated ở trang Accounts &ndash;&gt;-->
+<!--                        <a class="btn" th:href="@{/admin/accounts(status='DEACTIVATED', sort='updatedAt,desc')}">Xem tất cả</a>-->
+<!--                    </form>-->
+<!--                </div>-->
 
-                <!-- Empty -->
-                <div th:if="${accDeactPage == null or accDeactPage.totalElements == 0}" class="empty">Không có người dùng bị vô hiệu hóa</div>
+<!--                &lt;!&ndash; Empty &ndash;&gt;-->
+<!--                <div th:if="${accDeactPage == null or accDeactPage.totalElements == 0}" class="empty">Không có người dùng bị vô hiệu hóa</div>-->
 
-                <!-- List -->
-                <div class="table-wrap" th:if="${accDeactPage != null and accDeactPage.totalElements > 0}">
-                    <table>
-                        <thead>
-                        <tr>
-                            <th style="width:90px">ID</th>
-                            <th>Email</th>
-                            <th>Full name</th>
-                            <th style="width:120px">Status</th>
-                            <th style="width:170px">Updated At</th>
-                            <th style="width:160px">Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="a : ${accDeactPage.content}">
-                            <td class="small" th:text="${a.accountId}">1</td>
-                            <td th:text="${a.email}">email@example.com</td>
-                            <td th:text="${a.fullName}">Name</td>
-                            <td>
-                                <span class="badge" style="background:#fee2e2;color:#991b1b;border-color:#fecaca;">DEACTIVATED</span>
-                            </td>
-                            <td class="small"
-                                th:text="${(a.updatedAt != null ? #temporals.format(a.updatedAt, 'yyyy-MM-dd HH:mm') : (a.createdAt != null ? #temporals.format(a.createdAt, 'yyyy-MM-dd HH:mm') : '-'))}">
-                                -
-                            </td>
-                            <td>
-                                <a class="btn view" th:href="@{|/admin/accounts/${a.accountId}|}">View</a>
-                                <form class="inline ml-6" th:action="@{|/admin/accounts/${a.accountId}/reactivate|}" method="post"
-                                      onsubmit="return confirm('Reactivate this account?');">
-                                    <div th:if="${_csrf != null}">
-                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    </div>
-                                    <button class="btn update" type="submit">Reactivate</button>
-                                </form>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+<!--                &lt;!&ndash; List &ndash;&gt;-->
+<!--                <div class="table-wrap" th:if="${accDeactPage != null and accDeactPage.totalElements > 0}">-->
+<!--                    <table>-->
+<!--                        <thead>-->
+<!--                        <tr>-->
+<!--                            <th style="width:90px">ID</th>-->
+<!--                            <th>Email</th>-->
+<!--                            <th>Full name</th>-->
+<!--                            <th style="width:120px">Status</th>-->
+<!--                            <th style="width:170px">Updated At</th>-->
+<!--                            <th style="width:160px">Actions</th>-->
+<!--                        </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody>-->
+<!--                        <tr th:each="a : ${accDeactPage.content}">-->
+<!--                            <td class="small" th:text="${a.accountId}">1</td>-->
+<!--                            <td th:text="${a.email}">email@example.com</td>-->
+<!--                            <td th:text="${a.fullName}">Name</td>-->
+<!--                            <td>-->
+<!--                                <span class="badge" style="background:#fee2e2;color:#991b1b;border-color:#fecaca;">DEACTIVATED</span>-->
+<!--                            </td>-->
+<!--                            <td class="small"-->
+<!--                                th:text="${(a.updatedAt != null ? #temporals.format(a.updatedAt, 'yyyy-MM-dd HH:mm') : (a.createdAt != null ? #temporals.format(a.createdAt, 'yyyy-MM-dd HH:mm') : '-'))}">-->
+<!--                                - -->
+<!--                            </td>-->
+<!--                            <td>-->
+<!--                                <a class="btn view" th:href="@{|/admin/accounts/${a.accountId}|}">View</a>-->
+<!--                                <form class="inline ml-6" th:action="@{|/admin/accounts/${a.accountId}/reactivate|}" method="post"-->
+<!--                                      onsubmit="return confirm('Reactivate this account?');">-->
+<!--                                    <div th:if="${_csrf != null}">-->
+<!--                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>-->
+<!--                                    </div>-->
+<!--                                    <button class="btn update" type="submit">Reactivate</button>-->
+<!--                                </form>-->
+<!--                            </td>-->
+<!--                        </tr>-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
 
-                <!-- Pagination Deactivated -->
-                <div class="pager" th:if="${accDeactPage != null and accDeactPage.totalPages > 0}">
-                    <div class="subtitle">
-                        Page [[${accDeactPage.number + 1}]] / [[${accDeactPage.totalPages}]] • Total [[${accDeactPage.totalElements}]]
-                    </div>
-                    <ul class="pagination">
-                        <!-- Prev -->
-                        <li th:classappend="${accDeactPage.first} ? 'disabled'">
-                            <a th:if="${!accDeactPage.first}"
-                               th:href="@{/admin/adminhome(
-                                 q1=${q1}, sort1=${sort1}, p1=${p1}, s1=${s1},
-                                 q2=${q2}, sort2=${sort2}, p2=${accDeactPage.number - 1}, s2=${accDeactPage.size}
-                               )}">&laquo; Prev</a>
-                            <span th:if="${accDeactPage.first}">&laquo; Prev</span>
-                        </li>
+<!--                &lt;!&ndash; Pagination Deactivated &ndash;&gt;-->
+<!--                <div class="pager" th:if="${accDeactPage != null and accDeactPage.totalPages > 0}">-->
+<!--                    <div class="subtitle">-->
+<!--                        Page [[${accDeactPage.number + 1}]] / [[${accDeactPage.totalPages}]] • Total [[${accDeactPage.totalElements}]]-->
+<!--                    </div>-->
+<!--                    <ul class="pagination">-->
+<!--                        &lt;!&ndash; Prev &ndash;&gt;-->
+<!--                        <li th:classappend="${accDeactPage.first} ? 'disabled'">-->
+<!--                            <a th:if="${!accDeactPage.first}"-->
+<!--                               th:href="@{/admin/adminhome(-->
+<!--                                 q1=${q1}, sort1=${sort1}, p1=${p1}, s1=${s1},-->
+<!--                                 q2=${q2}, sort2=${sort2}, p2=${accDeactPage.number - 1}, s2=${accDeactPage.size}-->
+<!--                               )}">&laquo; Prev</a>-->
+<!--                            <span th:if="${accDeactPage.first}">&laquo; Prev</span>-->
+<!--                        </li>-->
 
-                        <!-- Next -->
-                        <li th:classappend="${accDeactPage.last} ? 'disabled'">
-                            <a th:if="${!accDeactPage.last}"
-                               th:href="@{/admin/adminhome(
-                                 q1=${q1}, sort1=${sort1}, p1=${p1}, s1=${s1},
-                                 q2=${q2}, sort2=${sort2}, p2=${accDeactPage.number + 1}, s2=${accDeactPage.size}
-                               )}">Next &raquo;</a>
-                            <span th:if="${accDeactPage.last}">Next &raquo;</span>
-                        </li>
-                    </ul>
-                </div>
+<!--                        &lt;!&ndash; Next &ndash;&gt;-->
+<!--                        <li th:classappend="${accDeactPage.last} ? 'disabled'">-->
+<!--                            <a th:if="${!accDeactPage.last}"-->
+<!--                               th:href="@{/admin/adminhome(-->
+<!--                                 q1=${q1}, sort1=${sort1}, p1=${p1}, s1=${s1},-->
+<!--                                 q2=${q2}, sort2=${sort2}, p2=${accDeactPage.number + 1}, s2=${accDeactPage.size}-->
+<!--                               )}">Next &raquo;</a>-->
+<!--                            <span th:if="${accDeactPage.last}">Next &raquo;</span>-->
+<!--                        </li>-->
+<!--                    </ul>-->
+<!--                </div>-->
 
-            </div>
-        </div>
+<!--            </div>-->
+<!--        </div>-->
 
     </div>
 </main>

@@ -43,13 +43,13 @@ public class FeedbackController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
     }
 
-    /** Lấy accountId hiện tại từ Principal (email/username) */
+    /** Lấy accountId hiện tại từ Principal (email) */
     private Long getCurrentAccountId(Principal principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập.");
         }
-        String usernameOrEmail = principal.getName();
-        return accountRepo.findIdByEmail(usernameOrEmail)
+        String email = principal.getName(); // Security đang dùng email làm username
+        return accountRepo.findIdByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không tìm thấy tài khoản."));
     }
 
@@ -90,7 +90,7 @@ public class FeedbackController {
         feedbackRepo.save(fb);
 
         ra.addFlashAttribute("ok", "Cảm ơn bạn! Đánh giá đã được ghi nhận.");
-        return "redirect:/orders"; // quay về danh sách đơn hoặc tuỳ bạn muốn điều hướng
+        return "redirect:/tools/" + order.getTool().getToolId() + "#review";
     }
 
     // ================== EDIT/DELETE (không cần orderId) ==================
@@ -108,7 +108,6 @@ public class FeedbackController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền.");
         }
 
-        model.addAttribute("order", fb.getAccount().getOrders()); // nếu entity Feedback không có order, có thể bỏ
         model.addAttribute("tool", fb.getTool());
         model.addAttribute("fb", fb);
         return "customer/feedback-edit-form";
@@ -132,7 +131,6 @@ public class FeedbackController {
 
         fb.setRating(rating);
         fb.setComment(comment == null ? "" : comment.trim());
-        // nếu có updatedAt: fb.setUpdatedAt(LocalDateTime.now());
         feedbackRepo.save(fb);
 
         ra.addFlashAttribute("ok", "Đã cập nhật đánh giá.");
@@ -154,7 +152,7 @@ public class FeedbackController {
         }
 
         Long toolId = fb.getTool().getToolId();
-        feedbackReplyRepo.deleteByFeedback_FeedbackId(fb.getFeedbackId()); // xoá reply theo feedback
+        feedbackReplyRepo.deleteByFeedback_FeedbackId(fb.getFeedbackId()); // xoá reply trước
         feedbackRepo.delete(fb);
 
         ra.addFlashAttribute("ok", "Đã xoá đánh giá.");

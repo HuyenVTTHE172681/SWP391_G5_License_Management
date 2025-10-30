@@ -1,4 +1,3 @@
-// src/main/java/.../controller/seller/SellerFeedbackController.java
 package swp391.fa25.lms.controller.seller;
 
 import org.springframework.stereotype.Controller;
@@ -21,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
-@RequestMapping("/seller/feedbacks")
+@RequestMapping("/seller/feedback")
 public class SellerFeedbackController {
 
     private final FeedbackRepository feedbackRepo;
@@ -61,7 +60,6 @@ public class SellerFeedbackController {
         return "seller/feedback-list";
     }
 
-    // Tạo / cập nhật reply
     @PostMapping("/{feedbackId}/reply")
     @Transactional
     public String upsertReply(@PathVariable Long feedbackId,
@@ -93,7 +91,7 @@ public class SellerFeedbackController {
             replyRepo.save(existing);
         }
 
-        return "redirect:/seller/feedbacks";
+        return "redirect:/seller/feedback";
     }
 
     @PostMapping("/{feedbackId}/reply/delete")
@@ -109,7 +107,7 @@ public class SellerFeedbackController {
         }
 
         replyRepo.deleteByFeedback_FeedbackId(feedbackId);
-        return "redirect:/seller/feedbacks";
+        return "redirect:/seller/feedback";
     }
 
     private Account getCurrentSeller(Principal principal) {
