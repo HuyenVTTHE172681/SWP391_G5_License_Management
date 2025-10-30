@@ -50,6 +50,14 @@ public class CustomerOrder {
     @Transient
     private boolean canFeedbackOrReport;
 
+    // THÊM MỚI: Lưu txnRef unique cho retry (nullable)
+    @Column(name = "last_txn_ref")
+    private String lastTxnRef;
+
+    // THÊM MỚI: updatedAt cho update callback
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     public CustomerOrder() {
     }
 
@@ -64,6 +72,23 @@ public class CustomerOrder {
         this.transaction = transaction;
         this.createdAt = createdAt;
         this.licenseAccount = licenseAccount;
+    }
+
+    // Getters/Setters (thêm cho lastTxnRef)
+    public String getLastTxnRef() {
+        return lastTxnRef;
+    }
+
+    public void setLastTxnRef(String lastTxnRef) {
+        this.lastTxnRef = lastTxnRef;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public CustomerOrder(Account account, Tool tool, License license, Double price) {

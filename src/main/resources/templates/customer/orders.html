@@ -57,7 +57,7 @@
                 <select name="status" class="form-select">
                     <option value="">Tất cả trạng thái</option>
                     <option value="SUCCESS" th:selected="${status == 'SUCCESS'}">Thành công</option>
-<!--                    <option value="PENDING" th:selected="${status == 'PENDING'}">Đang xử lý</option>-->
+                    <option value="PENDING" th:selected="${status == 'PENDING'}">Đang xử lý</option>
                     <option value="FAILED" th:selected="${status == 'FAILED'}">Thất bại</option>
                 </select>
             </div>
@@ -147,6 +147,7 @@
                 <td th:text="${#numbers.formatDecimal(order.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></td>
                 <td class="text-center">
                 <span th:switch="${order.orderStatus.name()}">
+                    <span th:case="'PENDING'" class="badge bg-warning">Chờ thanh toán</span>
                     <span th:case="'SUCCESS'" class="badge bg-success">Thành công</span>
                     <span th:case="'FAILED'" class="badge bg-danger">Thất bại</span>
                     <span th:case="*">Không xác định</span>
@@ -162,6 +163,12 @@
                        class="btn btn-sm btn-success"
                        th:disabled="${!order.canFeedbackOrReport}">
                         <i class="bi bi-arrow-right"></i> Dùng dịch vụ
+                    </a>
+                    <!-- THÊM MỚI: Nút retry cho PENDING -->
+                    <a th:href="@{'/payment/create?toolId=' + ${order.tool.toolId} + '&licenseId=' + ${order.license.licenseId} + '&orderId=' + ${order.orderId}}"
+                       th:if="${order.orderStatus == T(swp391.fa25.lms.model.CustomerOrder$OrderStatus).PENDING}"
+                       class="btn btn-sm btn-info">
+                        <i class="bi bi-credit-card"></i> Thanh toán lại
                     </a>
 
                 </td>

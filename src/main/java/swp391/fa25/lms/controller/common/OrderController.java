@@ -59,8 +59,7 @@ public class OrderController {
     }
 
     /**
-     * Trả về fragment HTML (phần bảng đơn hàng) -- dùng cho HTMX / AJAX. Endpoit /orders/filter
-     * Khi người dùng thay đổi filter, sort, hoặc nhấn phân trang → HTMX sẽ gọi endpoint /orders/filter
+     * Trả về fragment HTML (phần bảng đơn hàng) -- dùng cho HTMX / AJAX. Endpoint /orders/filter
      */
     @GetMapping("/orders/filter")
     public String filterOrdersFragment(
@@ -89,8 +88,8 @@ public class OrderController {
 
         // Nếu là HTMX request (AJAX), trả về fragment chứa bảng + pagination
         String hxRequest = request.getHeader("HX-Request");
-        if (hxRequest != null && hxRequest.equalsIgnoreCase("true")) {
-            // fragment name: customer/orders :: orderTableFragment
+        if ("true".equals(hxRequest)) {
+            // Fragment name: customer/orders :: orderTableFragment
             return "customer/orders :: orderTableFragment";
         }
 
@@ -98,25 +97,15 @@ public class OrderController {
     }
 
     /**
-     * Hàm dùng chung để thêm các attribute vào model
-     * @param model
-     * @param ordersPage: xử lý lọc + phân trang
-     * @param page: trang hiện tại (bắt đầu từ 0)
-     * @param keyword: từ khóa tìm kiếm
-     * @param status: lọc theo trạng thái đơn hàng
-     * @param dateRange: lọc theo thời gian
-     * @param priceRange: lọc theo giá
-     * @param sortField: cột sắp xếp
-     * @param sortDir: hướng sắp xếp tăng, giảm
-     * @param size: số item mỗi trang (5)
+     * Hàm dùng chung để thêm các attribute vào model (thêm null check cho ordersPage)
      */
     private void addCommonAttributes(Model model, Page<CustomerOrder> ordersPage,
                                      int page, String keyword, String status,
                                      String dateRange, String priceRange,
                                      String sortField, String sortDir, int size) {
-        model.addAttribute("ordersPage", ordersPage);
+        model.addAttribute("ordersPage", ordersPage != null ? ordersPage : Page.empty());  // THÊM: Null-safe
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", ordersPage.getTotalPages());
+        model.addAttribute("totalPages", ordersPage != null ? ordersPage.getTotalPages() : 0);
         model.addAttribute("keyword", keyword);
         model.addAttribute("status", status);
         model.addAttribute("dateRange", dateRange);
@@ -125,7 +114,6 @@ public class OrderController {
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("size", size);
     }
-
 
     /**
      * Trang hiển thị lịch sử giao dịch thanh toán (Wallet_Transaction)

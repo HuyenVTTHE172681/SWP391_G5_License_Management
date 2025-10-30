@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.view.RedirectView;
 import swp391.fa25.lms.model.Account;
+import swp391.fa25.lms.model.CustomerOrder;
 import swp391.fa25.lms.model.Tool;
+import swp391.fa25.lms.repository.OrderRepository;
 import swp391.fa25.lms.service.customer.PaymentService;
 import swp391.fa25.lms.service.customer.ToolService;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/payment")
@@ -23,6 +26,8 @@ public class PaymentController {
     private PaymentService paymentService;
     @Autowired
     private ToolService toolService;
+    @Autowired
+    private OrderRepository orderRepository;
 
     /**
      * Tạo thanh toán — khi click “Thanh toán” payment/create
@@ -30,6 +35,7 @@ public class PaymentController {
     @GetMapping("/create")
     public RedirectView createPayment(@RequestParam Long toolId,
                                       @RequestParam Long licenseId,
+                                      @RequestParam(required = false) Long orderId,  // THÊM: Cho retry
                                       HttpServletRequest request,
                                       Model model) {
         // Kiểm tra session (nếu chưa đăng nhập thì bắt đăng nhập lại)
@@ -43,6 +49,7 @@ public class PaymentController {
 
         if (tool.getQuantity() <= 0) {
             model.addAttribute("errorMessage", "Sản phẩm này đã hết hàng!");
+            return new RedirectView("/tools/" + toolId);  // Redirect back với error
         }
 
         // Lấy thông tin account đăng nhập từ session
@@ -52,7 +59,20 @@ public class PaymentController {
             return new RedirectView("/login");
         }
 
-        // Gọi service để tạo URL thanh toán VNPay
+        // THÊM MỚI: Nếu có orderId (retry), check PENDING
+        if (orderId != null) {
+            Optional<CustomerOrder> optionalOrder = orderRepository.findById(orderId);  // Inject OrderRepo nếu chưa
+            if (optionalOrder.isPresent() && optionalOrder.get().getOrderStatus() == CustomerOrder.OrderStatus.PENDING) {
+                // Reuse order PENDING
+                String paymentUrl = paymentService.createPaymentUrlForRetry(orderId, licenseId, account, request);
+                return new RedirectView(paymentUrl);
+            } else {
+                model.addAttribute("errorMessage", "Đơn hàng không hợp lệ hoặc đã thanh toán!");
+                return new RedirectView("/orders");  // Back to orders
+            }
+        }
+
+        // Gọi service để tạo URL thanh toán VNPay (tạo order mới PENDING)
         String paymentUrl = paymentService.createPaymentUrl(toolId, licenseId, account, request);
 
         // Redirect sang VNPay để thực hiện thanh toán

@@ -515,27 +515,27 @@ public class RoleDataInitializer implements CommandLineRunner {
 
 
         // ============ WALLET ============
-        // Tạo ví mặc định cho tất cả Seller (nếu chưa có)
-        List<Account> allSellers = accountRepo.findAll()
-                .stream()
-                .filter(acc -> acc.getRole() != null && acc.getRole().getRoleName() == RoleName.SELLER)
-                .toList();
+// Tạo ví mặc định cho TẤT CẢ Account (không chỉ seller)
+        List<Account> allAccounts = accountRepo.findAll();  // THAY: Không filter seller
 
-        for (Account seller : allSellers) {
-            // Kiểm tra xem seller đã có ví chưa
-            boolean hasWallet = walletRepository.findByAccount(seller).isPresent();
+        for (Account acc : allAccounts) {
+            // Kiểm tra xem account đã có ví chưa
+            boolean hasWallet = walletRepository.findByAccount(acc).isPresent();
             if (!hasWallet) {
                 Wallet wallet = new Wallet();
-                wallet.setAccount(seller);
+                wallet.setAccount(acc);
                 wallet.setBalance(java.math.BigDecimal.ZERO);
                 wallet.setCurrency("VND");
+//                wallet.setCreatedAt(LocalDateTime.now());
                 wallet.setUpdatedAt(LocalDateTime.now());
                 walletRepository.save(wallet);
-                System.out.println("Created default wallet for seller: " + seller.getEmail());
+                acc.setWallet(wallet);  // Link back
+                accountRepo.save(acc);  // Update account
+                System.out.println("Created default wallet for account: " + acc.getEmail() + " (Role: " + acc.getRole().getRoleName() + ")");
             }
         }
 
-        System.out.println("Wallet initialization completed successfully.");
+        System.out.println("Wallet initialization completed successfully for all accounts.");
 
 
     }
