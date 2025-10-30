@@ -33,11 +33,12 @@ public class RenewSellerController {
             String email = authentication.getName();
             Account account = accountRepo.findByEmail(email).orElse(null);
             if (account != null) {
-                if (account.getSellerExpiryDate() != null &&
-                        account.getSellerExpiryDate().isBefore(LocalDateTime.now())) {
+                if (account.getSellerExpiryDate() == null) {
+                    model.addAttribute("warning", "Bạn chưa kích hoạt gói Seller. Vui lòng chọn gói phù hợp!");
+                } else if (account.getSellerExpiryDate().isBefore(LocalDateTime.now())) {
                     model.addAttribute("warning", "Gói Seller của bạn đã hết hạn! Vui lòng gia hạn để tiếp tục.");
                 } else {
-                    model.addAttribute("warning", "Bạn chưa kích hoạt gói Seller. Vui lòng chọn gói phù hợp!");
+                    model.addAttribute("info", "Gói hiện tại của bạn còn hạn đến: " + account.getSellerExpiryDate().toLocalDate());
                 }
             }
         }
@@ -49,11 +50,13 @@ public class RenewSellerController {
     @PostMapping("/renew")
     public String renewSeller(@RequestParam("packageId") int packageId,
                               Authentication authentication,
-                              Model model){
+                              Model model) {
         String email = authentication.getName();
         Account account = sellerService.renewSeller(email, packageId);
-        model.addAttribute("message", "Gia hạn thành công đến ngày: " + account.getSellerExpiryDate().toLocalDate());
+
+        model.addAttribute("message", "🎉 Gia hạn thành công! Hiệu lực đến ngày: " + account.getSellerExpiryDate().toLocalDate());
         model.addAttribute("packages", sellerService.getAllPackage());
+        model.addAttribute("info", "Gói hiện tại còn hạn đến: " + account.getSellerExpiryDate().toLocalDate());
         return "seller/renewSeller";
     }
 

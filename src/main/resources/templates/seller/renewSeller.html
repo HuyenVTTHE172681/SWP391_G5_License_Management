@@ -10,9 +10,9 @@
     <div class="card mx-auto shadow p-4" style="max-width: 600px;">
         <h3 class="text-center mb-3">Gia hạn tài khoản Seller</h3>
 
-        <div th:if="${message}" class="alert alert-success text-center" th:text="${message}"></div>
         <div th:if="${warning}" class="alert alert-warning text-center" th:text="${warning}"></div>
-
+        <div th:if="${info}" class="alert alert-info text-center" th:text="${info}"></div>
+        <div th:if="${message}" class="alert alert-success text-center" th:text="${message}"></div>
 
         <form th:action="@{/seller/renew}" method="post">
             <div class="mb-3">
