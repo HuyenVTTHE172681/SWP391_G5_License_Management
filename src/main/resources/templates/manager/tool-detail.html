@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager - Tool Detail</title>
+    <link rel="stylesheet" th:href="@{/css/manager-tool-detail.css}">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1 th:text="${tool.toolName}">Tool Detail</h1>
+        <a th:href="@{/manager/upload-tool}" class="btn back">← Back</a>
+    </header>
+
+    <section class="info">
+        <img th:src="@{'/images/' + ${tool.image}}" alt="Tool image" class="tool-img">
+
+        <p><strong>Seller:</strong> <span th:text="${tool.seller.fullName}"></span></p>
+        <p><strong>Category:</strong> <span th:text="${tool.category.categoryName}"></span></p>
+        <p><strong>Status:</strong>
+            <span th:text="${tool.status}" th:class="'status ' + ${tool.status}"></span></p>
+        <p><strong>Reviewed By:</strong>
+            <span th:text="${tool.reviewedBy != null ? tool.reviewedBy : '-'}"></span></p>
+        <p><strong>Created At:</strong>
+            <span th:text="${#temporals.format(tool.createdAt, 'yyyy-MM-dd HH:mm')}"></span></p>
+        <p><strong>Updated Status At:</strong>
+            <span th:text="${#temporals.format(tool.updatedAt, 'yyyy-MM-dd HH:mm')}"></span></p>
+        <p><strong>Description:</strong></p>
+        <p class="desc" th:text="${tool.description}"></p>
+        <p><strong>Files:</strong></p>
+        <ul>
+            <li th:each="f : ${tool.files}">
+                <a th:href="@{'/uploads/' + ${f.filePath}}"
+                   th:text="${f.fileType}"
+                   download>Download</a>
+            </li>
+        </ul>
+        <div th:if="${tool.note != null}">
+            <p><strong>Last Manager Note:</strong></p>
+            <p class="note-box" th:text="${tool.note}"></p>
+        </div>
+    </section>
+
+    <!-- ⚙️ ACTIONS -->
+    <section class="actions" th:if="${tool.status?.name() == 'APPROVED'}">
+        <h3>Manager Actions</h3>
+
+        <div class="action-buttons">
+
+            <!-- 🟢 Publish -->
+            <form th:action="@{'/manager/tool/' + ${tool.toolId} + '/publish'}" method="post">
+                <button type="submit" class="btn btn-publish">Publish</button>
+            </form>
+
+            <!-- 🟡 Set Pending -->
+            <form th:action="@{'/manager/tool/' + ${tool.toolId} + '/pending'}" method="post" class="note-form">
+                <textarea name="note" placeholder="Enter note for pending..." required></textarea>
+                <button type="submit" class="btn btn-pending">Set Pending</button>
+            </form>
+
+            <!-- 🔴 Reject -->
+            <form th:action="@{'/manager/tool/' + ${tool.toolId} + '/reject'}" method="post" class="note-form">
+                <textarea name="note" placeholder="Enter rejection reason..." required></textarea>
+                <button type="submit" class="btn btn-reject">Reject</button>
+            </form>
+        </div>
+    </section>
+
+    <section th:if="${tool.status?.name() != 'APPROVED'}" class="no-action">
+        <p>No actions available for this tool status.</p>
+    </section>
+</div>
+
+</body>
+</html>

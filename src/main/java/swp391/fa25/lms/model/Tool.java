@@ -27,6 +27,8 @@ public class Tool {
     @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
     private String toolName;
 
+    private String reviewedBy;
+
     @NotBlank(message = "Image cannot be blank")
     @Column(nullable = false)
     private String image;
@@ -60,7 +62,7 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, DEACTIVE }
+    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED,  VIOLATED}
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -281,5 +283,13 @@ public class Tool {
     @Override
     public int hashCode() {
         return Objects.hash(toolId);  // Hash dựa ID
+    }
+
+    public String getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(String reviewedBy) {
+        this.reviewedBy = reviewedBy;
     }
 }
