@@ -15,9 +15,10 @@ public class Wallet {
     private Long walletId;
 
     @OneToOne
-    @JoinColumn(name = "account_id", unique = true)
+    @JoinColumn(name = "account_id", unique = true, nullable = false)
     private Account account;
 
+    @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal balance;
     private String currency = "VND";
     private LocalDateTime updatedAt;
@@ -27,4 +28,73 @@ public class Wallet {
 
     @OneToMany(mappedBy = "wallet")
     private List<WithdrawRequest> withdrawRequests;
+
+    public Wallet() {
+    }
+
+    public Wallet(Long walletId, Account account, BigDecimal balance, String currency, LocalDateTime updatedAt, List<WalletTransaction> transactions, List<WithdrawRequest> withdrawRequests) {
+        this.walletId = walletId;
+        this.account = account;
+        this.balance = balance;
+        this.currency = currency;
+        this.updatedAt = updatedAt;
+        this.transactions = transactions;
+        this.withdrawRequests = withdrawRequests;
+    }
+
+    public Long getWalletId() {
+        return walletId;
+    }
+
+    public void setWalletId(Long walletId) {
+        this.walletId = walletId;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public List<WalletTransaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(List<WalletTransaction> transactions) {
+        this.transactions = transactions;
+    }
+
+    public List<WithdrawRequest> getWithdrawRequests() {
+        return withdrawRequests;
+    }
+
+    public void setWithdrawRequests(List<WithdrawRequest> withdrawRequests) {
+        this.withdrawRequests = withdrawRequests;
+    }
 }

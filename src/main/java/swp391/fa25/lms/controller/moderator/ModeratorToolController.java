@@ -15,7 +15,7 @@ import swp391.fa25.lms.model.ToolReport;
 import swp391.fa25.lms.service.moderator.ToolFileService;
 import swp391.fa25.lms.service.moderator.ToolReportService;
 import swp391.fa25.lms.service.moderator.ToolService;
-import swp391.fa25.lms.service.used.CategoryService;
+import swp391.fa25.lms.service.customer.CategoryService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

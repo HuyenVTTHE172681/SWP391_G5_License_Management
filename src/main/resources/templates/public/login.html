@@ -67,8 +67,9 @@
                 <div class="mb-3">
                     <label class="form-label required">Email</label>
                     <input id="email" name="email" type="email" class="form-control"
-                           placeholder="Nhập email" required>
-                    <div id="emailError" class="error-message"></div>
+                           placeholder="Nhập email" required
+                           th:value="${email}">
+                    <div id="emailError" class="error-message" th:if="${emailError}" th:text="${emailError}"></div>
                 </div>
 
                 <!-- Password -->
@@ -82,7 +83,7 @@
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
-                    <div id="error-message" class="error-message"></div>
+                    <div id="passwordError" class="error-message" th:if="${passwordError}" th:text="${passwordError}"></div>
                 </div>
 
                 <!-- Forgot password link -->
@@ -123,45 +124,6 @@
             icon.classList.replace('fa-eye-slash', 'fa-eye');
         }
     }
-
-    // Xử lý validation phía client
-    document.getElementById('loginForm').addEventListener('submit', function (event) {
-        let isValid = true;
-        const email = document.getElementById('email');
-        const password = document.getElementById('password');
-        const emailError = document.getElementById('emailError');
-        const passwordError = document.getElementById('passwordError');
-
-        // Reset lỗi cũ
-        emailError.textContent = '';
-        passwordError.textContent = '';
-
-        // Regex kiểm tra email hợp lệ
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        // Kiểm tra email
-        if (!email.value.trim()) {
-            emailError.textContent = 'Vui lòng nhập email.';
-            isValid = false;
-        } else if (!emailPattern.test(email.value)) {
-            emailError.textContent = 'Định dạng email không hợp lệ.';
-            isValid = false;
-        }
-
-        // Kiểm tra password
-        if (!password.value.trim()) {
-            passwordError.textContent = 'Vui lòng nhập mật khẩu.';
-            isValid = false;
-        } else if (password.value.length < 6) {
-            passwordError.textContent = 'Mật khẩu phải có ít nhất 6 ký tự.';
-            isValid = false;
-        }
-
-        // Ngăn form submit nếu có lỗi
-        if (!isValid) {
-            event.preventDefault();
-        }
-    });
 
     document.addEventListener("DOMContentLoaded", function() {
         const usernameInput = document.getElementById("username");

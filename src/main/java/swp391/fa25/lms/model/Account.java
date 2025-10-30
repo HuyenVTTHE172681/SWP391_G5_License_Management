@@ -1,5 +1,6 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -22,7 +23,7 @@ public class Account {
     private String password;
 
     @NotBlank(message = "Họ và tên không được để trống")
-    @Size(min = 10, max = 20, message = "Họ và tên đầy đủ phải từ 10 đến 20 ký tự")
+    @Size(min = 5, max = 20, message = "Họ và tên đầy đủ phải từ 5 đến 20 ký tự")
     @Column(name = "fullName", columnDefinition = "NVARCHAR(100)")
     private String fullName;
 
@@ -44,9 +45,14 @@ public class Account {
     @Column(name = "is_verified")
     private Boolean verified = false;
 
-    private String verificationToken;
+    @Column(name = "verification_code")
+    private String verificationCode;
 
-    private LocalDateTime tokenExpiry;
+    @Column(name = "code_expiry")
+    private LocalDateTime codeExpiry;
+
+    @Transient  // Không lưu vào database
+    private String confirmPassword;
 
     @ManyToOne
     @JoinColumn(name = "role_id")
@@ -66,30 +72,45 @@ public class Account {
     private List<Favorite> favorites;
 
     @OneToMany(mappedBy = "seller")
+    @JsonBackReference(value = "tool-seller")
     private List<Tool> tools;
+
+    @ManyToOne
+    @JoinColumn(name = "seller_package_id") // tên cột trong bảng Account
+    private SellerPackage sellerPackage;
+
+    @Column(name = "seller_active")
+    private Boolean sellerActive = false;
+
+    @Column(name = "seller_expiry_date")
+    private LocalDateTime sellerExpiryDate;
 
     public Account() {
     }
 
-    public Account(Long accountId, String email, String password, String fullName, AccountStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationToken, LocalDateTime tokenExpiry, Role role, Wallet wallet, List<CustomerOrder> orders, List<Feedback> feedbacks, List<Favorite> favorites, List<Tool> tools) {
+    public Account(Long accountId, String email, String password, String fullName, LocalDateTime createdAt, AccountStatus status, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationCode, LocalDateTime codeExpiry, String confirmPassword, Role role, Wallet wallet, LocalDateTime sellerExpiryDate, Boolean sellerActive, SellerPackage sellerPackage, List<Tool> tools, List<Favorite> favorites, List<Feedback> feedbacks, List<CustomerOrder> orders) {
         this.accountId = accountId;
         this.email = email;
         this.password = password;
         this.fullName = fullName;
-        this.status = status;
         this.createdAt = createdAt;
+        this.status = status;
         this.updatedAt = updatedAt;
         this.phone = phone;
         this.address = address;
         this.verified = verified;
-        this.verificationToken = verificationToken;
-        this.tokenExpiry = tokenExpiry;
+        this.verificationCode = verificationCode;
+        this.codeExpiry = codeExpiry;
+        this.confirmPassword = confirmPassword;
         this.role = role;
         this.wallet = wallet;
-        this.orders = orders;
-        this.feedbacks = feedbacks;
-        this.favorites = favorites;
+        this.sellerExpiryDate = sellerExpiryDate;
+        this.sellerActive = sellerActive;
+        this.sellerPackage = sellerPackage;
         this.tools = tools;
+        this.favorites = favorites;
+        this.feedbacks = feedbacks;
+        this.orders = orders;
     }
 
     public Long getAccountId() {
@@ -100,27 +121,27 @@ public class Account {
         this.accountId = accountId;
     }
 
-    public String getEmail() {
+    public @NotBlank(message = "Email không được để trống") @Email(message = "Định dạng email không hợp lệ") String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
+    public void setEmail(@NotBlank(message = "Email không được để trống") @Email(message = "Định dạng email không hợp lệ") String email) {
         this.email = email;
     }
 
-    public String getPassword() {
+    public @NotBlank(message = "Mật khẩu không được để trống") String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(@NotBlank(message = "Mật khẩu không được để trống") String password) {
         this.password = password;
     }
 
-    public String getFullName() {
+    public @NotBlank(message = "Họ và tên không được để trống") @Size(min = 5, max = 20, message = "Họ và tên đầy đủ phải từ 5 đến 20 ký tự") String getFullName() {
         return fullName;
     }
 
-    public void setFullName(String fullName) {
+    public void setFullName(@NotBlank(message = "Họ và tên không được để trống") @Size(min = 5, max = 20, message = "Họ và tên đầy đủ phải từ 5 đến 20 ký tự") String fullName) {
         this.fullName = fullName;
     }
 
@@ -148,11 +169,11 @@ public class Account {
         this.updatedAt = updatedAt;
     }
 
-    public String getPhone() {
+    public @Pattern(regexp = "0\\d{9}", message = "Số điện thoại phải có 9 chữ số bắt đầu bằng số 0") String getPhone() {
         return phone;
     }
 
-    public void setPhone(String phone) {
+    public void setPhone(@Pattern(regexp = "0\\d{9}", message = "Số điện thoại phải có 9 chữ số bắt đầu bằng số 0") String phone) {
         this.phone = phone;
     }
 
@@ -172,20 +193,20 @@ public class Account {
         this.verified = verified;
     }
 
-    public String getVerificationToken() {
-        return verificationToken;
+    public String getVerificationCode() {
+        return verificationCode;
     }
 
-    public void setVerificationToken(String verificationToken) {
-        this.verificationToken = verificationToken;
+    public void setVerificationCode(String verificationCode) {
+        this.verificationCode = verificationCode;
     }
 
-    public LocalDateTime getTokenExpiry() {
-        return tokenExpiry;
+    public LocalDateTime getCodeExpiry() {
+        return codeExpiry;
     }
 
-    public void setTokenExpiry(LocalDateTime tokenExpiry) {
-        this.tokenExpiry = tokenExpiry;
+    public void setCodeExpiry(LocalDateTime codeExpiry) {
+        this.codeExpiry = codeExpiry;
     }
 
     public Role getRole() {
@@ -234,5 +255,37 @@ public class Account {
 
     public void setTools(List<Tool> tools) {
         this.tools = tools;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
+    }
+
+    public SellerPackage getSellerPackage() {
+        return sellerPackage;
+    }
+
+    public void setSellerPackage(SellerPackage sellerPackage) {
+        this.sellerPackage = sellerPackage;
+    }
+
+    public Boolean getSellerActive() {
+        return sellerActive;
+    }
+
+    public void setSellerActive(Boolean sellerActive) {
+        this.sellerActive = sellerActive;
+    }
+
+    public LocalDateTime getSellerExpiryDate() {
+        return sellerExpiryDate;
+    }
+
+    public void setSellerExpiryDate(LocalDateTime sellerExpiryDate) {
+        this.sellerExpiryDate = sellerExpiryDate;
     }
 }

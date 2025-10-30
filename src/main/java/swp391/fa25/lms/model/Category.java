@@ -1,5 +1,7 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
@@ -7,6 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "Category")
+@JsonIgnoreProperties("tools")
 public class Category {
 
     @Id
@@ -21,6 +24,7 @@ public class Category {
     private String description;
 
     @OneToMany(mappedBy = "category")
+    @JsonBackReference(value = "tool-category")
     private List<Tool> tools;
 
     @Enumerated(EnumType.STRING)

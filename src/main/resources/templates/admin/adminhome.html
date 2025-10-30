@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Admin • Home</title>
+    <style>
+        :root{
+            --bg:#f5f7fb; --card:#ffffff; --muted:#64748b; --text:#0f172a; --border:#e2e8f0;
+            --accent:#2563eb; --accent-2:#16a34a; --warn:#dc2626; --hover:#f1f5f9;
+        }
+        *{ box-sizing:border-box } html,body{ height:100% }
+        body{
+            margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+            background:
+                    radial-gradient(1200px 600px at 20% -10%, #c7d2fe33, transparent 60%),
+                    radial-gradient(1000px 500px at 110% 10%, #bbf7d033, transparent 60%),
+                    var(--bg);
+            color:var(--text); padding:28px;
+        }
+        .wrap{ max-width:1100px; margin:0 auto }
+        .page-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px }
+        .title{ margin:0; font-weight:800; letter-spacing:.2px; line-height:1.1; font-size: clamp(26px, 3vw, 32px); color: var(--text); text-shadow: 0 1px 2px rgba(15,23,42,.06); }
+        .subtitle{ margin:6px 0 0; color:var(--muted); font-size:13px }
+
+        /* Tabs (dùng chung với accounts.html) */
+        .tabs{ display:flex; gap:8px; margin:16px 0 22px; }
+        .tab{
+            display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border);
+            background:#fff; border-radius:10px; text-decoration:none; color:#0f172a; font-weight:600; font-size:14px;
+        }
+        .tab.active{ background:#eef2ff; border-color:#bfdbfe; color:#1e40af }
+
+        /* Userbar + logout */
+        .userbar{ display:flex; align-items:center; gap:10px }
+        .hello{ color:var(--muted); font-size:13px }
+        .btn{
+            appearance:none; border:1px solid var(--border); background:#f8fafc; color:var(--text);
+            padding:8px 12px; border-radius:10px; cursor:pointer; text-decoration:none; font-size:13px;
+            transition: transform .05s ease, background .2s ease, border-color .2s ease;
+        }
+        .btn:hover{ background:#eef2ff; transform:translateY(-1px) }
+        .btn.logout{ border-color:#fecaca; background:#fff1f2; color:#9f1239 }
+        .btn.logout:hover{ background:#ffe4e6 }
+
+        /* KPI cards */
+        .kpis{ display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:14px }
+        .kpi{ background: linear-gradient(180deg, #ffffff, #fbfdff); border:1px solid var(--border); border-radius:14px; padding:16px; }
+        .kpi .label{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.3px; margin-bottom:6px }
+        .kpi .value{ font-weight:800; font-size:24px }
+
+        /* Cards + tables */
+        .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px }
+        .card{ background: linear-gradient(180deg, #ffffff, #fbfdff); border:1px solid var(--border); border-radius:14px; overflow:hidden }
+        .card-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border) }
+        .card-title{ font-weight:700; margin:0; font-size:15px }
+        .table-wrap{ overflow:auto }
+        table{ border-collapse:collapse; width:100% }
+        thead th{
+            position:sticky; top:0; background:#ffffff; border-bottom:1px solid var(--border);
+            color:#334155; font-weight:700; text-align:left; font-size:12px; letter-spacing:.3px; text-transform:uppercase
+        }
+        th,td{ padding:12px 14px; border-bottom:1px solid var(--border) }
+        tbody tr:hover{ background:var(--hover) }
+        td.small{ color:var(--muted); font-size:13px }
+        .badge{ display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid #c7d2fe; background:#eef2ff; color:#1e3a8a; }
+        .empty{ padding:22px; border:1px dashed var(--border); border-radius:12px; color:var(--muted); text-align:center; background:#ffffff80; margin:12px }
+
+        .flash{ padding:10px 12px; margin:10px 0; border:1px solid #86efac; background:#ecfdf5; color:#166534; border-radius:10px; font-size:13px }
+    </style>
+</head>
+<body>
+<div class="wrap" th:with="fixedEmail=${fixedAdminEmail != null ? fixedAdminEmail : 'admin@gmail.com'}">
+
+    <div class="page-head">
+        <div>
+            <h1 class="title">Admin Home</h1>
+            <p class="subtitle">Tổng quan & hoạt động gần đây</p>
+        </div>
+        <div class="userbar">
+      <span class="hello"
+            th:text="'Xin chào, ' + (${session.loggedInAccount != null ? session.loggedInAccount.fullName : (#httpServletRequest.remoteUser ?: 'Admin')})">
+        Xin chào, Admin
+      </span>
+            <form th:action="@{/logout}" method="post">
+                <div th:if="${_csrf != null}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                </div>
+                <button class="btn logout" type="submit">Đăng xuất</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <a class="tab" th:classappend="${page}=='home' ? 'active'" th:href="@{/admin/adminhome}">Home</a>
+        <a class="tab" th:classappend="${page}=='accounts' ? 'active'" th:href="@{/admin/accounts}">Accounts</a>
+    </div>
+
+    <!-- Flash message (nếu có) -->
+    <p th:if="${msg}" class="flash" th:text="${msg}">Message</p>
+
+    <!-- KPIs -->
+    <div class="kpis">
+        <div class="kpi">
+            <div class="label">Total Users</div>
+            <div class="value" th:text="${#numbers.formatInteger(totalUsers,0)}">0</div>
+        </div>
+        <div class="kpi">
+            <div class="label">Total Sellers</div>
+            <div class="value" th:text="${#numbers.formatInteger(totalSellers,0)}">0</div>
+        </div>
+        <div class="kpi">
+            <div class="label">Total Customers</div>
+            <div class="value" th:text="${#numbers.formatInteger(totalCustomers,0)}">0</div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Latest registrations -->
+        <div class="card">
+            <div class="card-head">
+                <h3 class="card-title">User đăng ký mới nhất</h3>
+                <a class="btn" th:href="@{/admin/accounts(sort='createdAt,desc')}">Xem tất cả</a>
+            </div>
+            <div th:if="${#lists.isEmpty(latestAccounts)}" class="empty">Chưa có dữ liệu</div>
+            <div class="table-wrap" th:if="${!#lists.isEmpty(latestAccounts)}">
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width:90px">ID</th>
+                        <th>Email</th>
+                        <th>Full name</th>
+                        <th style="width:140px">Role</th>
+                        <th style="width:170px">Created At</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="a : ${latestAccounts}">
+                        <td class="small" th:text="${a.accountId}">1</td>
+                        <td th:text="${a.email}">email@example.com</td>
+                        <td th:text="${a.fullName}">Name</td>
+                        <td>
+                            <span th:if="${a.role != null}" class="badge" th:text="${a.role.roleName}">ROLE</span>
+                            <span th:if="${a.role == null}" class="badge">N/A</span>
+                        </td>
+                        <td class="small"
+                            th:text="${a.createdAt != null ? #temporals.format(a.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Deactivated users -->
+        <div class="card">
+            <div class="card-head">
+                <h3 class="card-title">User deactivated</h3>
+                <a class="btn" th:href="@{/admin/accounts(q=' ', sort='updatedAt,desc')}">Xem tất cả</a>
+            </div>
+            <div th:if="${#lists.isEmpty(deactivatedAccounts)}" class="empty">Không có người dùng bị vô hiệu hóa</div>
+            <div class="table-wrap" th:if="${!#lists.isEmpty(deactivatedAccounts)}">
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width:90px">ID</th>
+                        <th>Email</th>
+                        <th>Full name</th>
+                        <th style="width:120px">Status</th>
+                        <th style="width:170px">Updated At</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="a : ${deactivatedAccounts}">
+                        <td class="small" th:text="${a.accountId}">1</td>
+                        <td th:text="${a.email}">email@example.com</td>
+                        <td th:text="${a.fullName}">Name</td>
+                        <td>
+                            <span class="badge" style="background:#fee2e2;color:#991b1b;border-color:#fecaca;">DEACTIVATED</span>
+                        </td>
+                        <td class="small"
+                            th:text="${(a.updatedAt != null ? #temporals.format(a.updatedAt, 'yyyy-MM-dd HH:mm') : (a.createdAt != null ? #temporals.format(a.createdAt, 'yyyy-MM-dd HH:mm') : '-'))}">
+                            -
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>
