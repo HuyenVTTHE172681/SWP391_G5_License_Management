@@ -11,6 +11,7 @@ import swp391.fa25.lms.repository.ToolRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,20 +54,37 @@ public class FavoriteService {
     }
 
     /**
-     * Đếm số favorite của account.
+     * Đếm số favorite của account
      */
     public long countFavoritesByAccount(Account account) {
         return favoriteRepository.countByAccount(account);
     }
 
     /**
-     * Lấy list Tool favorite của account (dùng cho /list).
+     * Count trực tiếp by ID
+     */
+    public long countByAccountId(Long accountId) {
+        if (accountId == null) return 0L;
+        return favoriteRepository.countByAccountId(accountId);
+    }
+
+    /**
+     * Lấy Set tool IDs yêu thích của account
+     */
+    public Set<Long> getFavoriteToolIds(Account account) {
+        return favoriteRepository.findByAccount(account).stream()
+                .map(fav -> fav.getTool().getToolId())
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Fix: Lấy list Tool favorite của account (dùng ID để tránh dummy Account)
      */
     public List<Tool> getFavoritesByAccount(Long accountId) {
-        return favoriteRepository.findByAccount(new Account() {{ setAccountId(accountId); }})
-                .stream()
+        // Thêm method findByAccountId ở Repo (xem dưới)
+        return favoriteRepository.findByAccountId(accountId).stream()
                 .map(Favorite::getTool)
-                .collect(Collectors.toList());
+                .toList();
     }
 
 }

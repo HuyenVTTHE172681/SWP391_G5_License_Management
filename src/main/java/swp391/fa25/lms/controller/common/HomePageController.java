@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -62,19 +63,12 @@ public class HomePageController {
             HttpServletRequest request,
             Model model) {
 
-        Page<Tool> toolPage = toolService.searchAndFilterTools(
-                keyword, categoryId, dateFilter, priceFilter, ratingFilter, page, size
-        );
-
+        // Lấy account từ session
         Account account = (Account) request.getSession().getAttribute("loggedInAccount");
 
-        // Nếu đã login -> đánh dấu tool đã favorite
-        if (account != null) {
-            List<Tool> favTools = favoriteService.getFavoriteTools(account);
-            toolPage.getContent().forEach(tool -> {
-                tool.setIsFavorite(favTools.contains(tool));
-            });
-        }
+        Page<Tool> toolPage = toolService.searchAndFilterTools(
+                keyword, categoryId, dateFilter, priceFilter, ratingFilter, account, page, size
+        );
 
         model.addAttribute("tools", toolPage.getContent());
         model.addAttribute("currentPage", page);
@@ -93,7 +87,11 @@ public class HomePageController {
 
     @GetMapping("/logout")
     public String logout(HttpServletRequest request) {
-        request.getSession().invalidate();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            new SecurityContextLogoutHandler().logout(request, null, auth);  // Clear SecurityContext
+        }
+        request.getSession().invalidate();  // Invalidate session (giữ nguyên)
         return "redirect:/login";
     }
 }

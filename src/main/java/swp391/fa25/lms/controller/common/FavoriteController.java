@@ -53,15 +53,28 @@ public class FavoriteController {
     }
 
     // Count tool favorite
+//    @GetMapping("/count")
+//    @ResponseBody
+//    public ResponseEntity<Long> getFavoriteCount(HttpServletRequest request) {
+//        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
+//        if (account == null) {
+//            return ResponseEntity.ok(0L);
+//        }
+//
+//        long count = favoriteService.countFavoritesByAccount(account);
+//        return ResponseEntity.ok(count);
+//    }
+
+    // Count tool favorite dùng ID
     @GetMapping("/count")
     @ResponseBody
     public ResponseEntity<Long> getFavoriteCount(HttpServletRequest request) {
         Account account = (Account) request.getSession().getAttribute("loggedInAccount");
-        if (account == null) {
+        if (account == null || account.getAccountId() == null) {
             return ResponseEntity.ok(0L);
         }
 
-        long count = favoriteService.countFavoritesByAccount(account);
+        long count = favoriteService.countByAccountId(account.getAccountId());
         return ResponseEntity.ok(count);
     }
 
@@ -71,10 +84,13 @@ public class FavoriteController {
         Account account = (Account) session.getAttribute("loggedInAccount");
         if (account == null) {
             model.addAttribute("favorites", List.of());
-            return "customer/favorite-list"; // vẫn render trang rỗng
+            model.addAttribute("favoriteCount", 0L);  // Thêm count
+            return "customer/favorite-list";
         }
         List<Tool> favorites = favoriteService.getFavoritesByAccount(account.getAccountId());
+        long count = favorites.size();  // Hoặc gọi countFavoritesByAccount(account)
         model.addAttribute("favorites", favorites);
+        model.addAttribute("favoriteCount", count);  // Thêm vào model
         return "customer/favorite-list";
     }
 }

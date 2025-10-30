@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -268,4 +269,17 @@ public class Tool {
 
     public boolean isIsFavorite() { return isFavorite; }
     public void setIsFavorite(boolean isFavorite) { this.isFavorite = isFavorite; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Tool tool = (Tool) o;
+        return Objects.equals(toolId, tool.toolId);  // So sánh chỉ ID
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(toolId);  // Hash dựa ID
+    }
 }
