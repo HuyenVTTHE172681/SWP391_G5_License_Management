@@ -51,19 +51,24 @@
         ← Back to Tool Setup
     </a>
 
-    <a th:if="${!isTemp}"
+    <a th:if="${!isTemp&&editMode}"
        th:href="@{'/seller/tools/edit/' + ${tool.toolId}}"
-       class="back-link">
+       class="back-link"
+       th:attr="onclick=${count != max} ? 'alert(\'⚠️ Vui lòng chỉnh token sao cho bằng quantity mới trước khi quay lại!\'); return false;' : null">
         ← Back to Tool Setup
     </a>
 
     <!-- 🔹 Notifications -->
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${info}" class="alert alert-info text-center" th:text="${info}"></div>
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
     <!-- 🔹 Tool Info -->
     <div class="card p-4 mb-4">
         <h4 class="fw-bold mb-3" th:text="'Tool: ' + ${tool.toolName}"></h4>
+        <p class="mb-1"><strong>Quantity:</strong> <span th:text="${max}"></span></p>
+        <p class="text-muted mb-3" th:if="${editMode}">⚙️ Edit Mode — vui lòng điều chỉnh token sao cho khớp với số lượng mới trước khi lưu thay đổi.</p>
+
 
         <!-- 🟢 Form Add Tokens -->
         <form th:if="${isTemp}"
@@ -90,16 +95,14 @@
             <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addRow()">+ Add another</button>
             <button type="submit" class="btn btn-success mt-3 float-end">Add Tokens</button>
         </form>
-
         <!-- 🟣 DB Mode: Add Token to Existing Tool -->
-        <form th:if="${!isTemp}"
-              th:action="@{'/seller/tokens/add/' + ${tool.toolId}}"
-              method="post">
+        <form th:if="${!isTemp}" th:action="@{'/seller/tokens/add-multiple'}" method="post">
+            <input type="hidden" name="toolId" th:value="${tool.toolId}">
 
             <label class="form-label fw-semibold">Add New Token</label>
             <div class="row token-input-row">
                 <div class="col-10">
-                    <input type="text" name="tokenKey" class="form-control"
+                    <input type="text" name="tokens" class="form-control"
                            placeholder="Enter token key..."
                            required
                            pattern="^[0-9]{6}$"
@@ -110,6 +113,7 @@
                 </div>
             </div>
         </form>
+
     </div>
 
     <!-- 🔹 Token List -->
@@ -170,6 +174,19 @@
                 ✅ Finalize Tool Creation
             </button>
         </form>
+        <!-- 🟣 Finalize cho edit mode -->
+        <form th:if="${!isTemp && editMode}"
+              th:action="@{/seller/tokens/finalize-edit}"
+              method="post"
+              class="mt-3 text-end"
+              onsubmit="return validateFinalize()">
+            <input type="hidden" name="toolId" th:value="${tool.toolId}">
+            <button type="submit" class="btn btn-success">
+                💾 Save Tool Changes
+            </button>
+        </form>
+    </div>
+</div>
     </div>
 </div>
 

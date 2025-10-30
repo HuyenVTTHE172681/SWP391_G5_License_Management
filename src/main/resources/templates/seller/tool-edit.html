@@ -209,9 +209,9 @@
 
         <!-- 💾 Change Tool File -->
         <div class="form-group">
-            <label class="form-label">Change Tool File (.exe, .zip, .rar, .7z)</label>
-            <input type="file" name="toolFile" id="toolFile" accept=".exe,.zip,.rar,.7z" class="form-input">
-            <small class="form-text text-muted">Only .exe, .zip, .rar, .7z — Max 100MB.</small>
+            <label class="form-label">Change Tool File (.exe, .zip, .rar)</label>
+            <input type="file" name="toolFile" id="toolFile" accept=".exe,.zip,.rar" class="form-input">
+            <small class="form-text text-muted">Only .exe, .zip, .rar — Max 100MB.</small>
             <small id="fileError" class="error-message text-danger"></small>
         </div>
         <!-- 🗂 Category -->
@@ -233,21 +233,12 @@
             <textarea th:field="*{description}" rows="4" class="form-textarea"
                       placeholder="Enter description"></textarea>
         </div>
-        <!-- 🔐 Login Method (readonly) -->
+        <!-- 🔐 Login Method (readonly, không có nút Edit Tokens nữa) -->
         <div class="form-group">
             <label class="form-label">Login Method</label>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="text" class="form-input" th:value="${tool.loginMethod}" readonly>
-
-                <!-- ✅ Nút Edit Tokens (chỉ hiện nếu loginMethod là TOKEN) -->
-                <a th:if="${tool.loginMethod?.name() == 'TOKEN'}"
-                   th:href="@{'/seller/tokens/manage/' + ${tool.toolId}}"
-                   class="submit-btn"
-                   style="background-color: #2563eb; padding: 0.5rem 1rem; text-decoration: none;">
-                    ⚙ Edit Tokens
-                </a>
-            </div>
+            <input type="text" class="form-input" th:value="${tool.loginMethod}" readonly>
         </div>
+
 
         <!-- 🔢 Quantity -->
         <div class="form-group">

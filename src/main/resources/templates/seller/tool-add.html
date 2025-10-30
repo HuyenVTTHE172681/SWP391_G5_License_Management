@@ -200,9 +200,9 @@
 
         <!-- 💾 Upload Tool File -->
         <div class="form-group">
-            <label class="form-label">Upload Tool File (.exe, .zip, .rar, .7z)</label>
-            <input type="file" name="toolFile" id="toolFile" accept=".exe,.zip,.rar,.7z" class="form-input">
-            <small class="form-text text-muted">Only .exe, .zip, .rar, .7z — Max 100MB.</small>
+            <label class="form-label">Upload Tool File (.exe, .zip, .rar)</label>
+            <input type="file" name="toolFile" id="toolFile" accept=".exe,.zip,.rar" class="form-input">
+            <small class="form-text text-muted">Only .exe, .zip, .rar,  — Max 100MB.</small>
             <small id="fileError" class="error-message text-danger"></small>
         </div>
 
@@ -440,10 +440,10 @@
 
         if (!file) return;
 
-        const allowed = [".exe", ".zip", ".rar", ".7z"];
+        const allowed = [".exe", ".zip", ".rar", ];
         const lower = file.name.toLowerCase();
         if (!allowed.some(ext => lower.endsWith(ext))) {
-            errorEl.textContent = "❌ Invalid file type. Only .exe, .zip, .rar, .7z allowed.";
+            errorEl.textContent = "❌ Invalid file type. Only .exe, .zip, .rar, allowed.";
             this.value = "";
             return;
         }

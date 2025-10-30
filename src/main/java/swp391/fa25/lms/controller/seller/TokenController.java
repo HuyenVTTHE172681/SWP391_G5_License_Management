@@ -23,12 +23,18 @@ public class TokenController {
     @Autowired private LicenseAccountRepository licenseAccountRepository;
     @Autowired private LicenseToolRepository licenseRepo;
     @Autowired private ToolService toolService;
-
-    /** ============================================================
-     * 🔹 1️⃣ Giao diện quản lý token (tự nhận biết chế độ)
-     * ============================================================ */
+    private String redirectToManage(Long toolId, HttpServletRequest request) {
+        HttpSession s = request.getSession(false);
+        boolean inEdit = false;
+        if (s != null) {
+            Tool editTemp = (Tool) s.getAttribute("editToolTemp");
+            inEdit = (editTemp != null && Objects.equals(editTemp.getToolId(), toolId));
+        }
+        return "redirect:/seller/tokens/manage/" + toolId + (inEdit ? "?mode=edit" : "");
+    }
     @GetMapping(value = {"/manage", "/manage/{toolId}"})
     public String manageTokens(@PathVariable(required = false) Long toolId,
+                               @RequestParam(value = "mode", required = false) String mode,
                                HttpServletRequest request,
                                Model model,
                                RedirectAttributes redirectAttributes) {
@@ -47,9 +53,9 @@ public class TokenController {
             List<String> tempTokens = (List<String>) session.getAttribute("tempTokens");
             if (tempTokens == null) tempTokens = new ArrayList<>();
 
-
             int max = tempTool.getQuantity() == null ? 0 : tempTool.getQuantity();
             int count = tempTokens.size();
+
             model.addAttribute("tool", tempTool);
             model.addAttribute("tokens", tempTokens);
             model.addAttribute("isTemp", true);
@@ -58,6 +64,7 @@ public class TokenController {
             model.addAttribute("remaining", Math.max(0, max - count));
             return "seller/token-manage";
         }
+
         // 💾 DB MODE
         Tool tool = toolRepository.findById(toolId).orElse(null);
         if (tool == null || seller == null || !tool.getSeller().getAccountId().equals(seller.getAccountId())) {
@@ -66,14 +73,32 @@ public class TokenController {
         }
 
         List<LicenseAccount> tokens = licenseAccountRepository.findByToolToolId(toolId);
+        boolean editMode = "edit".equalsIgnoreCase(mode);
+
+        Tool editTemp = (Tool) session.getAttribute("editToolTemp");
+        if (editTemp != null && Objects.equals(editTemp.getToolId(), toolId)) {
+            editMode = true;
+        }
+
+        Integer displayQty = tool.getQuantity();
+        if (editMode && editTemp != null && Objects.equals(editTemp.getToolId(), toolId)) {
+            displayQty = editTemp.getQuantity();
+        }
+
+        if (editMode) {
+            model.addAttribute("info", "⚙️ Edit Mode — Vui lòng chỉnh sửa token sao cho khớp với quantity mới.");
+        }
+
+        model.addAttribute("editMode", editMode);
         model.addAttribute("tool", tool);
         model.addAttribute("tokens", tokens);
         model.addAttribute("isTemp", false);
         model.addAttribute("count", tokens.size());
-        model.addAttribute("max", tool.getQuantity() == null ? 0 : tool.getQuantity());
-        model.addAttribute("remaining", Math.max(0, (tool.getQuantity() == null ? 0 : tool.getQuantity()) - tokens.size()));
+        model.addAttribute("max", displayQty == null ? 0 : displayQty);
+        model.addAttribute("remaining", Math.max(0, (displayQty == null ? 0 : displayQty) - tokens.size()));
         return "seller/token-manage";
     }
+
 
     /** ============================================================
      * 🔹 2️⃣ Thêm token đơn lẻ
@@ -132,7 +157,14 @@ public class TokenController {
         int max = tool.getQuantity() == null ? 0 : tool.getQuantity();
         int current = licenseAccountRepository.findByToolToolId(toolId).size();
         if (current >= max) {
-            redirectAttributes.addFlashAttribute("error", "❌ Đã đủ số lượng (" + max + "). Không thể thêm nữa.");
+            if (current > max) {
+                redirectAttributes.addFlashAttribute("error",
+                        "⚠️ Số lượng token hiện tại (" + current + ") vượt quá quantity mới (" + max + "). "
+                                + "Vui lòng xóa bớt token trước khi thêm mới.");
+            } else {
+                redirectAttributes.addFlashAttribute("error",
+                        "❌ Đã đủ số lượng (" + max + "). Không thể thêm nữa.");
+            }
             return "redirect:/seller/tokens/manage/" + toolId;
         }
 
@@ -190,7 +222,7 @@ public class TokenController {
                 if (t == null) continue;
                 t = t.trim();
                 if (!t.matches("^\\d{6}$")) {
-                    redirectAttributes.addFlashAttribute("error", "❌ Token '" + t + "' không hợp lệ.");
+                    redirectAttributes.addFlashAttribute("error", "❌ Token '" + t + "' không hợp lệ. Phải có đúng 6 số");
                     return "redirect:/seller/tokens/manage";
                 }
                 if (tempTokens.contains(t) || licenseAccountRepository.existsByToken(t)) {
@@ -210,9 +242,12 @@ public class TokenController {
             redirectAttributes.addFlashAttribute("success", "✅ Đã thêm " + clean.size() + " token tạm!");
             return "redirect:/seller/tokens/manage";
         }
-
         // 💾 DB MODE
         Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttributes.addFlashAttribute("error", "⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+            return "redirect:/login";
+        }
         Tool tool = toolRepository.findById(toolId).orElse(null);
         if (tool == null || !tool.getSeller().getAccountId().equals(seller.getAccountId())) {
             redirectAttributes.addFlashAttribute("error", "Không thể thêm token cho tool này.");
@@ -221,8 +256,15 @@ public class TokenController {
         int max = tool.getQuantity() == null ? 0 : tool.getQuantity();
         int current = licenseAccountRepository.findByToolToolId(toolId).size();
         int remaining = max - current;
-        if (remaining <= 0) {
-            redirectAttributes.addFlashAttribute("error", "❌ Đã đủ số lượng (" + max + ").");
+        if (current >= max) {
+            if (current > max) {
+                redirectAttributes.addFlashAttribute("error",
+                        "⚠️ Số lượng token hiện tại (" + current + ") vượt quá quantity mới (" + max + "). "
+                                + "Vui lòng xóa bớt token trước khi thêm mới.");
+            } else {
+                redirectAttributes.addFlashAttribute("error",
+                        "❌ Đã đủ số lượng (" + max + "). Không thể thêm nữa.");
+            }
             return "redirect:/seller/tokens/manage/" + toolId;
         }
 
@@ -426,4 +468,51 @@ public class TokenController {
         }
         return "redirect:/seller/tools/add";
     }
+    /** ============================================================
+     * 🔹 7️⃣ Finalize Edit Tool (khi quantity thay đổi)
+     * ============================================================ */
+    @PostMapping("/finalize-edit")
+    @Transactional
+    public String finalizeEditTool(@RequestParam("toolId") Long toolId,
+                                   HttpServletRequest request,
+                                   RedirectAttributes redirectAttributes) {
+        HttpSession session = request.getSession();
+        Tool editTemp = (Tool) session.getAttribute("editToolTemp");
+
+        if (editTemp == null) {
+            redirectAttributes.addFlashAttribute("error", "⚠️ Phiên sửa tool đã hết hạn.");
+            return "redirect:/seller/tools";
+        }
+
+        Tool existing = toolRepository.findById(toolId)
+                .orElseThrow(() -> new RuntimeException("Tool không tồn tại."));
+
+        // Đếm token hiện có
+        List<LicenseAccount> tokens = licenseAccountRepository.findByToolToolId(toolId);
+        int count = tokens.size();
+        int max = editTemp.getQuantity() == null ? 0 : editTemp.getQuantity();
+
+        if (count != max) {
+            redirectAttributes.addFlashAttribute("error",
+                    "❌ Số lượng token (" + count + ") không khớp với quantity mới (" + max + ").");
+            return "redirect:/seller/tokens/manage/" + toolId + "?mode=edit";
+        }
+
+        // Cập nhật thông tin tool thật
+        existing.setToolName(editTemp.getToolName());
+        existing.setDescription(editTemp.getDescription());
+        existing.setCategory(editTemp.getCategory());
+        existing.setQuantity(editTemp.getQuantity());
+        existing.setUpdatedAt(LocalDateTime.now());
+        existing.setStatus(Tool.Status.PENDING);
+
+        toolRepository.save(existing);
+
+        // Xóa session tạm
+        session.removeAttribute("editToolTemp");
+
+        redirectAttributes.addFlashAttribute("success", "✅ Tool đã được cập nhật cùng với token mới!");
+        return "redirect:/seller/tools";
+    }
+
 }

@@ -348,7 +348,7 @@ public class ToolController {
                              @Valid @ModelAttribute("tool") Tool tool,
                              BindingResult bindingResult,
                              @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
-                             @RequestParam(value = "toolFile", required = false) MultipartFile toolFile, // 🧩 thêm dòng này
+                             @RequestParam(value = "toolFile", required = false) MultipartFile toolFile,
                              @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
                              @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
                              RedirectAttributes redirectAttributes,
@@ -362,13 +362,13 @@ public class ToolController {
                 return "redirect:/seller/tools";
             }
 
-            // 🔒 Check quyền chỉnh sửa
+            // 🔒 Kiểm tra quyền chỉnh sửa
             if (!existingTool.getSeller().getAccountId().equals(seller.getAccountId())) {
                 redirectAttributes.addFlashAttribute("errorMessage", "You are not allowed to edit this tool.");
                 return "redirect:/seller/tools";
             }
 
-            // ⚠️ Validate thủ công giống addTool()
+            // ⚠️ Validate
             if (bindingResult.hasErrors()) {
                 System.out.println("❌ Binding errors: " + bindingResult.getAllErrors());
                 reloadEditData(model, tool);
@@ -382,7 +382,7 @@ public class ToolController {
                 return "seller/tool-edit";
             }
 
-            // ✅ Handle image upload (nếu có upload ảnh mới)
+            // ✅ Xử lý upload ảnh (nếu có)
             if (imageFile != null && !imageFile.isEmpty()) {
                 String contentType = imageFile.getContentType();
                 if (contentType == null || !contentType.matches("image/(jpeg|jpg|png)")) {
@@ -402,43 +402,63 @@ public class ToolController {
 
                     String originalFileName = StringUtils.cleanPath(imageFile.getOriginalFilename());
                     Path filePath = uploadPath.resolve(originalFileName);
-                    int count = 1;
-                    String newFileName = originalFileName;
-
                     if (existingTool.getImage() != null) {
                         Path oldFile = uploadPath.resolve(existingTool.getImage());
                         Files.deleteIfExists(oldFile);
                     }
 
-
                     Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-                    existingTool.setImage(newFileName);
-
+                    existingTool.setImage(originalFileName);
                 } catch (IOException e) {
                     e.printStackTrace();
                     model.addAttribute("errorImage", "Error saving image. Please try again.");
                     reloadEditData(model, existingTool);
                     return "seller/tool-edit";
                 }
-            } else if (existingTool.getImage() == null || existingTool.getImage().isBlank()) {
-                model.addAttribute("errorImage", "Please select an image.");
-                reloadEditData(model, existingTool);
-                return "seller/tool-edit";
             }
 
-            // ✅ Cập nhật dữ liệu chính
+            // ✅ So sánh quantity cũ và mới
+            Integer oldQuantity = existingTool.getQuantity();
+            Integer newQuantity = tool.getQuantity();
+
+            // 🟢 Nếu quantity thay đổi & tool là TOKEN → KHÔNG lưu DB ngay
+            if (!Objects.equals(oldQuantity, newQuantity)
+                    && existingTool.getLoginMethod() == Tool.LoginMethod.TOKEN) {
+
+                HttpSession session = request.getSession();
+
+                // 🔹 Tạo bản tạm (copy thông tin mới để TokenController biết đang sửa)
+                Tool editTemp = new Tool();
+                editTemp.setToolId(existingTool.getToolId());
+                editTemp.setToolName(tool.getToolName());
+                editTemp.setDescription(tool.getDescription());
+                editTemp.setCategory(tool.getCategory());
+                editTemp.setQuantity(tool.getQuantity());
+                editTemp.setLoginMethod(existingTool.getLoginMethod());
+                editTemp.setImage(existingTool.getImage());
+
+                // 🔹 Lưu tool tạm vào session
+                session.setAttribute("editToolTemp", editTemp);
+
+                redirectAttributes.addFlashAttribute("info",
+                        "⚙️ Quantity has changed. Please adjust tokens to match the new quantity before saving.");
+
+                return "redirect:/seller/tokens/manage/" + id + "?mode=edit";
+            }
+
+            // 🟢 Nếu quantity KHÔNG thay đổi → Cập nhật DB như bình thường
             existingTool.setToolName(tool.getToolName());
             existingTool.setDescription(tool.getDescription());
             existingTool.setQuantity(tool.getQuantity());
             existingTool.setStatus(Tool.Status.PENDING);
             existingTool.setUpdatedAt(LocalDateTime.now());
-
             existingTool.setLoginMethod(existingTool.getLoginMethod());
 
             Category category = categoryRepo.findById(tool.getCategory().getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Invalid category selected"));
             existingTool.setCategory(category);
 
+            // ✅ Lưu DB
             toolService.save(existingTool);
 
             // 🧩 TOOL FILE UPLOAD START
@@ -451,8 +471,8 @@ public class ToolController {
                 }
 
                 String lowerName = originalName.toLowerCase();
-                if (!(lowerName.endsWith(".exe") || lowerName.endsWith(".zip") || lowerName.endsWith(".rar") || lowerName.endsWith(".7z"))) {
-                    model.addAttribute("errorFile", "Only .exe, .zip, .rar, or .7z files are allowed.");
+                if (!(lowerName.endsWith(".exe") || lowerName.endsWith(".zip") || lowerName.endsWith(".rar"))) {
+                    model.addAttribute("errorFile", "Only .exe, .zip, .rar are allowed.");
                     reloadFormData(model);
                     return "seller/tool-add";
                 }
@@ -462,17 +482,19 @@ public class ToolController {
                     reloadFormData(model);
                     return "seller/tool-add";
                 }
+
                 try {
-                    String uploadDir =  "uploads/toolfiles/";
+                    String uploadDir = "uploads/toolfiles/";
                     File dir = new File(uploadDir);
                     if (!dir.exists()) dir.mkdirs();
+
                     String safeFileName = Paths.get(originalName).getFileName().toString().replaceAll("[\\\\/]+", "");
                     String storedName = UUID.randomUUID() + "_" + safeFileName;
 
                     Path savePath = Paths.get(uploadDir + storedName);
                     Files.copy(toolFile.getInputStream(), savePath, StandardCopyOption.REPLACE_EXISTING);
 
-                    // Xóa file cũ (nếu muốn)
+                    // Xóa file cũ (nếu có)
                     toolFileRepository.findByTool(existingTool).forEach(oldFile -> {
                         try {
                             Files.deleteIfExists(Paths.get(oldFile.getFilePath().substring(1)));
@@ -527,6 +549,7 @@ public class ToolController {
             return "redirect:/seller/tools/edit/" + id;
         }
     }
+
 
     // ================== TOGGLE TOOL STATUS ==================
 
