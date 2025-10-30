@@ -12,4 +12,6 @@ public interface CategoryRepository extends JpaRepository<Category,Long> {
     List<Category> findByCategoryName(String categoryName);
     List<Category> findByCategoryNameContainingIgnoreCase(String name);
     List<Category> findByStatus(Category.Status status);
-    List<Category> findByCategoryNameContainingIgnoreCaseAndStatus(String name, Category.Status status);}
+    List<Category> findByCategoryNameContainingIgnoreCaseAndStatus(String name, Category.Status status);
+    boolean existsByCategoryName(String categoryName);
+}

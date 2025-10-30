@@ -74,8 +74,8 @@ public class CustomAuthenticationSuccessHandler
     private void redirectByRole(Role.RoleName role, HttpServletResponse response) throws IOException {
         switch (role) {
             case ADMIN -> response.sendRedirect("/admin/dashboard");
-            case MANAGER -> response.sendRedirect("/manager/home");
-            case MOD -> response.sendRedirect("/moderator/panel");
+            case MANAGER -> response.sendRedirect("/manager/dashboard");
+            case MOD -> response.sendRedirect("/moderator/dashboard");
             case CUSTOMER -> response.sendRedirect("/home");
             default -> response.sendRedirect("/");
         }

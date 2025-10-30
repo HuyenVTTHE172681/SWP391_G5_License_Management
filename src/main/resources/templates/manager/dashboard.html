@@ -1,10 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Manager Panel</title>
+    <link rel="stylesheet" th:href="@{/css/manager-layout.css}">
 </head>
 <body>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <h2 class="sidebar-title">Manager Panel</h2>
+        <nav>
+            <a th:href="@{/manager/}" class="nav-link" th:classappend="${active == 'dashboard'} ? 'active' : ''">Dashboard</a>
+            <a th:href="@{/manager/tool/list}" class="nav-link" th:classappend="${active == 'tools'} ? 'active' : ''">Tools</a>
+            <a th:href="@{/manager/category/list}" class="nav-link" th:classappend="${active == 'categories'} ? 'active' : ''">Categories</a>
+            <a th:href="@{/manager/package/list}" class="nav-link" th:classappend="${active == 'packages'} ? 'active' : ''">Packages</a>
+            <a th:href="@{/manager/upload-tool}" class="nav-link" th:classappend="${active == 'upload'} ? 'active' : ''">Upload Tools</a>
+            <a th:href="@{/logout}" class="nav-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+        <header class="page-header">
+            <h1>📋 Uploaded Tools</h1>
+        </header>
+
+        <section class="content-body">
+            <!-- Nội dung thực tế của từng trang đặt ở đây -->
+            <p>Welcome to the Manager Panel! Select a function from the left menu.</p>
+        </section>
+    </main>
+</div>
 
 </body>
 </html>

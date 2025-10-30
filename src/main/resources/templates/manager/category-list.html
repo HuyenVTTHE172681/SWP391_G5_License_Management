@@ -6,59 +6,82 @@
     <link rel="stylesheet" th:href="@{/css/category.css}">
 </head>
 <body>
-<div class="container">
-    <h1>Category Management</h1>
+<div class="layout">
 
-    <form method="get" th:action="@{/manager/category/list}" class="filter-form">
-        <input type="text" name="name" placeholder="Search by name..." th:value="${searchName}">
-        <select name="status">
-            <option value="" th:selected="${selectedStatus == null}">All Status</option>
-            <option value="ACTIVE" th:selected="${selectedStatus?.name() == 'ACTIVE'}">ACTIVE</option>
-            <option value="DEACTIVATED" th:selected="${selectedStatus?.name() == 'DEACTIVATED'}">DEACTIVATED</option>
-        </select>
-        <button type="submit" class="btn btn-filter">Filter</button>
-        <a th:href="@{/manager/category/create}" class="btn btn-create">New Category</a>
-    </form>
+    <!-- 🧭 SIDEBAR -->
+    <aside class="sidebar">
+        <h2 class="sidebar-title">Manager Panel</h2>
+        <nav>
+            <a th:href="@{/manager/}" class="nav-link" th:classappend="${active == 'dashboard'} ? 'active' : ''">Dashboard</a>
+            <a th:href="@{/manager/tool/list}" class="nav-link" th:classappend="${active == 'tools'} ? 'active' : ''">Tools</a>
+            <a th:href="@{/manager/category/list}" class="nav-link" th:classappend="${active == 'categories'} ? 'active' : ''">Categories</a>
+            <a th:href="@{/manager/package/list}" class="nav-link" th:classappend="${active == 'packages'} ? 'active' : ''">Packages</a>
+            <a th:href="@{/manager/upload-tool}" class="nav-link" th:classappend="${active == 'upload'} ? 'active' : ''">Upload Tools</a>
+            <a th:href="@{/logout}" class="nav-link logout">Logout</a>
+        </nav>
+    </aside>
 
-    <table class="category-table">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Icon</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="c : ${categories}">
-            <td th:text="${c.categoryId}"></td>
-            <td th:text="${c.categoryName}"></td>
-            <td th:text="${c.description}"></td>
-            <td th:text="${c.icon}"></td>
-            <td>
-                <span th:text="${c.status}" th:class="'status ' + ${c.status}"></span>
-            </td>
-            <td>
-                <a th:href="@{'/manager/category/edit/' + ${c.categoryId}}" class="btn btn-edit">Edit</a>
-                <a th:if="${c.status?.name() == 'ACTIVE'}"
-                   th:href="@{'/manager/category/delete/' + ${c.categoryId}}"
-                   class="btn btn-delete"
-                   onclick="return confirm('Deactivate this category?')">Deactivate</a>
+    <!-- 📋 MAIN CONTENT -->
+    <main class="content">
+        <div class="container">
+            <h1>Category Management</h1>
 
-                <a th:if="${c.status?.name() == 'DEACTIVATED'}"
-                   th:href="@{'/manager/category/restore/' + ${c.categoryId}}"
-                   class="btn btn-restore"
-                   onclick="return confirm('Restore this category?')">Restore</a>
-            </td>
-        </tr>
+            <form method="get" th:action="@{/manager/category/list}" class="filter-form">
+                <input type="text"
+                       name="name"
+                       placeholder="Search by name..."
+                       th:value="${searchName}"
+                       pattern="[A-Za-z0-9 ]*"
+                       title="Only letters, numbers and spaces are allowed">
+                <select name="status">
+                    <option value="" th:selected="${selectedStatus == null}">All Status</option>
+                    <option value="ACTIVE" th:selected="${selectedStatus?.name() == 'ACTIVE'}">ACTIVE</option>
+                    <option value="DEACTIVATED" th:selected="${selectedStatus?.name() == 'DEACTIVATED'}">DEACTIVATED</option>
+                </select>
+                <button type="submit" class="btn btn-filter">Filter</button>
+                <a th:href="@{/manager/category/create}" class="btn btn-create">New Category</a>
+            </form>
 
-        <tr th:if="${#lists.isEmpty(categories)}">
-            <td colspan="6" class="no-data">No categories found</td>
-        </tr>
-        </tbody>
-    </table>
+            <table class="category-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Icon</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${categories}">
+                    <td th:text="${c.categoryId}"></td>
+                    <td th:text="${c.categoryName}"></td>
+                    <td th:text="${c.description}"></td>
+                    <td th:text="${c.icon}"></td>
+                    <td><span th:text="${c.status}" th:class="'status ' + ${c.status}"></span></td>
+                    <td>
+                        <a th:href="@{'/manager/category/edit/' + ${c.categoryId}}" class="btn btn-edit">Edit</a>
+
+                        <a th:if="${c.status?.name() == 'ACTIVE'}"
+                           th:href="@{'/manager/category/delete/' + ${c.categoryId}}"
+                           class="btn btn-delete"
+                           onclick="return confirm('Deactivate this category?')">Deactivate</a>
+
+                        <a th:if="${c.status?.name() == 'DEACTIVATED'}"
+                           th:href="@{'/manager/category/restore/' + ${c.categoryId}}"
+                           class="btn btn-restore"
+                           onclick="return confirm('Restore this category?')">Restore</a>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(categories)}">
+                    <td colspan="6" class="no-data">No categories found</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
 </div>
 </body>
 </html>

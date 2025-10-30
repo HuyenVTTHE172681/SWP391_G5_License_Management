@@ -9,8 +9,8 @@
 <div class="container">
     <a th:href="@{/manager/category/list}" class="btn btn-back">Back</a>
     <h1>New Category</h1>
-
     <form th:action="@{/manager/category/create}" method="post" th:object="${newCategory}" class="form-box">
+        <p style="color: red" th:text="${errMsg}"></p>
         <label>Name:</label>
         <input type="text" th:field="*{categoryName}" placeholder="Enter category name" required>
 

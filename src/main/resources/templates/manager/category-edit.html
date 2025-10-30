@@ -12,6 +12,7 @@
 
     <form th:action="@{'/manager/category/edit/' + ${category.categoryId}}" method="post" th:object="${category}"
           class="form-box">
+        <input type="hidden" th:field="*{status}">
         <label>Name:</label>
         <input type="text" th:field="*{categoryName}" required>
 

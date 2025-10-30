@@ -1,3 +1,4 @@
+
 /* ===== 🧭 SIDEBAR LAYOUT (thêm mới, giữ nguyên phần còn lại) ===== */
 
 .layout {
@@ -88,125 +89,178 @@
 }
 
 /* ===== Giữ nguyên toàn bộ phần CSS cũ từ đây trở xuống ===== */
+
+/* 🌐 RESET & BASE */
 body {
     font-family: "Segoe UI", sans-serif;
-    background: #f5f7fa;
+    background-color: #f5f7fa;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+}
+
+/* ... phần CSS cũ bạn gửi ở trên giữ nguyên hoàn toàn ... */
+/* 🌐 RESET & BASE */
+body {
+    font-family: "Segoe UI", sans-serif;
+    background-color: #f5f7fa;
     margin: 0;
     padding: 20px;
     color: #333;
 }
 
 .container {
-    max-width: 1000px;
+    max-width: 1100px;
     margin: auto;
     background: #fff;
     border-radius: 10px;
     padding: 25px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* ... (phần CSS cũ giữ nguyên toàn bộ như bạn gửi) ... */
-body {
-    font-family: "Segoe UI", sans-serif;
-    background: #f5f7fa;
-    margin: 0;
-    padding: 20px;
-    color: #333;
-}
-
-.container {
-    max-width: 1000px;
-    margin: auto;
-    background: #fff;
-    border-radius: 10px;
-    padding: 25px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
+/* 🧩 HEADER */
 h1 {
     text-align: center;
-    margin-bottom: 25px;
     color: #0078d4;
+    margin-bottom: 25px;
 }
 
+/* 🔍 FILTER FORM */
 .filter-form {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    margin-bottom: 20px;
     gap: 10px;
+    margin-bottom: 25px;
+    align-items: center;
 }
 
 .filter-form input,
 .filter-form select {
     flex: 1;
-    padding: 8px;
+    min-width: 140px;
+    padding: 8px 10px;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 14px;
+    transition: 0.2s;
 }
 
+.filter-form input:focus,
+.filter-form select:focus {
+    border-color: #0078d4;
+    box-shadow: 0 0 4px rgba(0, 120, 212, 0.3);
+    outline: none;
+}
+
+/* 🔘 BUTTONS */
 .btn {
     padding: 8px 14px;
-    border-radius: 6px;
     border: none;
+    border-radius: 6px;
     cursor: pointer;
-    color: white;
-    transition: 0.3s;
+    color: #fff;
+    font-size: 14px;
     text-decoration: none;
     text-align: center;
-    font-size: 14px;
+    transition: 0.3s;
 }
 
-.btn-filter { background-color: #0078d4; }
-.btn-filter:hover { background-color: #005fa3; }
+.btn-filter {
+    background-color: #0078d4;
+}
+.btn-filter:hover {
+    background-color: #005fa3;
+}
 
-.btn-create { background-color: #28a745; }
-.btn-create:hover { background-color: #1e7e34; }
+.btn-create {
+    background-color: #28a745;
+}
+.btn-create:hover {
+    background-color: #1e7e34;
+}
 
-.btn-edit { background-color: #4caf50; }
-.btn-edit:hover { background-color: #3c8d40; }
+.btn-edit {
+    background-color: #4caf50;
+}
+.btn-edit:hover {
+    background-color: #3c8d40;
+}
 
-.btn-delete { background-color: #f44336; }
-.btn-delete:hover { background-color: #d32f2f; }
+.btn-delete {
+    background-color: #f44336;
+}
+.btn-delete:hover {
+    background-color: #d32f2f;
+}
 
-.btn-restore { background-color: #ff9800; }
-.btn-restore:hover { background-color: #e68900; }
+.btn-restore {
+    background-color: #ff9800;
+}
+.btn-restore:hover {
+    background-color: #e68900;
+}
 
-.btn-save { background-color: #0078d4; border: none; cursor: pointer; }
-.btn-save:hover { background-color: #005fa3; }
+.btn-save {
+    background-color: #0078d4;
+}
+.btn-save:hover {
+    background-color: #005fa3;
+}
 
-.btn-back { background-color: gray; }
-.btn-back:hover { background-color: #555; }
+.btn-back {
+    background-color: gray;
+}
+.btn-back:hover {
+    background-color: #555;
+}
 
-.category-table {
+/* 📋 TABLE STYLE */
+.package-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
-}
-
-.category-table th, .category-table td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
     font-size: 14px;
 }
 
-.category-table th {
-    background-color: #0078d4;
-    color: white;
+.package-table th,
+.package-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
 }
 
-.status.ACTIVE { color: green; font-weight: bold; }
-.status.DEACTIVATED { color: red; font-weight: bold; }
+.package-table th {
+    background-color: #0078d4;
+    color: white;
+    font-weight: 600;
+}
+
+.package-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.package-table tr:hover {
+    background-color: #eef5ff;
+}
+
+/* 📦 STATUS COLOR */
+.status.ACTIVE {
+    color: green;
+    font-weight: bold;
+}
+.status.DEACTIVATED {
+    color: red;
+    font-weight: bold;
+}
 
 .no-data {
     text-align: center;
-    color: #999;
+    padding: 15px;
+    color: #888;
     font-style: italic;
-    padding: 10px;
 }
 
+/* 🧾 FORM BOX (CREATE + EDIT) */
 .form-box {
     display: flex;
     flex-direction: column;
@@ -236,31 +290,51 @@ h1 {
 .form-box select:focus {
     border-color: #0078d4;
     outline: none;
+    box-shadow: 0 0 4px rgba(0, 120, 212, 0.3);
 }
 
 .form-box .btn-save,
 .form-box .btn-back {
-    margin-top: 10px;
-    align-self: flex-start;
+    width: fit-content;
+    margin-top: 8px;
 }
 
-.form-box .btn-back {
-    margin-left: 10px;
+/* ⚠️ FRONT-END VALIDATION STYLES */
+input.error,
+textarea.error,
+select.error {
+    border-color: #e57373;
+    background-color: #fff5f5;
 }
 
-.icon-preview {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
+.error-message {
+    color: #d32f2f;
+    font-size: 13px;
+    margin-top: -5px;
+    margin-bottom: 8px;
 }
 
-.icon-preview img {
-    width: 24px;
-    height: 24px;
-}
-
-/* ⚙️ SMALL ANIMATION */
-.btn:hover, input:focus {
+/* 🪶 EFFECTS */
+.btn:hover,
+input:focus,
+textarea:focus {
     transform: translateY(-1px);
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 768px) {
+    .filter-form {
+        flex-direction: column;
+    }
+
+    .filter-form input,
+    .filter-form select,
+    .btn {
+        width: 100%;
+    }
+
+    .form-box {
+        width: 100%;
+        padding: 10px;
+    }
 }

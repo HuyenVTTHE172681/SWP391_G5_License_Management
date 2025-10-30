@@ -81,7 +81,7 @@ public class ToolService {
                 .orElseThrow(() -> new RuntimeException("Tool not found or unauthorized"));
 
         if (tool.getStatus() == Tool.Status.PUBLISHED) {
-            tool.setStatus(Tool.Status.DEACTIVE);
+            tool.setStatus(Tool.Status.DEACTIVATED);
         } else {
             tool.setStatus(Tool.Status.PUBLISHED);
         }

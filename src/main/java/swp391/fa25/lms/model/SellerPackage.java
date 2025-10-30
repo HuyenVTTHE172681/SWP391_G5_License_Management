@@ -13,13 +13,18 @@ public class SellerPackage {
     private String packageName;
 
     @Column(nullable = false)
-    private int durationInMonths; // số tháng (1, 3, 6, 12)
+    private int durationInMonths;
 
     @Column(nullable = false)
-    private double price; // giá tiền
+    private double price;
 
     @Column(nullable = true)
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    public enum Status {ACTIVE, DEACTIVATED}
 
     public SellerPackage() {
     }
@@ -70,5 +75,13 @@ public class SellerPackage {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 }

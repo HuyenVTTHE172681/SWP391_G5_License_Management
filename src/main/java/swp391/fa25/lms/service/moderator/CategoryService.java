@@ -21,7 +21,7 @@ public class CategoryService {
         categoryRepo.save(category);
     }
     public List<Category> filter(String name, Category.Status status) {
-        if ((name == null || name.isBlank()) && status == null)
+        if ((name == null || name.trim().isBlank()) && status == null)
             return categoryRepo.findAll();
 
         if (status == null)
@@ -36,5 +36,8 @@ public class CategoryService {
     public Category findById(Long id) {
         return categoryRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid category ID: " + id));
+    }
+    public boolean isExist(String name) {
+        return categoryRepo.existsByCategoryName(name);
     }
 }
