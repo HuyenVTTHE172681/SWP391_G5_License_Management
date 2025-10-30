@@ -1,5 +1,7 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -14,14 +16,17 @@ public class CustomerOrder {
 
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"orders", "wallet"})
     private Account account; // buyer
 
     @ManyToOne
     @JoinColumn(name = "tool_id", nullable = false)
+    @JsonIgnoreProperties({"orders", "licenses", "files", "seller", "category"})
     private Tool tool;
 
     @ManyToOne
     @JoinColumn(name = "license_id", nullable = false)
+    @JsonIgnoreProperties({"customerOrders", "tool"})
     private License license;
 
     @Column(nullable = false)
@@ -38,6 +43,7 @@ public class CustomerOrder {
 
     @ManyToOne
     @JoinColumn(name = "transaction_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"wallet", "customerOrders", "licenseRenewLogs"})
     private WalletTransaction transaction;
 
     @Column(name = "created_at")

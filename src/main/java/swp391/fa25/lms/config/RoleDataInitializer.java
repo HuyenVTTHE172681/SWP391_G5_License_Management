@@ -118,6 +118,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             Role customerRole = roleRepository.findByRoleName(RoleName.CUSTOMER).get();
             Role adminRole = roleRepository.findByRoleName(RoleName.ADMIN).get();
             Role modRole = roleRepository.findByRoleName(RoleName.MOD).get();
+            Role managerRole = roleRepository.findByRoleName(RoleName.MANAGER).get();
 
             Account seller1 = new Account();
             seller1.setEmail("seller1@example.com");
@@ -164,7 +165,17 @@ public class RoleDataInitializer implements CommandLineRunner {
             mod1.setCreatedAt(LocalDateTime.now().minusDays(10));
             mod1.setRole(modRole);
 
+//            Account manager1 = new Account();
+//            manager1.setEmail("manager1@example.com");
+//            manager1.setPassword(passwordEncoder.encode("123456"));
+//            manager1.setVerified(true);
+//            manager1.setFullName("Nguyễn Quản Lý");
+//            manager1.setStatus(Account.AccountStatus.ACTIVE);
+//            manager1.setCreatedAt(LocalDateTime.now().minusDays(5));
+//            manager1.setRole(managerRole);
+
             accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin, mod1));
+            System.out.println("Default accounts have been initialized.");
         } else {
             System.out.println("Account already exist, skipping initialization.");
         }
@@ -213,7 +224,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             Tool t4 = new Tool();
             t4.setToolName("SEO Keyword Analyzer");
             t4.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
-            t4.setImage("/images/tools/seo1.png");
+            t4.setImage("/images/tools/1.png");
             t4.setSeller(seller1);
             t4.setCategory(categories.get(3)); // SEO
             t4.setStatus(Tool.Status.PUBLISHED);

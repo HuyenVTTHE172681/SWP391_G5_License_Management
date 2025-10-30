@@ -18,4 +18,5 @@ public interface ToolFileRepository extends JpaRepository<ToolFile, Integer> {
     @Transactional
     @Query("DELETE FROM ToolFile tf WHERE tf.tool.toolId = :toolId")
     void deleteAllByToolToolId(Long toolId);
+
 }

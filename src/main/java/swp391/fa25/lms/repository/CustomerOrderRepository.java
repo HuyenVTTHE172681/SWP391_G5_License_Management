@@ -22,4 +22,7 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     // THÊM MỚI: Tìm order bằng lastTxnRef cho callback retry
     @Query("SELECT o FROM CustomerOrder o WHERE o.lastTxnRef = :lastTxnRef")
     Optional<CustomerOrder> findByLastTxnRef(@Param("lastTxnRef") String lastTxnRef);
+    List<CustomerOrder> findByTool_Seller_AccountId(Long sellerId);
+
+    List<CustomerOrder> findByTool_ToolIdAndTool_Seller_AccountId(Long toolId, Long sellerId);
 }

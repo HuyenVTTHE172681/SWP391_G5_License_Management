@@ -1,5 +1,6 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class Role {
     private String note;
 
     @OneToMany(mappedBy = "role")
+    @JsonIgnore
     private List<Account> accounts;
 
     public Role() {

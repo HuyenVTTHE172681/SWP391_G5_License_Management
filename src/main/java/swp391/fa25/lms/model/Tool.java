@@ -1,10 +1,15 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,7 +20,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "Tool")
-@JsonIgnoreProperties({"seller", "toolFiles"})
+@JsonIgnoreProperties({"toolFiles"})
 public class Tool {
 
     @Id
@@ -24,31 +29,33 @@ public class Tool {
     private Long toolId;
 
     @NotBlank(message = "Tool name cannot be blank")
+    @Size(max = 100, message = "Tool name must be less than 100 characters")
     @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
+//    @Pattern(
+//            regexp = "^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$",
+//            message = "Tool name can only contain letters and numbers, separated by a single space"
+//    )
     private String toolName;
 
     private String reviewedBy;
 
-    @NotBlank(message = "Image cannot be blank")
     @Column(nullable = false)
     private String image;
 
     @NotBlank(message = "Description cannot be blank")
+    @Size(max = 500, message = "Description must be under 500 characters")
     @Column(columnDefinition = "NVARCHAR(100)", nullable = false)
     private String description;
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
-    @JsonManagedReference(value = "tool-seller")
+    @com.fasterxml.jackson.annotation.JsonBackReference(value = "tool-seller")
     private Account seller;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "tool_login_methods", joinColumns = @JoinColumn(name = "tool_id"))
-    @Column(name = "login_method")
-    private Set<String> loginMethods = new HashSet<>();
-
     @Enumerated(EnumType.STRING)
+    @Column(name = "login_method", nullable = false)
     private LoginMethod loginMethod;
+
     public enum LoginMethod {
         USER_PASSWORD,
         TOKEN
@@ -65,15 +72,19 @@ public class Tool {
     public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED,  VIOLATED}
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference(value = "tool-files")
     private List<ToolFile> files;
 
-    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
-    @JsonManagedReference(value = "tool-licenses")
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"tool", "customerOrders"})
     private List<License> licenses;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties({"tool", "license"})
+    private List<CustomerOrder> orders;
 
     @Column(columnDefinition = "NVARCHAR(255)")
     private String note;
@@ -121,13 +132,8 @@ public class Tool {
         this.toolName = toolName;
     }
 
-    public @NotBlank(message = "Image cannot be blank") String getImage() {
-        return image;
-    }
-
-    public void setImage(@NotBlank(message = "Image cannot be blank") String image) {
-        this.image = image;
-    }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
 
     public @NotBlank(message = "Description cannot be blank") String getDescription() {
         return description;
@@ -215,14 +221,6 @@ public class Tool {
         this.totalReviews = totalReviews;
     }
 
-    public Set<String> getLoginMethods() {
-        return loginMethods;
-    }
-
-    public void setLoginMethods(Set<String> loginMethods) {
-        this.loginMethods = loginMethods;
-    }
-
     public Integer getQuantity() {
         return quantity;
     }
@@ -291,5 +289,13 @@ public class Tool {
 
     public void setReviewedBy(String reviewedBy) {
         this.reviewedBy = reviewedBy;
+    }
+
+    public List<CustomerOrder> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<CustomerOrder> orders) {
+        this.orders = orders;
     }
 }

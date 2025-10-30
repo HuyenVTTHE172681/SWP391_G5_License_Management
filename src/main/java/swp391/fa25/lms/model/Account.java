@@ -1,6 +1,7 @@
 package swp391.fa25.lms.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -59,10 +60,12 @@ public class Account {
     private Role role;
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"transactions"})
     private Wallet wallet;
 
     // quan hệ với các bảng con
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"account", "license", "tool", "transaction"})
     private List<CustomerOrder> orders;
 
     @OneToMany(mappedBy = "account")
@@ -72,8 +75,12 @@ public class Account {
     private List<Favorite> favorites;
 
     @OneToMany(mappedBy = "seller")
-    @JsonBackReference(value = "tool-seller")
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "tool-seller")
     private List<Tool> tools;
+
+    @OneToMany(mappedBy = "uploadedBy")
+    @JsonManagedReference(value = "file-uploader")
+    private List<ToolFile> uploadedFiles;
 
     public Account() {
     }
@@ -97,6 +104,14 @@ public class Account {
         this.feedbacks = feedbacks;
         this.favorites = favorites;
         this.tools = tools;
+    }
+
+    public List<ToolFile> getUploadedFiles() {
+        return uploadedFiles;
+    }
+
+    public void setUploadedFiles(List<ToolFile> uploadedFiles) {
+        this.uploadedFiles = uploadedFiles;
     }
 
     public Long getAccountId() {
