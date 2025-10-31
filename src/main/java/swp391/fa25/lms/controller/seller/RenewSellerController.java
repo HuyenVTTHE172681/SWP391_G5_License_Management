@@ -62,9 +62,9 @@ public class RenewSellerController {
         String email = authentication.getName();
         Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
-        // ✅ Tạo URL thanh toán qua VNPay
+
         String paymentUrl = paymentService.createPaymentUrlForSeller(packageId, account, request);
-        return "redirect:" + paymentUrl; // Redirect user sang VNPay
+        return "redirect:" + paymentUrl;
     }
 
     // 🔄 VNPay callback trả về sau thanh toán

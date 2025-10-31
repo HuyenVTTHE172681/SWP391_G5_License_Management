@@ -56,21 +56,18 @@ public class PaymentController {
         boolean success = paymentService.handlePaymentCallback(params);
         String orderInfo = params.get("vnp_OrderInfo");
 
-        // ⚡️ Phân loại loại giao dịch dựa theo orderInfo
+        // ⚡ Phân biệt loại giao dịch
         if (orderInfo != null && orderInfo.startsWith("SELLER_")) {
             if (success) {
-                // ✅ Redirect đến trang thành công riêng cho seller
                 return "seller/paymentSuccess";
             } else {
-                // ❌ Redirect đến trang thất bại riêng cho seller
                 return "seller/paymentFailed";
             }
         }
 
-        // 🧾 Trường hợp khách hàng mua tool
+        // 🧾 Thanh toán tool
         model.put("success", success);
         model.put("vnpParams", params);
-
-        return "public/payment-result"; // hiển thị kết quả thanh toán tool
+        return "public/payment-result";
     }
 }
