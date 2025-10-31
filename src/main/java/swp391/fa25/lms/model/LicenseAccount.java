@@ -36,6 +36,7 @@ public class LicenseAccount {
     private Tool tool;
 
     @OneToMany(mappedBy = "licenseAccount")
+    @OrderBy("renewDate DESC")
     private List<LicenseRenewLog> renewAcc;
 
     @Enumerated(EnumType.STRING)
@@ -103,7 +104,7 @@ public class LicenseAccount {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(@NotBlank(message = "Password name cannot be blank") String password) {
         this.password = password;
     }
 

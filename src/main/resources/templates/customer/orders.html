@@ -119,12 +119,13 @@
     <div id="orderTableContainer" th:fragment="orderTableFragment">
 
         <!-- Nếu không có dữ liệu -->
-        <div th:if="${ordersPage.empty}" class="alert alert-warning text-center">
+        <div th:if="${ordersPage == null or ordersPage.isEmpty()}"
+             class="alert alert-warning text-center">
             Không có đơn hàng nào phù hợp với bộ lọc.
         </div>
 
         <!-- Nếu có dữ liệu, hiển thị bảng -->
-        <table th:if="${!ordersPage.empty}" class="table table-bordered table-hover align-middle">
+        <table class="table table-bordered table-hover align-middle">
             <thead class="table-primary text-center">
             <tr>
                 <th>Mã đơn hàng</th>
@@ -146,31 +147,71 @@
                 <td th:text="${order.license.name}"></td>
                 <td th:text="${#numbers.formatDecimal(order.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></td>
                 <td class="text-center">
-                <span th:switch="${order.orderStatus.name()}">
-                    <span th:case="'PENDING'" class="badge bg-warning">Chờ thanh toán</span>
-                    <span th:case="'SUCCESS'" class="badge bg-success">Thành công</span>
-                    <span th:case="'FAILED'" class="badge bg-danger">Thất bại</span>
-                    <span th:case="*">Không xác định</span>
-                </span>
+                                <span th:switch="${order.orderStatus.name()}">
+                                    <span th:case="'PENDING'" class="badge bg-warning">Chờ thanh toán</span>
+                                    <span th:case="'SUCCESS'" class="badge bg-success">Thành công</span>
+                                    <span th:case="'FAILED'" class="badge bg-danger">Thất bại</span>
+                                    <span th:case="*">Không xác định</span>
+                                </span>
                 </td>
                 <td class="text-center">
-                    <button class="btn btn-sm btn-primary" title="Xem chi tiết">
+                    <!-- Luôn show: Xem chi tiết -->
+                    <button class="btn btn-sm btn-primary" title="Xem chi tiết"
+                            >
                         <i class="bi bi-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-warning" th:disabled="${!order.canFeedbackOrReport}">Feedback</button>
-                    <button class="btn btn-sm btn-danger" th:disabled="${!order.canFeedbackOrReport}">Report</button>
-                    <a th:href="@{'/my-tools/' + ${order.orderId}}"
+
+                    <!-- Chỉ show nếu SUCCESS: Feedback -->
+<!--                    <button th:if="${order.orderStatus.name() == 'SUCCESS'}"-->
+<!--                            class="btn btn-sm btn-warning" th:disabled="${!order.canFeedbackOrReport}"-->
+<!--                            th:onclick="'window.location.href=\'/feedback/create?orderId=' + ${order.orderId}">-->
+<!--                        Feedback-->
+<!--                    </button>-->
+                    <span th:if="${order.orderStatus.name() == 'SUCCESS'}">
+        <span th:if="${order.canFeedbackOrReport}">
+            <a class="btn btn-sm btn-warning"
+               th:href="@{|/orders/${order.orderId}/feedback|}">
+                Feedback
+            </a>
+        </span>
+        <span th:unless="${order.canFeedbackOrReport}">
+            <button class="btn btn-sm btn-warning" disabled>Feedback</button>
+        </span>
+    </span>
+
+                    <!-- Chỉ show nếu SUCCESS: Report -->
+<!--                    <button th:if="${order.orderStatus.name() == 'SUCCESS'}"-->
+<!--                            class="btn btn-sm btn-danger" th:disabled="${!order.canFeedbackOrReport}"-->
+<!--                            >-->
+<!--                        Report-->
+<!--                    </button>-->
+
+                    <span th:if="${order.orderStatus.name() == 'SUCCESS'}">
+        <span th:if="${order.canFeedbackOrReport}">
+            <a class="btn btn-sm btn-danger"
+               th:href="@{|/orders/${order.orderId}/report|}">
+                Report
+            </a>
+        </span>
+        <span th:unless="${order.canFeedbackOrReport}">
+            <button class="btn btn-sm btn-danger" disabled>Report</button>
+        </span>
+    </span>
+
+                    <!-- Chỉ show nếu SUCCESS: Dùng dịch vụ -->
+                    <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
+                       th:href="@{'/my-tools/' + ${order.orderId}}"
                        class="btn btn-sm btn-success"
                        th:disabled="${!order.canFeedbackOrReport}">
                         <i class="bi bi-arrow-right"></i> Dùng dịch vụ
                     </a>
-                    <!-- THÊM MỚI: Nút retry cho PENDING -->
-                    <a th:href="@{'/payment/create?toolId=' + ${order.tool.toolId} + '&licenseId=' + ${order.license.licenseId} + '&orderId=' + ${order.orderId}}"
-                       th:if="${order.orderStatus == T(swp391.fa25.lms.model.CustomerOrder$OrderStatus).PENDING}"
+
+                    <!-- Chỉ show nếu PENDING: Thanh toán lại -->
+                    <a th:if="${order.orderStatus.name() == 'PENDING'}"
+                       th:href="@{'/payment/create?toolId=' + ${order.tool.toolId} + '&licenseId=' + ${order.license.licenseId} + '&orderId=' + ${order.orderId}}"
                        class="btn btn-sm btn-info">
                         <i class="bi bi-credit-card"></i> Thanh toán lại
                     </a>
-
                 </td>
             </tr>
             </tbody>

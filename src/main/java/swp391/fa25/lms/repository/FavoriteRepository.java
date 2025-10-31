@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
     Optional<Favorite> findByAccountAndTool(Account account, Tool tool);
     List<Favorite> findByAccount(Account account);
+
     long countByAccount(Account account);
 
     // Query by account ID (dùng @Query để lấy list Favorite)

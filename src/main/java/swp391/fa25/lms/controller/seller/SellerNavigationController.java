@@ -35,11 +35,11 @@ public class SellerNavigationController {
     }
 
     // 💬 Trang View Feedback
-    @GetMapping("/seller/feedback")
-    public String goToFeedback() {
-        // Trả về template "feedback.html" để team frontend xử lý sau
-        return "seller/feedback";
-    }
+//    @GetMapping("/seller/feedback")
+//    public String goToFeedback() {
+//        // Trả về template "feedback.html" để team frontend xử lý sau
+//        return "seller/feedback";
+//    }
     // ==============================
     // 🟢 1. Hiển thị trang report
     // ==============================

@@ -147,6 +147,15 @@ public class RoleDataInitializer implements CommandLineRunner {
             customer1.setCreatedAt(LocalDateTime.now().minusDays(10));
             customer1.setRole(customerRole);
 
+            Account customer4 = new Account();
+            customer4.setEmail("customer4@example.com");
+            customer4.setPassword(passwordEncoder.encode("123456"));
+            customer4.setVerified(true);
+            customer4.setFullName("Bùi Duy Ngọc");
+            customer4.setStatus(Account.AccountStatus.ACTIVE);
+            customer4.setCreatedAt(LocalDateTime.now().minusDays(10));
+            customer4.setRole(customerRole);
+
             Account admin = new Account();
             admin.setEmail(FIXED_ADMIN_EMAIL);
             admin.setPassword(passwordEncoder.encode("admin123"));
@@ -165,17 +174,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             mod1.setCreatedAt(LocalDateTime.now().minusDays(10));
             mod1.setRole(modRole);
 
-//            Account manager1 = new Account();
-//            manager1.setEmail("manager1@example.com");
-//            manager1.setPassword(passwordEncoder.encode("123456"));
-//            manager1.setVerified(true);
-//            manager1.setFullName("Nguyễn Quản Lý");
-//            manager1.setStatus(Account.AccountStatus.ACTIVE);
-//            manager1.setCreatedAt(LocalDateTime.now().minusDays(5));
-//            manager1.setRole(managerRole);
-
-            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin, mod1));
-            System.out.println("Default accounts have been initialized.");
+            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin, mod1,customer4));
         } else {
             System.out.println("Account already exist, skipping initialization.");
         }
@@ -224,7 +223,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             Tool t4 = new Tool();
             t4.setToolName("SEO Keyword Analyzer");
             t4.setDescription("Phân tích từ khóa, hỗ trợ SEO toàn diện.");
-            t4.setImage("/images/tools/1.png");
+            t4.setImage("/images/tools/seo1.png");
             t4.setSeller(seller1);
             t4.setCategory(categories.get(3)); // SEO
             t4.setStatus(Tool.Status.PUBLISHED);
@@ -546,7 +545,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             }
         }
 
-        System.out.println("Wallet initialization completed successfully for all accounts.");
+        System.out.println("Wallet initialization completed successfully.");
 
 
     }

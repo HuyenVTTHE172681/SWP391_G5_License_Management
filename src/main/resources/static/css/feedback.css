@@ -1,0 +1,89 @@
+/* Palette nhẹ nhàng */
+:root{
+    --bg:#f7fafc; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0;
+    --accent:#2563eb; --accent-soft:#eff6ff; --star-on:#f59e0b; --star-off:#e2e8f0;
+}
+
+body{
+    background:
+            radial-gradient(1200px 600px at 20% -10%, #c7d2fe2a, transparent 60%),
+            radial-gradient(1000px 500px at 110% 10%, #bbf7d02a, transparent 60%),
+            var(--bg);
+    color:var(--text);
+    padding-top: 24px;
+}
+
+.page{ max-width: 980px; margin: 0 auto; }
+
+.header{
+    background: linear-gradient(180deg, #ffffff, #fbfdff);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 20px;
+    box-shadow: 0 10px 24px rgba(2,6,23,.06);
+    margin-bottom:16px;
+}
+
+.title{ margin:0 0 6px; font-weight:800; letter-spacing:.2px; }
+.sub{ margin:0; color:var(--muted); }
+
+/* Khối điểm trung bình */
+.rating-summary{
+    display:flex; align-items:center; gap:14px; margin-top:10px;
+}
+.rating-number{ font-size:34px; font-weight:800; line-height:1; }
+.stars .on{ color:var(--star-on); }
+.stars .off{ color:var(--star-off); }
+.stars .star{ font-size:18px; }
+
+/* Card review */
+.card{
+    background: var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px 16px;
+    box-shadow: 0 6px 16px rgba(2,6,23,.04);
+    margin-bottom:12px;
+}
+.review-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:8px;
+}
+.author{ font-weight:600; }
+.muted{ color:var(--muted); }
+
+/* Empty state */
+.empty{
+    background: var(--accent-soft);
+    border:1px dashed #bfdbfe;
+    color:#1e40af;
+    border-radius:12px;
+    padding:18px;
+    text-align:center;
+}
+
+/* Pagination đẹp hơn */
+.pagination > li > a,
+.pagination > li > span{
+    border-radius:8px !important;
+    border-color: var(--border);
+    color:#1f2937;
+}
+.pagination > .active > a,
+.pagination > .active > span{
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Responsive */
+@media (max-width: 600px){
+    .rating-number{ font-size:28px; }
+    .stars .star{ font-size:16px; }
+}
+/* --- create form tweaks --- */
+.create-comment { width: 48%; margin-left: 8px; }
+.create-submit { margin-left: 8px; }
+@media (max-width: 600px){
+    .create-comment { width: 100%; margin: 8px 0 0 0; }
+    .create-submit { margin-left: 0; margin-top: 8px; }
+}

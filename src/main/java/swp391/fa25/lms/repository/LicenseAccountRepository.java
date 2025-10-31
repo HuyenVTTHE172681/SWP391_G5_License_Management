@@ -16,11 +16,15 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
     boolean existsByToken(String token);
     long countByToolToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
 
-    Optional<LicenseAccount> findFirstByToolAndUsedFalse(Tool tool);
-
     // Lấy tất cả license còn hoạt động nhưng đã hết hạn
     @Query("SELECT l FROM LicenseAccount l WHERE l.status = 'ACTIVE' AND l.endDate < :now")
     List<LicenseAccount> findExpiredAccounts(LocalDateTime now);
+
+    Optional<LicenseAccount> findFirstByToolAndUsedFalse(Tool tool);
+
+    Optional<LicenseAccount> findByOrder_OrderId(Long orderId);
+
+    boolean existsByOrder_OrderId(Long orderId);
     List<LicenseAccount> findByToolToolId(Long toolId);
 }
 

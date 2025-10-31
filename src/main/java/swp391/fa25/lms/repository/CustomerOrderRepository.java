@@ -1,5 +1,6 @@
 package swp391.fa25.lms.repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,4 +26,21 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     List<CustomerOrder> findByTool_Seller_AccountId(Long sellerId);
 
     List<CustomerOrder> findByTool_ToolIdAndTool_Seller_AccountId(Long toolId, Long sellerId);
+    @Query("""
+           select o from CustomerOrder o
+           join fetch o.tool t
+           left join fetch o.licenseAccount la
+           left join fetch o.license l
+           where o.orderId = :id
+           """)
+    Optional<CustomerOrder> findWithToolAndLicenseAccountById(@Param("id") Long id);
+    @EntityGraph(attributePaths = {"tool","licenseAccount","license"})
+    Optional<CustomerOrder> findByOrderIdAndAccount_AccountId(Long orderId, Long accountId);
+    @EntityGraph(attributePaths = {
+            "tool",
+            "license",
+            "licenseAccount",
+            "licenseAccount.renewAcc"   // <— load lịch sử gia hạn
+    })
+    Optional<CustomerOrder> findByOrderId(Long orderId);
 }
