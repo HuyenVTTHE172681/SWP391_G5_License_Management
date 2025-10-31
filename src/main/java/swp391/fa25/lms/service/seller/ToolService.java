@@ -34,7 +34,6 @@ public class ToolService {
         return toolRepo.save(tool);
     }
 
-
     public Tool save(Tool tool) {
         tool.setUpdatedAt(LocalDateTime.now());
         return toolRepo.save(tool);
@@ -82,11 +81,11 @@ public class ToolService {
         Tool tool = toolRepo.findByToolIdAndSeller(id, seller)
                 .orElseThrow(() -> new RuntimeException("Tool not found or unauthorized"));
 
-//        if (tool.getStatus() == Tool.Status.PUBLISHED) {
-//            tool.setStatus(Tool.Status.DEACTIVE);
-//        } else {
-//            tool.setStatus(Tool.Status.PUBLISHED);
-//        }
+        if (tool.getStatus() == Tool.Status.PUBLISHED) {
+            tool.setStatus(Tool.Status.DEACTIVATED);
+        } else {
+            tool.setStatus(Tool.Status.PUBLISHED);
+        }
 
         tool.setUpdatedAt(LocalDateTime.now());
         toolRepo.save(tool);

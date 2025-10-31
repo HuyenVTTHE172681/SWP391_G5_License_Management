@@ -37,7 +37,7 @@ public class ModeratorToolController {
     @Autowired
     private CategoryService categoryService;
 
-    @GetMapping({"", "/"})
+    @GetMapping({"", "/dashboard"})
     public String moderatorDashboard(Model model) {
         model.addAttribute("activePage", "dashboard");
         return "moderator/dashboard";
@@ -65,7 +65,7 @@ public class ModeratorToolController {
                 uploadTo,
                 approvedFrom,
                 approvedTo,
-                "CUSTOMER",
+                "MOD",
                 status
         );
 

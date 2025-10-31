@@ -66,6 +66,36 @@ public class ResetPasswordController {
             return "public/reset-passwordProfile";
         }
 
+        if(!newPassword.matches(".*[A-Z].*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 chữ in hoa");
+            return "public/reset-passwordProfile";
+        }
+
+        if(!newPassword.matches(".*[a-z].*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 chữ in thường");
+            return "public/reset-passwordProfile";
+        }
+
+        if(!newPassword.matches(".*\\d.*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 chữ số");
+            return "public/reset-passwordProfile";
+        }
+
+        if (!newPassword.matches(".*[@$!%*?&^#()_+=-].*")) {
+            model.addAttribute("error", "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.");
+            return "public/reset-passwordProfile";
+        }
+
+        if(newPassword.length() < 8){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 8 ký tự");
+            return "public/reset-passwordProfile";
+        }
+
+        if(newPassword.contains(" ")){
+            model.addAttribute("error", "Mật khẩu không được có dấu cách");
+            return "public/reset-passwordProfile";
+        }
+
         // Cập nhật mật khẩu mới
         account.setPassword(passwordEncoder.encode(newPassword));
         accountRepository.save(account);

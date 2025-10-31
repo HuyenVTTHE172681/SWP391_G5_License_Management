@@ -1,5 +1,7 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -15,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Objects;
 import java.util.Set;
 
@@ -43,13 +46,13 @@ public class Tool {
     private String image;
 
     @NotBlank(message = "Description cannot be blank")
-    @Size(max = 500, message = "Description must be under 500 characters")
     @Column(columnDefinition = "NVARCHAR(100)", nullable = false)
     private String description;
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
     @com.fasterxml.jackson.annotation.JsonBackReference(value = "tool-seller")
+    @JsonManagedReference(value = "tool-seller")
     private Account seller;
 
     @Enumerated(EnumType.STRING)
@@ -69,7 +72,7 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED,  VIOLATED}
+    public enum Status {PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED,  VIOLATED}
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference(value = "tool-files")
@@ -85,6 +88,7 @@ public class Tool {
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
     @JsonIgnoreProperties({"tool", "license"})
     private List<CustomerOrder> orders;
+
 
     @Column(columnDefinition = "NVARCHAR(255)")
     private String note;
@@ -221,14 +225,6 @@ public class Tool {
         this.totalReviews = totalReviews;
     }
 
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
     public LoginMethod getLoginMethod() {
         return loginMethod;
     }
@@ -291,6 +287,14 @@ public class Tool {
         this.reviewedBy = reviewedBy;
     }
 
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
     public List<CustomerOrder> getOrders() {
         return orders;
     }
@@ -298,4 +302,5 @@ public class Tool {
     public void setOrders(List<CustomerOrder> orders) {
         this.orders = orders;
     }
+
 }

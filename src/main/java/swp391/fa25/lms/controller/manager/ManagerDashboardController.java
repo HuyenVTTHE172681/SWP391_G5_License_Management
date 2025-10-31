@@ -1,18 +1,20 @@
 package swp391.fa25.lms.controller.manager;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Category;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.service.moderator.CategoryService;
-import swp391.fa25.lms.service.moderator.ToolService;
+import swp391.fa25.lms.service.manager.ToolService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,8 +22,9 @@ import java.util.List;
 @Controller
 @RequestMapping("/manager")
 public class ManagerDashboardController {
+
     @Autowired
-    @Qualifier("moderatorToolService")
+    @Qualifier("manageToolService")
     private ToolService toolService;
 
     @Autowired
@@ -67,6 +70,7 @@ public class ManagerDashboardController {
 
         return "manager/upload-tool";
     }
+
     @GetMapping("/tool/{id}")
     public String viewToolDetail(@PathVariable Long id, Model model) {
         Tool tool = toolService.findById(id);
@@ -156,4 +160,5 @@ public class ManagerDashboardController {
 
         return "manager/tool-list";
     }
+
 }
