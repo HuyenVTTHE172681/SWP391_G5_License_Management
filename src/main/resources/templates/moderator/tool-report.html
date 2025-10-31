@@ -56,7 +56,11 @@
             <button type="submit" class="btn btn-filter">Filter</button>
             <a th:href="@{/moderator/tool/report}" class="btn btn-reset">Reset</a>
         </form>
-
+        <p th:if="${message != null}" th:text="${message}"
+           style="margin-top:12px;padding:10px 14px;border-radius:8px;
+          font-size:14px;line-height:1.5;
+          background-color:#fef3c7;border:1px solid #facc15;color:#92400e;">
+        </p>
         <!-- 📋 Report table -->
         <table>
             <thead>

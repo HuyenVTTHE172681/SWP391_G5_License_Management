@@ -176,7 +176,7 @@ public class ModeratorToolController {
         }
         toolService.approveTool(tool, account.getRole().getRoleName().toString());
 
-        redirectAttributes.addFlashAttribute("successMessage", "Approved");
+        redirectAttributes.addFlashAttribute("message", tool.getToolName() + " Approved");
         return "redirect:/moderator/uploadRequest";
     }
 
@@ -195,7 +195,7 @@ public class ModeratorToolController {
 
         toolService.rejectTool(tool, reason, account.getRole().getRoleName().toString());
 
-        redirectAttributes.addFlashAttribute("errorMessage", "Rejected because" + reason);
+        redirectAttributes.addFlashAttribute("message", "Rejected because" + reason);
         return "redirect:/moderator/uploadRequest";
     }
 
@@ -235,14 +235,14 @@ public class ModeratorToolController {
     @PostMapping("/tool/report/{id}/approve")
     public String approveReport(@PathVariable Long id, RedirectAttributes redirect) {
         toolReportService.updateStatus(id, ToolReport.Status.APPROVED);
-        redirect.addFlashAttribute("success", "✅ Report approved successfully!");
+        redirect.addFlashAttribute("message", "Report approved successfully!");
         return "redirect:/moderator/tool/report";
     }
 
     @PostMapping("/tool/report/{id}/reject")
     public String rejectReport(@PathVariable Long id, RedirectAttributes redirect) {
         toolReportService.updateStatus(id, ToolReport.Status.REJECTED);
-        redirect.addFlashAttribute("error", "Report rejected.");
+        redirect.addFlashAttribute("message", "Report rejected.");
         return "redirect:/moderator/tool/report";
     }
 }
