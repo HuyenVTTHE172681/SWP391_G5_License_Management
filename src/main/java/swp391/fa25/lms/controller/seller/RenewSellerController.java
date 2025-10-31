@@ -1,5 +1,6 @@
 package swp391.fa25.lms.controller.seller;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -12,12 +13,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.SellerSubscription;
 import swp391.fa25.lms.repository.AccountRepository;
-import swp391.fa25.lms.service.customer.PaymentService;
+import swp391.fa25.lms.service.seller.PaymentPackageService;
 import swp391.fa25.lms.service.seller.SellerService;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/seller")
@@ -30,26 +30,21 @@ public class RenewSellerController {
     private AccountRepository accountRepo;
 
     @Autowired
-    private PaymentService paymentService;
+    private PaymentPackageService paymentPackageService;
 
     // 🧾 Hiển thị trang chọn gói
     @GetMapping("/renew")
-    public String showRenewPage(Authentication authentication, Model model) {
-        if (authentication != null) {
-            String email = authentication.getName();
-            Account account = accountRepo.findByEmail(email).orElse(null);
-
-            if (account != null) {
-                if (account.getSellerExpiryDate() == null) {
-                    model.addAttribute("warning", "Bạn chưa kích hoạt gói Seller. Vui lòng chọn gói phù hợp!");
-                } else if (account.getSellerExpiryDate().isBefore(LocalDateTime.now())) {
-                    model.addAttribute("warning", "⚠️ Gói Seller của bạn đã hết hạn! Vui lòng gia hạn để tiếp tục.");
-                } else {
-                    model.addAttribute("info", "⏳ Gói hiện tại còn hạn đến: " + account.getSellerExpiryDate().toLocalDate());
-                }
+    public String showRenewPage(HttpSession session, Model model) {
+        Account account = (Account) session.getAttribute("loggedInAccount");
+        if (account != null) {
+            if (account.getSellerExpiryDate() == null) {
+                model.addAttribute("warning", "Bạn chưa kích hoạt gói Seller. Vui lòng chọn gói phù hợp!");
+            } else if (account.getSellerExpiryDate().isBefore(LocalDateTime.now())) {
+                model.addAttribute("warning", "⚠️ Gói Seller của bạn đã hết hạn! Vui lòng gia hạn để tiếp tục.");
+            } else {
+                model.addAttribute("info", "⏳ Gói hiện tại còn hạn đến: " + account.getSellerExpiryDate().toLocalDate());
             }
         }
-
         model.addAttribute("packages", sellerService.getAllPackage());
         return "seller/renewSeller";
     }
@@ -63,21 +58,9 @@ public class RenewSellerController {
         Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
 
-        String paymentUrl = paymentService.createPaymentUrlForSeller(packageId, account, request);
+        // Dùng PaymentPackageService (service dành riêng cho Seller)
+        String paymentUrl = paymentPackageService.createPaymentUrlForSeller(packageId, account, request);
         return "redirect:" + paymentUrl;
-    }
-
-    // 🔄 VNPay callback trả về sau thanh toán
-    @GetMapping("/payment-return")
-    public String handlePaymentReturn(@RequestParam Map<String, String> params, Model model) {
-        boolean success = paymentService.handlePaymentCallback(params);
-        if (success) {
-            model.addAttribute("message", "🎉 Thanh toán thành công! Gói Seller đã được kích hoạt.");
-            return "seller/paymentSuccess";
-        } else {
-            model.addAttribute("message", "❌ Thanh toán thất bại hoặc bị hủy.");
-            return "seller/paymentFailed";
-        }
     }
 
     // 📜 Xem lịch sử gia hạn
