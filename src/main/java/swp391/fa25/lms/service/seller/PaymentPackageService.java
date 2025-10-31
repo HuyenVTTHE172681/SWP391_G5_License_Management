@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
-public class PaymentPackage {
+public class PaymentPackageService {
 
     private final ToolRepository toolRepository;
     private final LicenseToolRepository licenseToolRepository;
@@ -45,7 +45,7 @@ public class PaymentPackage {
     @Value("${vnpay.returnUrl}")
     private String returnUrl;
 
-    public PaymentPackage(ToolRepository toolRepository,
+    public PaymentPackageService(ToolRepository toolRepository,
                           LicenseToolRepository licenseToolRepository,
                           CustomerOrderRepository orderRepository,
                           WalletTransactionRepository transactionRepository,
@@ -105,7 +105,7 @@ public class PaymentPackage {
         vnpParams.put("vnp_OrderInfo", "SELLER_" + packageId + "_" + account.getAccountId());
         vnpParams.put("vnp_OrderType", "billpayment");
         vnpParams.put("vnp_Locale", "vn");
-        vnpParams.put("vnp_ReturnUrl", returnUrl.trim() + "/seller/payment-return");
+        vnpParams.put("vnp_ReturnUrl", returnUrl.trim());
         vnpParams.put("vnp_IpAddr", request.getRemoteAddr());
         vnpParams.put("vnp_CreateDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 

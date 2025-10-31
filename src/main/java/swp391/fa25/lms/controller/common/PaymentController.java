@@ -75,7 +75,7 @@ public class PaymentController {
         // Gọi service để tạo URL thanh toán VNPay (tạo order mới PENDING)
         String paymentUrl = paymentService.createPaymentUrl(toolId, licenseId, account, request);
 
-        // Redirect sang VNPay để thực hiện thanh toán
+        // Redirect client to VNPay (sandbox)
         return new RedirectView(paymentUrl);
     }
 
@@ -87,7 +87,18 @@ public class PaymentController {
                                 Map<String, Object> model) {
         // Gọi service xử lý callback từ VNPay
         boolean success = paymentService.handlePaymentCallback(params);
+        String orderInfo = params.get("vnp_OrderInfo");
 
+        // ⚡ Phân biệt loại giao dịch
+        if (orderInfo != null && orderInfo.startsWith("SELLER_")) {
+            if (success) {
+                return "seller/paymentSuccess";
+            } else {
+                return "seller/paymentFailed";
+            }
+        }
+
+        // 🧾 Thanh toán tool
         // Kết quả ra view
         model.put("success", success);
         model.put("vnpParams", params);
