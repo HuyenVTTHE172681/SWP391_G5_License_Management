@@ -106,3 +106,14 @@ td.small{ color:var(--muted); font-size:13px }
 @media (max-width: 640px){
     .kpis{ grid-template-columns: 1fr; }
 }
+.card-head .filters{ display:flex; align-items:center; gap:8px; }
+.card-head .filters input[type="text"],
+.card-head .filters select{
+    height:36px; padding:6px 10px;
+    border:1px solid var(--border); border-radius:10px;
+    background:#fff; font-size:13px; outline:none;
+}
+.card-head .filters input[type="text"]:focus,
+.card-head .filters select:focus{
+    border-color:#bfdbfe; box-shadow:0 0 0 3px #dbeafe;
+}

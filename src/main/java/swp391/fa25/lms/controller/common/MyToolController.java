@@ -16,9 +16,10 @@ import java.time.LocalDateTime;
 @Controller
 @RequestMapping("/my-tools")
 public class MyToolController {
-      @Autowired
-      @Qualifier("myTool")
-    private  MyToolService myToolService;
+
+    @Autowired
+    @Qualifier("myTool")
+    private MyToolService myToolService;
 
     public MyToolController(MyToolService myToolService) {
         this.myToolService = myToolService;

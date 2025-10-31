@@ -18,7 +18,6 @@
                 Mã đơn: <span th:text="${order.orderId}">0</span>
             </small>
         </div>
-
     </div>
 
     <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
@@ -32,12 +31,10 @@
                 <th style="width:260px">License Account ID</th>
                 <td th:text="*{licenseAccountId}">-</td>
             </tr>
-
             <tr>
                 <th>Login method</th>
                 <td th:text="*{loginMethod}">TOKEN</td>
             </tr>
-
             <tr>
                 <th>Token</th>
                 <td class="d-flex align-items-center gap-2">
@@ -46,7 +43,6 @@
                     <button class="btn btn-sm btn-outline-primary" type="button" onclick="copyText('tVal')">Copy</button>
                 </td>
             </tr>
-
             <tr>
                 <th>Status</th>
                 <td th:switch="${acc.status != null ? acc.status.name() : null}">
@@ -56,7 +52,6 @@
                     <span class="badge text-bg-secondary" th:case="*">N/A</span>
                 </td>
             </tr>
-
             <tr>
                 <th>Hiệu lực</th>
                 <td>
@@ -65,76 +60,35 @@
                     <span th:text="${acc.endDate != null ? #temporals.format(acc.endDate,'dd/MM/yyyy HH:mm') : '-'}">-</span>
                 </td>
             </tr>
-
-            <tr>
-                <th>Lần đăng nhập gần nhất</th>
-                <td th:text="${acc.lastLogin != null ? #temporals.format(acc.lastLogin,'dd/MM/yyyy HH:mm') : '-'}">-</td>
-            </tr>
-
-            <tr><th>Thiết bị</th><td th:text="${#strings.isEmpty(acc.deviceInfo) ? '-' : acc.deviceInfo}">-</td></tr>
-            <tr><th>Max devices</th><td th:text="*{maxDevices}">1</td></tr>
-
-            <tr>
-                <th>Đã kích hoạt</th>
-                <td>
-                    <span th:text="*{used} ? 'Yes' : 'No'">No</span>
-                    <span th:if="*{activatedAt != null}">
-                        · <span th:text="${#temporals.format(acc.activatedAt,'dd/MM/yyyy HH:mm')}">-</span>
-                    </span>
-                </td>
-            </tr>
-
             <tr>
                 <th>License gói (lần mua gần nhất)</th>
                 <td th:text="${order.license != null ? order.license.name : '-'}">-</td>
+            </tr>
+
+            <!-- ✅ Tệp cài đặt / file đính kèm  -->
+            <tr>
+                <th>Tệp cài đặt / file đính kèm</th>
+                <td>
+                    <div th:if="${#lists.isEmpty(files)}" class="text-muted">Chưa có file</div>
+
+                    <div class="d-flex flex-wrap gap-2" th:if="${!#lists.isEmpty(files)}">
+                        <!-- Chỉ hiển thị nút Download cho WRAPPED -->
+                        <a class="btn btn-sm btn-outline-primary"
+                           th:each="f : ${files}"
+                           th:if="${f.fileType != null and f.fileType.name() == 'WRAPPED'}"
+                           th:href="@{|/my-tools/${order.orderId}/files/${f.fileId}|}">
+                            Download
+                        </a>
+                        <!-- Nếu không có file WRAPPED, không hiển thị nút (tuân theo yêu cầu không cho tải ORIGINAL) -->
+                    </div>
+                </td>
             </tr>
             </tbody>
         </table>
     </div>
 
-    <!-- File cài đặt / đính kèm -->
-    <div class="card mt-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Tệp cài đặt / file đính kèm</strong>
-            <small class="text-muted">Các file thuộc Tool này</small>
-        </div>
-        <div class="card-body p-0">
-            <table class="table mb-0 align-middle">
-                <thead>
-                <tr>
-                    <th style="width:40%">Tên file</th>
-                    <th style="width:15%">Loại</th>
-                    <th style="width:25%">Ngày tải lên</th>
-                    <th style="width:20%"></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${#lists.isEmpty(files)}">
-                    <td colspan="4" class="text-center text-muted">Chưa có file nào</td>
-                </tr>
-
-                <tr th:each="f : ${files}"
-                    th:with="p=${f.filePath != null ? #strings.replace(f.filePath,'\\','/') : ''}">
-                    <!-- Lấy tên file an toàn cho cả Windows/Unix -->
-                    <td th:text="${p != '' ? p.substring(p.lastIndexOf('/') + 1) : '-'}">file.zip</td>
-
-                    <td th:switch="${f.fileType != null ? f.fileType.name() : null}">
-                        <span class="badge bg-secondary" th:case="'ORIGINAL'">ORIGINAL</span>
-                        <span class="badge bg-info"      th:case="'WRAPPED'">WRAPPED</span>
-                        <span class="badge bg-secondary" th:case="*">N/A</span>
-                    </td>
-
-                    <td th:text="${f.createdAt != null ? #temporals.format(f.createdAt,'dd/MM/yyyy HH:mm') : '-'}">-</td>
-                    <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary"
-                           th:href="@{|/my-tools/${order.orderId}/files/${f.fileId}|}">Download</a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <a href="/orders" class="btn btn-link mt-3">« Quay lại đơn hàng</a>
+    <!-- Đường dẫn quay lại -->
+    <a href="/orders" class="btn btn-link mt-1">« Quay lại đơn hàng</a>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -145,19 +99,12 @@
         if (el && !el.dataset.orig) el.dataset.orig = el.textContent;
         if (el) el.dataset.real = '1';
     });
-
     function toggleToken(){
         const el = document.getElementById('tVal');
         if (!el) return;
-        if (el.dataset.real === '1') {
-            el.textContent = '••••••••';
-            el.dataset.real = '0';
-        } else {
-            el.textContent = el.dataset.orig || '';
-            el.dataset.real = '1';
-        }
+        if (el.dataset.real === '1') { el.textContent = '••••••••'; el.dataset.real = '0'; }
+        else { el.textContent = el.dataset.orig || ''; el.dataset.real = '1'; }
     }
-
     function copyText(id){
         const t = document.getElementById(id)?.innerText || '';
         navigator.clipboard.writeText(t).then(()=>alert('Đã copy'));
