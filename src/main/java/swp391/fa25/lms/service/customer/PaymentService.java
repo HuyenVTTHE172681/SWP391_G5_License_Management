@@ -105,7 +105,7 @@ public class PaymentService {
         vnpParams.put("vnp_OrderInfo", "SELLER_" + packageId + "_" + account.getAccountId());
         vnpParams.put("vnp_OrderType", "billpayment");
         vnpParams.put("vnp_Locale", "vn");
-        vnpParams.put("vnp_ReturnUrl", returnUrl.trim() + "/seller/payment-return");
+        vnpParams.put("vnp_ReturnUrl", returnUrl.trim());
         vnpParams.put("vnp_IpAddr", request.getRemoteAddr());
         vnpParams.put("vnp_CreateDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 

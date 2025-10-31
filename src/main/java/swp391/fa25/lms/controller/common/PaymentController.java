@@ -54,11 +54,23 @@ public class PaymentController {
     public String paymentReturn(@RequestParam Map<String, String> params,
                                 Map<String, Object> model) {
         boolean success = paymentService.handlePaymentCallback(params);
+        String orderInfo = params.get("vnp_OrderInfo");
 
-        // Put result info into model for the result page to read and show details
+        // ⚡️ Phân loại loại giao dịch dựa theo orderInfo
+        if (orderInfo != null && orderInfo.startsWith("SELLER_")) {
+            if (success) {
+                // ✅ Redirect đến trang thành công riêng cho seller
+                return "seller/paymentSuccess";
+            } else {
+                // ❌ Redirect đến trang thất bại riêng cho seller
+                return "seller/paymentFailed";
+            }
+        }
+
+        // 🧾 Trường hợp khách hàng mua tool
         model.put("success", success);
         model.put("vnpParams", params);
 
-        return "public/payment-result"; // template to show success/failure + order details
+        return "public/payment-result"; // hiển thị kết quả thanh toán tool
     }
 }
