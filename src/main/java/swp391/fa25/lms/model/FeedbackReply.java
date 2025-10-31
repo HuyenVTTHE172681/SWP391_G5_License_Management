@@ -13,11 +13,11 @@ public class FeedbackReply {
 
     @OneToOne
     @JoinColumn(name = "feedback_id", nullable = false, unique = true)
-    private Feedback feedback; // mỗi feedback có tối đa 1 reply của seller
+    private Feedback feedback;
 
     @ManyToOne
     @JoinColumn(name = "seller_id", nullable = false)
-    private Account seller; // seller của tool
+    private Account seller;
 
     @Column(name = "content", columnDefinition = "NVARCHAR(500)", nullable = false)
     private String content;
