@@ -11,10 +11,13 @@ import java.util.List;
 @Repository
 public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, Long> {
     // Lấy danh sách token theo tool_id
-    List<LicenseAccount> findByTool_ToolId(Long toolId);
+    List<LicenseAccount> findByTool_ToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
 
     // Kiểm tra token đã tồn tại trong 1 tool chưa (chống trùng trong DB mode)
     boolean existsByToolAndToken(Tool tool, String token);
+    boolean existsByToken(String token);
+    @Transactional
+    void deleteByTool(Tool tool);
 }
 
 

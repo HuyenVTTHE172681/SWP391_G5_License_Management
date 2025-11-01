@@ -20,7 +20,7 @@ import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface ToolRepository extends JpaRepository<Tool, Long> {
-
+    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
     List<Tool> findAllByToolNameContainingIgnoreCaseAndCategory_CategoryId(
             String toolName, Long categoryId, Sort sort);
 

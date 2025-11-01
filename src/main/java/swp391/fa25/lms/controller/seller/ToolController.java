@@ -4,12 +4,8 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.*;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,18 +14,30 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
+import swp391.fa25.lms.service.seller.FileStorageService;
 import swp391.fa25.lms.service.seller.ToolFlowService;
 import swp391.fa25.lms.service.seller.ToolService;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 @Controller
 @RequestMapping("/seller/tools")
 public class ToolController {
 
-    @Autowired @Qualifier("sellerToolService") private ToolService toolService;
-    @Autowired private ToolFlowService toolFlowService;
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    @Qualifier("sellerToolService")
+    private ToolService toolService;
+
+    @Autowired
+    private ToolFlowService toolFlowService;
+
+    // ==========================================================
+    // 🔹 FLOW 1: TOOL LIST + MANAGEMENT
+    // ==========================================================
 
     /**
      * ✅ Trang danh sách Tool của seller
@@ -41,64 +49,10 @@ public class ToolController {
             redirectAttrs.addFlashAttribute("error", "Session expired. Please login again.");
             return "redirect:/login";
         }
+
         model.addAttribute("categories", toolService.getAllCategories());
-
-
         model.addAttribute("tools", toolService.getToolsBySeller(seller));
         return "seller/tool-list";
-    }
-
-    /**
-     * ✅ Trang thêm tool mới
-     */
-    @GetMapping("/add")
-    public String showAddToolForm(Model model) {
-        model.addAttribute("tool", new Tool());
-        model.addAttribute("categories", toolService.getAllCategories());
-        return "seller/tool-add";
-    }
-
-    /**
-     * ✅ Xử lý khi người dùng gửi form "Create New Tool"
-     */
-    @PostMapping("/add")
-    public String addTool(@Valid @ModelAttribute("tool") Tool tool,
-                          BindingResult result,
-                          @RequestParam("imageFile") MultipartFile imageFile,
-                          @RequestParam("toolFile") MultipartFile toolFile,
-                          @RequestParam("licenseDays") List<Integer> licenseDays,
-                          @RequestParam("licensePrices") List<Double> licensePrices,
-                          HttpSession session,
-                          RedirectAttributes redirectAttrs,
-                          Model model) {
-
-        if (result.hasErrors()) {
-            model.addAttribute("categories", toolService.getAllCategories());
-            return "seller/tool-add";
-        }
-
-        try {
-            toolFlowService.startCreateTool(
-                    tool, imageFile, toolFile,tool.getCategory().getCategoryId(),
-                    licenseDays, licensePrices, session
-            );
-
-            // Nếu chọn TOKEN → chuyển sang token-manage
-            if (tool.getLoginMethod() == Tool.LoginMethod.TOKEN) {
-                redirectAttrs.addFlashAttribute("info", "Please add tokens to finalize your tool.");
-                return "redirect:/seller/token-manage";
-            }
-
-            redirectAttrs.addFlashAttribute("success", "Tool created successfully!");
-            return "redirect:/seller/tools";
-
-        } catch (IOException e) {
-            redirectAttrs.addFlashAttribute("error", "File upload error: " + e.getMessage());
-            return "redirect:/seller/tools/add";
-        } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("error", e.getMessage());
-            return "redirect:/seller/tools/add";
-        }
     }
 
     /**
@@ -114,6 +68,7 @@ public class ToolController {
         }
         return "redirect:/seller/tools";
     }
+
     /**
      * ✅ API lấy danh sách Tool của Seller (cho JS fetch)
      */
@@ -136,20 +91,12 @@ public class ToolController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not logged in");
         }
 
-        Pageable pageable;
-        switch (sort) {
-            case "oldest":
-                pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
-                break;
-            case "price,asc":
-                pageable = PageRequest.of(page, size, Sort.by("licenses.price").ascending());
-                break;
-            case "price,desc":
-                pageable = PageRequest.of(page, size, Sort.by("licenses.price").descending());
-                break;
-            default:
-                pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        }
+        Pageable pageable = switch (sort) {
+            case "oldest" -> PageRequest.of(page, size, Sort.by("createdAt").ascending());
+            case "price,asc" -> PageRequest.of(page, size, Sort.by("licenses.price").ascending());
+            case "price,desc" -> PageRequest.of(page, size, Sort.by("licenses.price").descending());
+            default -> PageRequest.of(page, size, Sort.by("createdAt").descending());
+        };
 
         Page<Tool> tools = toolService.searchToolsForSeller(
                 seller.getAccountId(),
@@ -164,12 +111,181 @@ public class ToolController {
 
         return ResponseEntity.ok(tools);
     }
-    // ✅ Thêm API lấy category ở đây
+
+    /**
+     * ✅ API lấy danh mục (cho dropdown filter)
+     */
     @GetMapping("/categories")
     @ResponseBody
     public ResponseEntity<?> getCategories() {
         return ResponseEntity.ok(toolService.getAllCategories());
     }
+
+    // ==========================================================
+    // 🔹 FLOW 2: TOOL CREATION
+    // ==========================================================
+
+    /**
+     * ✅ Hiển thị form Add Tool
+     */
+    @GetMapping("/add")
+    public String showAddToolForm(Model model, HttpSession session) {
+        ToolFlowService.ToolSessionData pending =
+                (ToolFlowService.ToolSessionData) session.getAttribute("pendingTool");
+
+        if (pending != null) {
+            model.addAttribute("tool", pending.getTool());
+            model.addAttribute("licenses", pending.getLicenses());
+            model.addAttribute("categoryId", pending.getCategory().getCategoryId());
+            model.addAttribute("restoreFromSession", true);
+        } else {
+            model.addAttribute("tool", new Tool());
+        }
+
+        model.addAttribute("categories", toolService.getAllCategories());
+        return "seller/tool-add";
+    }
+
+    /**
+     * ✅ Xử lý khi seller submit form "Add New Tool"
+     */
+    @PostMapping("/add")
+    public String addTool(
+            @Valid @ModelAttribute("tool") Tool tool,
+            BindingResult result,
+            @RequestParam("imageFile") MultipartFile imageFile,
+            @RequestParam("toolFile") MultipartFile toolFile,
+            @RequestParam("licenseDays") List<Integer> licenseDays,
+            @RequestParam("licensePrices") List<Double> licensePrices,
+            HttpSession session,
+            RedirectAttributes redirectAttrs,
+            Model model) {
+
+        if (result.hasErrors()) {
+            model.addAttribute("categories", toolService.getAllCategories());
+            return "seller/tool-add";
+        }
+
+        try {
+            toolFlowService.startCreateTool(
+                    tool, imageFile, toolFile,
+                    tool.getCategory().getCategoryId(),
+                    licenseDays, licensePrices, session
+            );
+
+            if (tool.getLoginMethod() == Tool.LoginMethod.TOKEN) {
+                redirectAttrs.addFlashAttribute("info", "Please add tokens to finalize your tool.");
+                return "redirect:/seller/token-manage";
+            }
+
+            redirectAttrs.addFlashAttribute("success", "Tool created successfully!");
+            return "redirect:/seller/tools";
+
+        } catch (IOException e) {
+            redirectAttrs.addFlashAttribute("error", "File upload error: " + e.getMessage());
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/seller/tools/add";
+    }
+
+    // ==========================================================
+    // 🔹 FLOW 3: TOOL EDIT
+    // ==========================================================
+
+    /**
+     * ✅ Hiển thị form Edit Tool
+     */
+    @GetMapping("/edit/{id}")
+    public String showEditToolForm(
+            @PathVariable Long id,
+            Model model,
+            HttpSession session,
+            RedirectAttributes redirectAttrs) {
+
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login again.");
+            return "redirect:/login";
+        }
+
+        Tool tool = toolService.getToolByIdAndSeller(id, seller);
+        if (tool == null) {
+            redirectAttrs.addFlashAttribute("error", "Tool not found or unauthorized.");
+            return "redirect:/seller/tools";
+        }
+
+        model.addAttribute("tool", tool);
+        model.addAttribute("categories", toolService.getAllCategories());
+        model.addAttribute("isEdit", true);
+        model.addAttribute("isTokenLogin", tool.getLoginMethod() == Tool.LoginMethod.TOKEN);
+        return "seller/tool-edit";
+    }
+
+    /**
+     * ✅ Cập nhật Tool (User_Password hoặc Token Flow)
+     */
+    @PostMapping("/edit/{id}")
+    public String updateTool(
+            @PathVariable Long id,
+            @ModelAttribute("tool") Tool updatedTool,
+            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+            @RequestParam(value = "toolFile", required = false) MultipartFile toolFile,
+            @RequestParam(value = "licenseDays", required = false) List<Integer> licenseDays,
+            @RequestParam(value = "licensePrices", required = false) List<Double> licensePrices,
+            @RequestParam(value = "action", required = false) String action,
+            HttpSession session,
+            RedirectAttributes redirectAttrs) {
+
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login again.");
+            return "redirect:/login";
+        }
+
+        try {
+            Tool existing = toolService.getToolByIdAndSeller(id, seller);
+            if (existing == null) {
+                throw new IllegalArgumentException("Tool not found or unauthorized.");
+            }
+
+            String imagePath = null;
+            String toolPath = null;
+
+            if (imageFile != null && !imageFile.isEmpty()) {
+                imagePath = fileStorageService.uploadImage(imageFile);
+            }
+            if (toolFile != null && !toolFile.isEmpty()) {
+                toolPath = fileStorageService.uploadToolFile(toolFile);
+            }
+
+            // ✅ TOKEN → redirect sang token-edit flow
+            if ("token".equals(action) && existing.getLoginMethod() == Tool.LoginMethod.TOKEN) {
+                List<Integer> days = (licenseDays != null) ? licenseDays : new ArrayList<>();
+                List<Double> prices = (licensePrices != null) ? licensePrices : new ArrayList<>();
+
+                toolFlowService.startEditToolSession(existing, updatedTool, imageFile, toolFile, days, prices, session);
+                redirectAttrs.addFlashAttribute("info", "Please review and update tokens for this tool.");
+                return "redirect:/seller/token-manage/edit";
+            }
+
+            // ✅ USER_PASSWORD → cập nhật trực tiếp
+            toolService.updateTool(
+                    id,
+                    updatedTool,
+                    imagePath,
+                    toolPath,
+                    licenseDays != null ? licenseDays : new ArrayList<>(),
+                    licensePrices != null ? licensePrices : new ArrayList<>(),
+                    seller
+            );
+
+            redirectAttrs.addFlashAttribute("success", "Tool updated successfully!");
+            return "redirect:/seller/tools";
+
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+            return "redirect:/seller/tools/edit/" + id;
+        }
+    }
 }
-
-

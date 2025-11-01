@@ -33,7 +33,9 @@
 
         <div class="mt-4 d-flex justify-content-between">
             <form th:action="@{/seller/token-manage/back}" method="post">
-                <button type="submit" class="btn btn-outline-secondary">← Back</button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/seller/tools/add'">
+                    ← Back
+                </button>
             </form>
             <button type="submit" class="btn btn-success">Finalize Tool</button>
         </div>

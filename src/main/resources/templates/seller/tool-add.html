@@ -22,56 +22,97 @@
 
     <form th:action="@{/seller/tools/add}" th:object="${tool}" method="post" enctype="multipart/form-data">
 
+
+        <!-- 🔹 Tool name -->
         <div class="form-group">
             <label class="form-label">Tool Name</label>
             <input type="text" th:field="*{toolName}" placeholder="Enter tool name" class="form-input" required
-                   pattern="^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$" title="Only letters/numbers, single space allowed">
-            <small th:if="${#fields.hasErrors('toolName')}" th:errors="*{toolName}" style="color:#dc2626;"></small>
+                   pattern="^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$"
+                   title="Only letters/numbers, single space allowed">
+            <small th:if="${#fields.hasErrors('toolName')}"
+                   th:errors="*{toolName}" style="color:#dc2626;"></small>
         </div>
 
+        <!-- 🔹 Image upload -->
         <div class="form-group">
             <label class="form-label">Upload Image</label>
-            <input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg" required>
-            <img id="previewImage" class="preview-img" style="display:none;">
+            <input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg" onchange="previewImg(event)">
+            <img id="imgPreview" class="preview-img" alt="Image Preview" style="display:none;">
         </div>
 
+        <!-- 🔹 Tool file -->
         <div class="form-group">
             <label class="form-label">Upload Tool File (.exe, .zip, .rar)</label>
             <input type="file" name="toolFile" class="form-control" accept=".exe,.zip,.rar" required>
         </div>
 
+        <!-- 🔹 Category -->
         <div class="form-group">
             <label class="form-label">Category</label>
             <select th:field="*{category.categoryId}" class="form-select" required>
                 <option value="">-- Select category --</option>
-                <option th:each="c : ${categories}" th:value="${c.categoryId}" th:text="${c.categoryName}"></option>
+                <option th:each="c : ${categories}"
+                        th:value="${c.categoryId}"
+                        th:text="${c.categoryName}"
+                        th:selected="${c.categoryId == selectedCategory}">
+                </option>
             </select>
         </div>
 
+        <!-- 🔹 Description -->
         <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea th:field="*{description}" class="form-textarea" placeholder="Enter description" required></textarea>
+            <textarea th:field="*{description}" class="form-textarea"
+                      placeholder="Enter description" required></textarea>
         </div>
 
+        <!-- 🔹 Login method -->
         <div class="form-group">
             <label class="form-label">Login Method</label>
             <select name="loginMethod" class="form-select" required>
                 <option value="">-- Select method --</option>
-                <option value="USER_PASSWORD">User & Password</option>
-                <option value="TOKEN">Token (Key-based)</option>
+                <option value="USER_PASSWORD"
+                        th:selected="${tool.loginMethod?.name() == 'USER_PASSWORD'}">
+                    User & Password
+                </option>
+                <option value="TOKEN"
+                        th:selected="${tool.loginMethod?.name() == 'TOKEN'}">
+                    Token (Key-based)
+                </option>
             </select>
         </div>
 
+        <!-- 🔹 Quantity -->
         <div class="form-group">
             <label class="form-label">Quantity</label>
-            <input type="number" th:field="*{quantity}" min="1" placeholder="Enter quantity" class="form-input" required>
+            <input type="number" th:field="*{quantity}" min="1"
+                   placeholder="Enter quantity" class="form-input" required>
         </div>
 
-        <!-- ✅ License Packages -->
+        <!-- 🔹 License packages -->
         <div class="form-group">
             <label class="form-label">License Packages</label>
             <div id="licenseContainer">
-                <div class="license-row" style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+                <!-- ✅ Hiển thị license từ session nếu có -->
+                <div th:each="lic : ${licenses}"
+                     class="license-row"
+                     style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+                    <input type="number" name="licenseDays"
+                           th:value="${lic.durationDays}"
+                           min="1" placeholder="Days" class="form-input" style="flex:1;" required>
+                    <input type="number" name="licensePrices"
+                           th:value="${lic.price}"
+                           min="0" placeholder="Price (VNĐ)" class="form-input" style="flex:1;" required>
+                    <button type="button" class="remove-btn" onclick="removeLicenseRow(this)"
+                            style="background:none;border:none;color:#dc2626;font-size:18px;cursor:pointer;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <!-- ✅ Nếu chưa có license nào -->
+                <div th:if="${#lists.isEmpty(licenses)}"
+                     class="license-row"
+                     style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
                     <input type="number" name="licenseDays" min="1" placeholder="Days" class="form-input" style="flex:1;" required>
                     <input type="number" name="licensePrices" min="0" placeholder="Price (VNĐ)" class="form-input" style="flex:1;" required>
                     <button type="button" class="remove-btn" onclick="removeLicenseRow(this)"
@@ -80,11 +121,13 @@
                     </button>
                 </div>
             </div>
+
             <button type="button" class="add-btn" onclick="addLicenseRow()">+ Add another</button>
         </div>
 
-        <div style="text-align:right;">
+        <div class="form-actions">
             <button type="submit" class="submit-btn">Save Tool</button>
+            <button type="button" class="cancel-btn" onclick="cancelTool()">Cancel</button>
         </div>
     </form>
 </section>
@@ -128,6 +171,26 @@
         } else {
             alert("At least one license package is required!");
         }
+    }
+    function cancelTool() {
+        if (confirm("Are you sure you want to cancel tool creation?")) {
+            fetch('/seller/token-manage/back', {
+                method: 'POST'
+            }).then(() => {
+                window.location.href = '/seller/tools/add';
+            });
+        }
+    }
+    function previewImg(e) {
+        const file = e.target.files[0];
+        const img = document.getElementById("imgPreview");
+        if (!file || !img) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            img.src = ev.target.result;
+            img.style.display = "block";
+        };
+        reader.readAsDataURL(file);
     }
 </script>
 </body>

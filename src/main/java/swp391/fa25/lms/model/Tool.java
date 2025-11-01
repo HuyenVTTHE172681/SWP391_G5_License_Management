@@ -57,7 +57,7 @@ public class Tool {
     @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
-    @JsonManagedReference(value = "tool-category")
+    @JsonBackReference(value = "tool-category")
     private Category category;
 
     @Enumerated(EnumType.STRING)

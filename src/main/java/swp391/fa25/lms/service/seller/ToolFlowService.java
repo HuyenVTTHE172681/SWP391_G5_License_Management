@@ -3,158 +3,270 @@ package swp391.fa25.lms.service.seller;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import swp391.fa25.lms.model.*;
+import swp391.fa25.lms.repository.LicenseAccountRepository;
+
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ToolFlowService {
 
+    @Autowired private TokenService tokenService;
     @Autowired private ToolService toolService;
     @Autowired private FileStorageService fileStorageService;
+    @Autowired private LicenseAccountRepository licenseAccountRepository;
 
-    // ✅ key lưu session tạm thời cho tool chưa hoàn thành
     private static final String SESSION_PENDING_TOOL = "pendingTool";
+    private static final String SESSION_PENDING_EDIT = "pendingEditTool";
 
-    /**
-     * ✅ Bắt đầu tạo tool mới
-     * 1️⃣ Validate logic nghiệp vụ
-     * 2️⃣ Upload file (ảnh + tool)
-     * 3️⃣ Lưu Tool trạng thái PENDING
-     * 4️⃣ Nếu chọn loginMethod = TOKEN → lưu tạm Tool trong session và chờ token
-     * 5️⃣ Nếu chọn USER_PASSWORD → lưu luôn DB
-     */
-    public void startCreateTool(Tool tool,
-                                MultipartFile imageFile,
-                                MultipartFile toolFile,
-                                Long categoryId,
-                                List<Integer> licenseDays,
-                                List<Double> licensePrices,
-                                HttpSession session) throws IOException {
+    // ==========================================================
+    // 🔹 FLOW 1: TẠO TOOL MỚI
+    // ==========================================================
 
-        // 🔹 Lấy seller từ session
+    public void startCreateTool(
+            Tool tool,
+            MultipartFile imageFile,
+            MultipartFile toolFile,
+            Long categoryId,
+            List<Integer> licenseDays,
+            List<Double> licensePrices,
+            HttpSession session
+    ) throws IOException {
+
         Account seller = (Account) session.getAttribute("loggedInAccount");
-        if (seller == null) {
-            throw new IllegalStateException("You must be logged in as a seller to add a tool.");
-        }
+        if (seller == null)
+            throw new IllegalStateException("You must be logged in as a seller.");
 
-        // 🔹 Validate trùng tên
-        if (toolService.existsByToolName(tool.getToolName())) {
-            throw new IllegalArgumentException("Tool name already exists!");
-        }
+        if (toolService.existsByToolName(tool.getToolName()))
+            throw new IllegalArgumentException("Tool name already exists.");
 
-        // 🔹 Lấy category
         Category category = toolService.getCategoryById(categoryId);
-        if (category == null) {
-            throw new IllegalArgumentException("Category not found");
-        }
 
-        // 🔹 Upload file ảnh + tool
+        // ✅ Upload file ảnh + tool
         String imagePath = fileStorageService.uploadImage(imageFile);
         String toolPath = fileStorageService.uploadToolFile(toolFile);
 
+        // ✅ File entity
+        ToolFile fileEntity = new ToolFile();
+        fileEntity.setFilePath(toolPath);
+        fileEntity.setFileType(ToolFile.FileType.ORIGINAL);
+        fileEntity.setUploadedBy(seller);
+        fileEntity.setCreatedAt(LocalDateTime.now());
+        fileEntity.setTool(tool);
+
+        tool.setFiles(List.of(fileEntity));
         tool.setImage(imagePath);
         tool.setCategory(category);
-        tool.setSeller(seller); // ✅ GẮN SELLER Ở ĐÂY
-        tool.setStatus(Tool.Status.PENDING); // (khuyến nghị) đặt mặc định là Pending khi mới tạo
+        tool.setSeller(seller);
+        tool.setStatus(Tool.Status.PENDING);
 
-        // 🔹 Tạo danh sách license
+        // ✅ Licenses
         List<License> licenses = new ArrayList<>();
         for (int i = 0; i < licenseDays.size(); i++) {
-            License license = new License();
-            license.setDurationDays(licenseDays.get(i));
-            license.setPrice(licensePrices.get(i));
-            license.setName("License " + licenseDays.get(i) + " days"); // ✅ tránh lỗi validation
-            licenses.add(license);
+            License l = new License();
+            l.setName("License " + licenseDays.get(i) + " days");
+            l.setDurationDays(licenseDays.get(i));
+            l.setPrice(licensePrices.get(i));
+            licenses.add(l);
         }
 
-        // 🔹 Nếu là TOKEN → lưu tạm Tool & License vào session để xử lý sau
+        // ✅ TOKEN → lưu vào session (đợi finalize)
         if (tool.getLoginMethod() == Tool.LoginMethod.TOKEN) {
-            ToolSessionData pending = new ToolSessionData(tool, category, licenses, toolPath);
-            session.setAttribute(SESSION_PENDING_TOOL, pending);
+            session.setAttribute(SESSION_PENDING_TOOL,
+                    new ToolSessionData(tool, category, licenses, toolPath, new ArrayList<>()));
             return;
         }
 
-        // 🔹 Nếu là USER_PASSWORD → lưu luôn vào DB
+        // ✅ USER_PASSWORD → lưu luôn DB
         Tool saved = toolService.createTool(tool, category);
         toolService.createLicensesForTool(saved, licenses);
-
-        // (Nếu bạn có entity ToolFile riêng thì tạo ở đây)
     }
 
-    /**
-     * ✅ Sau khi user nhập token ở token-manage
-     * - Lấy ToolSessionData từ session
-     * - So sánh quantity và số lượng token
-     * - Nếu khớp → lưu Tool + Token vào DB
-     */
     public void finalizeTokenTool(List<String> tokens, HttpSession session) throws IOException {
         ToolSessionData pending = (ToolSessionData) session.getAttribute(SESSION_PENDING_TOOL);
-        if (pending == null) {
+        if (pending == null)
             throw new IllegalStateException("No pending tool found in session.");
-        }
 
         Tool tool = pending.getTool();
         Category category = pending.getCategory();
         List<License> licenses = pending.getLicenses();
 
-        int expected = tool.getQuantity();
-        int actual = tokens.size();
+        if (tool == null)
+            throw new IllegalStateException("No tool data found in session.");
 
-        if (actual < expected) {
-            throw new IllegalArgumentException("Not enough tokens. Need " + (expected - actual) + " more.");
-        } else if (actual > expected) {
-            throw new IllegalArgumentException("Too many tokens. Remove " + (actual - expected) + " extra tokens.");
+        int expectedQuantity = tool.getQuantity();
+        int actualQuantity = tokens.size();
+
+        // ✅ Kiểm tra số lượng token
+        if (actualQuantity != expectedQuantity) {
+            throw new IllegalArgumentException(
+                    String.format("Quantity mismatch: expected %d tokens, but got %d.", expectedQuantity, actualQuantity)
+            );
         }
 
-        // ✅ Lưu tool vào DB
+        // ✅ Kiểm tra trùng token trong DB
+        for (String token : tokens) {
+            if (licenseAccountRepository.existsByToken(token)) {
+                throw new IllegalArgumentException("Duplicate token detected: " + token);
+            }
+        }
+
+        // ✅ Cập nhật lại licenses list nếu cần (vì pending.getLicenses() có thể chưa chứa token)
+        if (licenses == null || licenses.isEmpty()) {
+            licenses = new ArrayList<>();
+            for (String token : tokens) {
+                License license = new License();
+                license.setTool(tool);
+                license.setCreatedAt(LocalDateTime.now());
+                licenses.add(license);
+            }
+        }
+
+        // ✅ Lưu vào DB
         Tool saved = toolService.createTool(tool, category);
-
-        // ✅ Lưu license
         toolService.createLicensesForTool(saved, licenses);
-
-        // ✅ Lưu token
         toolService.createLicenseAccountsForTool(saved, tokens);
 
-        // ✅ Clear session
         session.removeAttribute(SESSION_PENDING_TOOL);
     }
+    // ==========================================================
+    // 🔹 FLOW 2: EDIT TOOL (TOKEN)
+    // ==========================================================
 
-    /**
-     * ✅ Khi người dùng bấm “Back” ở token-manage → hủy luồng tạm và quay lại tool-add
-     */
+    public void startEditToolSession(
+            Tool existingTool,
+            Tool updatedTool,
+            MultipartFile imageFile,
+            MultipartFile toolFile,
+            List<Integer> licenseDays,
+            List<Double> licensePrices,
+            HttpSession session
+    ) throws IOException {
+
+        // ✅ Upload ảnh nếu có
+        if (imageFile != null && !imageFile.isEmpty()) {
+            updatedTool.setImage(fileStorageService.uploadImage(imageFile));
+        } else {
+            updatedTool.setImage(existingTool.getImage());
+        }
+
+        // ✅ Upload file tool nếu có
+        List<ToolFile> updatedFiles = new ArrayList<>();
+        if (toolFile != null && !toolFile.isEmpty()) {
+            String newToolPath = fileStorageService.uploadToolFile(toolFile);
+            ToolFile fileEntity = new ToolFile();
+            fileEntity.setFilePath(newToolPath);
+            fileEntity.setFileType(ToolFile.FileType.ORIGINAL);
+            fileEntity.setUploadedBy(existingTool.getSeller());
+            fileEntity.setCreatedAt(LocalDateTime.now());
+            fileEntity.setTool(existingTool);
+            updatedFiles.add(fileEntity);
+        } else {
+            updatedFiles = existingTool.getFiles();
+        }
+
+        updatedTool.setFiles(updatedFiles);
+
+        // ✅ Tạo danh sách license mới
+        List<License> licenses = new ArrayList<>();
+        for (int i = 0; i < licenseDays.size(); i++) {
+            License license = new License();
+            license.setName("License " + licenseDays.get(i) + " days");
+            license.setDurationDays(licenseDays.get(i));
+            license.setPrice(licensePrices.get(i));
+            licenses.add(license);
+        }
+
+        // ✅ Lấy token hiện tại từ DB
+        List<LicenseAccount> existingTokens = licenseAccountRepository
+                .findByTool_ToolIdAndLoginMethod(existingTool.getToolId(), LicenseAccount.LoginMethod.TOKEN);
+
+        List<String> tokenValues = existingTokens.stream()
+                .map(LicenseAccount::getToken)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        // ✅ Lưu session
+        session.setAttribute(
+                SESSION_PENDING_EDIT,
+                new ToolSessionData(existingTool, updatedTool.getCategory(), licenses, null, tokenValues)
+        );
+    }
+
+    @Transactional
+    public void finalizeEditTokenTool(List<String> tokens, HttpSession session) {
+        ToolSessionData pending = (ToolSessionData) session.getAttribute(SESSION_PENDING_EDIT);
+        if (pending == null)
+            throw new IllegalStateException("No tool edit data found in session.");
+
+        Tool tool = pending.getTool();
+        if (tool == null)
+            throw new IllegalStateException("Tool data missing in session.");
+
+        if (tokens == null || tokens.isEmpty())
+            throw new IllegalArgumentException("Danh sách token trống. Vui lòng thêm ít nhất 1 token trước khi lưu.");
+
+        // ✅ Check trùng token trong DB trước khi update
+        for (String token : tokens) {
+            if (token == null || !token.matches("^\\d{6}$")) {
+                throw new IllegalArgumentException("Token không hợp lệ: '" + token + "' (phải gồm 6 chữ số)");
+            }
+
+            boolean exists = licenseAccountRepository.existsByToken(token);
+            if (exists) {
+                throw new IllegalArgumentException("Token '" + token + "' đã tồn tại trong hệ thống!");
+            }
+        }
+
+        // ✅ Cập nhật quantity = số lượng token mới
+        int newQuantity = tokens.size();
+        tool.setQuantity(newQuantity);
+
+        // ✅ Cập nhật lại licenses + tokens trong DB
+        toolService.updateQuantityAndLicenses(tool.getToolId(), newQuantity, pending.getLicenses());
+        tokenService.updateTokensForTool(tool, tokens);
+
+        // ✅ Xoá session sau khi finalize xong
+        session.removeAttribute(SESSION_PENDING_EDIT);
+    }
+
+    // ==========================================================
+    // 🔹 Utility
+    // ==========================================================
+
     public void cancelToolCreation(HttpSession session) {
-        // Xóa tool tạm đang lưu trong session
         session.removeAttribute(SESSION_PENDING_TOOL);
-    }
-    /**
-     * ✅ Dùng để xem tool tạm thời trong session (debug)
-     */
-    public ToolSessionData getPendingTool(HttpSession session) {
-        return (ToolSessionData) session.getAttribute(SESSION_PENDING_TOOL);
+        session.removeAttribute(SESSION_PENDING_EDIT);
     }
 
-    /**
-     * ✅ Lớp tạm lưu dữ liệu tool khi đang chờ token
-     */
+    // ==========================================================
+    // 🔹 Session DTO
+    // ==========================================================
+
     public static class ToolSessionData {
         private final Tool tool;
         private final Category category;
         private final List<License> licenses;
-        private final String toolPath;
+        private final String filePath;
+        private final List<String> tokens;
 
-        public ToolSessionData(Tool tool, Category category, List<License> licenses, String toolPath) {
+        public ToolSessionData(Tool tool, Category category, List<License> licenses, String filePath, List<String> tokens) {
             this.tool = tool;
             this.category = category;
             this.licenses = licenses;
-            this.toolPath = toolPath;
+            this.filePath = filePath;
+            this.tokens = tokens;
         }
 
         public Tool getTool() { return tool; }
         public Category getCategory() { return category; }
         public List<License> getLicenses() { return licenses; }
-        public String getToolPath() { return toolPath; }
+        public String getFilePath() { return filePath; }
+        public List<String> getTokens() { return tokens; }
     }
 }

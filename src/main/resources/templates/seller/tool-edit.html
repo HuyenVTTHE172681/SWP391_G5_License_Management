@@ -1,286 +1,133 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Edit Tool</title>
-
-    <style>
-        body {
-            background-color: #f9fafb;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        .form-section {
-            max-width: 700px;
-            margin: 2rem auto;
-            background-color: white;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .back-btn {
-            background-color: #e5e7eb;
-            color: #374151;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: 0.2s;
-        }
-        .back-btn:hover { background-color: #d1d5db; }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 0.4rem;
-        }
-
-        .form-input,
-        .form-select,
-        .form-textarea,
-        .form-control {
-            width: 100%;
-            height: 45px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            padding: 0.6rem 0.75rem;
-            font-size: 1rem;
-            background-color: #fff;
-            outline: none;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            box-sizing: border-box;
-        }
-
-        .form-control[type="file"] { padding: 7px; }
-
-        textarea.form-textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus,
-        .form-control:focus {
-            border-color: #16a34a;
-            box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
-        }
-
-        .submit-btn {
-            background-color: #16a34a;
-            color: white;
-            border: none;
-            padding: 0.6rem 1.5rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        .submit-btn:hover { background-color: #15803d; }
-
-        /* ✅ Preview Image */
-        .preview-img {
-            width: 140px;
-            height: 140px;
-            object-fit: cover;
-            border-radius: 10px;
-            border: 1px solid #d1d5db;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            margin-top: 8px;
-            transition: transform 0.2s ease;
-        }
-        .preview-img:hover { transform: scale(1.03); }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/tool-edit.css}">
 </head>
-
 <body>
 
-<div style="max-width: 700px; margin: 1rem auto;">
-    <a href="/seller/tools" class="back-btn">← Back</a>
-</div>
+<div class="container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">Edit Tool</h1>
+        <a th:href="@{/seller/tools}" class="back-btn">← Back</a>
+    </div>
 
-<section class="form-section">
-    <h2>Edit Tool</h2>
-    <form th:action="@{'/seller/tools/edit/' + ${tool.toolId}}" th:object="${tool}" method="post" enctype="multipart/form-data">
+    <!-- Alerts -->
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+    <div th:if="${info}" class="alert alert-info" th:text="${info}"></div>
 
-        <!-- 🧾 Tool Name -->
+    <!-- Form -->
+    <form th:action="@{|/seller/tools/edit/${tool.toolId}|}" th:object="${tool}" method="post" enctype="multipart/form-data">
+
         <div class="form-group">
             <label class="form-label">Tool Name</label>
-            <input type="text" th:field="*{tool.toolName}" class="form-input">
+            <input type="text" th:field="*{toolName}" class="form-input" placeholder="Enter tool name" required>
         </div>
 
-        <!-- 🖼 Current Image -->
         <div class="form-group">
-            <label class="form-label">Current Image</label>
-            <img th:src="@{'/uploads/tools/' + ${tool.image}}"
-                 alt="Current Image"
-                 class="preview-img"
-                 onerror="this.src='/uploads/tools/default-placeholder.png'">
+            <label class="form-label">Upload Image</label>
+            <input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg" onchange="previewImg(event)">
+            <img id="imgPreview"
+                  class="preview-img"
+                  th:if="${tool.image != null}"
+                  th:src="@{'/' + ${tool.image}}"
+                  alt="Current tool image">
         </div>
 
-        <!-- 🖼 Change / Select Image -->
         <div class="form-group">
-            <label class="form-label">Change Image</label>
-            <input type="file" name="imageFile" id="imageFile" class="form-control" accept="image/*">
-            <p style="margin:8px 0;">Or choose existing image:</p>
-            <select name="existingImage" id="existingImage" class="form-select">
-                <option value="">-- Select existing image --</option>
-                <option th:each="img : ${existingImages}" th:value="${img}" th:text="${img}"></option>
-            </select>
-            <div class="text-center">
-                <img id="previewImage" class="preview-img" style="display:none;">
-            </div>
+            <label class="form-label">Upload Tool File (.exe, .zip, .rar)</label>
+            <input type="file" name="toolFile" class="form-control" accept=".exe,.zip,.rar">
         </div>
 
-        <!-- 💾 Tool File -->
-        <div class="form-group">
-            <label class="form-label">Change Tool File (.exe, .zip, .rar)</label>
-            <input type="file" name="toolFile" class="form-input" accept=".exe,.zip,.rar">
-        </div>
-
-        <!-- 🗂 Category -->
         <div class="form-group">
             <label class="form-label">Category</label>
-            <select th:field="*{category.categoryId}" class="form-select">
+            <select th:field="*{category.categoryId}" class="form-select" required>
                 <option value="">-- Select category --</option>
-                <option th:each="c : ${categories}" th:value="${c.categoryId}" th:text="${c.categoryName}"
-                        th:selected="${tool.category?.categoryId == c.categoryId}"></option>
+                <option th:each="c : ${categories}" th:value="${c.categoryId}" th:text="${c.categoryName}"></option>
             </select>
         </div>
 
-        <!-- 📝 Description -->
         <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea th:field="*{tool.description}" class="form-textarea"></textarea>
-        </div>
-        <div class="form-group mt-3">
-            <label class="form-label" for="loginMethod">Login Method</label>
-
-            <!-- ✅ Hiển thị dạng chỉ xem -->
-            <input type="text" id="loginMethod" class="form-control"
-                   th:value="${tool.loginMethod?.name() == 'USER_PASSWORD' ? 'Username & Password' : 'Token-based'}"
-                   readonly>
-
-            <!-- ✅ Hidden input gửi giá trị thật lên controller -->
-            <input type="hidden" name="loginMethod" th:value="${tool.loginMethod?.name()}">
+            <textarea th:field="*{description}" class="form-textarea" placeholder="Enter description" required></textarea>
         </div>
 
-        <!-- 🔢 Quantity -->
         <div class="form-group">
-            <label class="form-label">Quantity</label>
-            <input type="number" th:field="*{tool.quantity}" class="form-input" min="1">
+            <label class="form-label">Login Method</label>
+            <input class="form-input" th:value="*{loginMethod}" readonly>
+            <input type="hidden" th:field="*{loginMethod}">
         </div>
 
         <div class="form-group">
-            <label class="form-label">Pricing Options</label>
+            <label class="form-label">Quantity</label>
+            <input type="number" th:field="*{quantity}" class="form-input" min="0" required>
+            <small>Nếu login method là TOKEN, số lượng sẽ cập nhật khi finalize tokens.</small>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">License Packages</label>
             <div id="licenseContainer">
-
-                <!-- 🟢 Hiển thị các license cũ -->
-                <div th:each="i : ${#numbers.sequence(0, licenseDays.size() - 1)}"
-                     class="license-row" style="display:flex; gap:10px;">
-                    <input type="number" name="licenseDays" min="1" placeholder="Days"
-                           class="form-input" style="flex:1;"
-                           th:value="${licenseDays[i]}" />
-
-                    <input type="number" name="licensePrices" min="0" placeholder="Price (VNĐ)"
-                           class="form-input" style="flex:1;"
-                           th:value="${licensePrices[i]}" />
-
-                    <button type="button" class="remove-btn" onclick="removeLicenseRow(this)">×</button>
+                <div class="license-row" th:each="lic : ${tool.licenses}">
+                    <input type="number" name="licenseDays" th:value="${lic.durationDays}" class="form-input" placeholder="Days" min="1" required>
+                    <input type="number" name="licensePrices" th:value="${lic.price}" class="form-input" placeholder="Price (VND)" min="0" required>
+                    <button type="button" class="remove-btn" onclick="removeRow(this)">×</button>
                 </div>
             </div>
-            <button type="button" onclick="addLicenseRow()" style="margin-top:8px;">+ Add another</button>
-            <small id="licenseError" class="error-message" style="display:none;">Each pricing row must have both Days and Price.</small>
+            <button type="button" class="add-btn" onclick="addRow()">+ Add another</button>
         </div>
 
-        <!-- ✅ Submit -->
-        <div style="text-align:right;">
-            <!-- Nếu loginMethod là USER_PASSWORD thì lưu trực tiếp -->
-            <button type="submit"
-                    th:if="${tool.loginMethod?.name() == 'USER_PASSWORD'}"
-                    class="submit-btn">
-                💾 Save Changes
-            </button>
+        <div class="form-actions">
+            <a th:href="@{/seller/tools}" class="cancel-btn">Cancel</a>
 
-            <!-- Nếu loginMethod là TOKEN thì chuyển sang token manager -->
-            <button type="button"
-                    th:if="${tool.loginMethod?.name() == 'TOKEN'}"
+            <button th:if="${isTokenLogin}"
+                    type="submit"
+                    name="action"
+                    value="token"
                     class="submit-btn"
-                    th:onclick="|window.location.href='/seller/tokens/manage?toolId=' + [[${tool.toolId}]]|">
-                ➡️ Next
-            </button>
+                    style="background:#f59e0b;">Next → Tokens</button>
+
+            <button th:if="${!isTokenLogin}"
+                    type="submit"
+                    name="action"
+                    value="save"
+                    class="submit-btn">Save Changes</button>
         </div>
     </form>
-</section>
+</div>
 
 <script>
-    // Hiển thị preview khi chọn ảnh từ file
-    document.getElementById('imageFile').addEventListener('change', e => {
+    function previewImg(e) {
         const file = e.target.files[0];
-        const preview = document.getElementById('previewImage');
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = ev => {
-                preview.src = ev.target.result;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else preview.style.display = 'none';
-    });
+        const img = document.getElementById("imgPreview");
+        if (!file || !img) return;
+        const reader = new FileReader();
+        reader.onload = ev => img.src = ev.target.result;
+        reader.readAsDataURL(file);
+    }
 
-    // Hiển thị preview khi chọn ảnh có sẵn
-    document.getElementById('existingImage').addEventListener('change', e => {
-        const name = e.target.value;
-        const preview = document.getElementById('previewImage');
-        if (name) {
-            preview.src = '/uploads/tools/' + name;
-            preview.style.display = 'block';
-        } else preview.style.display = 'none';
-    });
-
-    // Thêm license mới
-    function addLicenseRow() {
-        const container = document.getElementById('licenseContainer');
-        const row = document.createElement('div');
-        row.classList.add('license-row');
+    function addRow() {
+        const container = document.getElementById("licenseContainer");
+        const row = document.createElement("div");
+        row.className = "license-row";
         row.innerHTML = `
-    <input type="number" name="licenseDays" min="1" placeholder="Days" class="form-input" style="flex:1;">
-    <input type="number" name="licensePrices" min="0" placeholder="Price (VNĐ)" class="form-input" style="flex:1;">
-    <button type="button" class="remove-btn" onclick="removeLicenseRow(this)">×</button>
-  `;
+      <input type="number" name="licenseDays" class="form-input" placeholder="Days" min="1" required>
+      <input type="number" name="licensePrices" class="form-input" placeholder="Price (VND)" min="0" required>
+      <button type="button" class="remove-btn" onclick="removeRow(this)">×</button>
+    `;
         container.appendChild(row);
     }
-    function removeLicenseRow(button) {
-        const container = document.getElementById('licenseContainer');
-        const rows = container.getElementsByClassName('license-row');
 
-        // ✅ Chỉ cho phép xóa nếu còn nhiều hơn 1 dòng
-        if (rows.length > 1) {
-            button.closest('.license-row').remove();
-        } else {
-            alert("At least one pricing option is required.");
+    function removeRow(btn) {
+        const container = document.getElementById("licenseContainer");
+        if (container.children.length <= 1) {
+            alert("Cần ít nhất 1 license!");
+            return;
         }
+        btn.closest(".license-row").remove();
     }
-
-    // ✅ Đảm bảo hàm hoạt động sau khi DOM load xong
-    document.addEventListener("DOMContentLoaded", function() {
-        const removeButtons = document.querySelectorAll(".remove-btn");
-        removeButtons.forEach(btn => {
-            btn.addEventListener("click", function() {
-                removeLicenseRow(btn);
-            });
-        });
-    });
 </script>
-
 </body>
 </html>

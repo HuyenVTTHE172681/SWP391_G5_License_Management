@@ -149,3 +149,18 @@ a {
     border: 1px solid #d1d5db;
     margin-top: 8px;
 }
+.cancel-btn {
+    background-color: #e5e7eb;
+    color: #374151;
+    border: none;
+    border-radius: 8px;
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-left: 10px;
+}
+
+.cancel-btn:hover {
+    background-color: #d1d5db;
+}

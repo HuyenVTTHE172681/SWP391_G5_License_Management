@@ -20,55 +20,62 @@ public class TokenService {
     @Autowired private ToolRepository toolRepository;
     @Autowired private LicenseToolRepository licenseRepository;
 
-    /**
-     * ✅ Lấy toàn bộ token (LicenseAccount) của một tool
-     */
+    // ==========================================================
+    // 🔹 LẤY DANH SÁCH TOKEN
+    // ==========================================================
+
+    /** ✅ Lấy toàn bộ token (LicenseAccount) của một tool */
     public List<LicenseAccount> getTokensByTool(Long toolId) {
-        return licenseAccountRepository.findByTool_ToolId(toolId);
+        return licenseAccountRepository.findByTool_ToolIdAndLoginMethod(
+                toolId, LicenseAccount.LoginMethod.TOKEN
+        );
     }
 
+    // ==========================================================
+    // 🔹 THÊM TOKEN CHO TOOL ĐÃ CÓ
+    // ==========================================================
+
     /**
-     * ✅ Thêm nhiều token cho tool đã tồn tại trong DB (DB mode)
-     * - Kiểm tra quyền sở hữu tool (seller)
-     * - Validate 6 chữ số, không trùng, không vượt quá quantity
+     * ✅ Thêm nhiều token cho Tool đã tồn tại trong DB
+     * - Kiểm tra quyền sở hữu (seller)
+     * - Validate format, chống trùng, không vượt quá quantity
      */
     public void addTokensToTool(Long toolId, List<String> tokens, Account seller) {
         Tool tool = toolRepository.findById(toolId)
-                .orElseThrow(() -> new IllegalArgumentException("Tool not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Tool not found."));
 
         if (!tool.getSeller().getAccountId().equals(seller.getAccountId())) {
-            throw new IllegalArgumentException("Bạn không có quyền sửa tool này");
+            throw new IllegalArgumentException("Bạn không có quyền chỉnh sửa tool này.");
         }
 
         if (tokens == null || tokens.isEmpty()) {
-            throw new IllegalArgumentException("Danh sách token trống");
+            throw new IllegalArgumentException("Danh sách token trống.");
         }
 
-        // Hiện có bao nhiêu token rồi?
-        List<LicenseAccount> existing = licenseAccountRepository.findByTool_ToolId(toolId);
+        // Số token còn trống có thể thêm
+        List<LicenseAccount> existing = licenseAccountRepository
+                .findByTool_ToolIdAndLoginMethod(toolId, LicenseAccount.LoginMethod.TOKEN);
+
         int current = existing.size();
-        int quantity = tool.getQuantity() == null ? 0 : tool.getQuantity();
+        int quantity = tool.getQuantity() != null ? tool.getQuantity() : 0;
         int remaining = quantity - current;
 
         if (remaining <= 0) {
-            throw new IllegalArgumentException("Đã đủ số lượng token (" + quantity + ")");
+            throw new IllegalArgumentException("Đã đủ số lượng token (" + quantity + ").");
         }
         if (tokens.size() > remaining) {
-            throw new IllegalArgumentException("Chỉ có thể thêm tối đa " + remaining + " token nữa");
+            throw new IllegalArgumentException("Chỉ có thể thêm tối đa " + remaining + " token nữa.");
         }
 
-        // Validate từng token & chống trùng
-        for (String t : tokens) {
-            if (t == null || !t.matches("^\\d{6}$")) {
-                throw new IllegalArgumentException("Token không hợp lệ: '" + t + "' (phải 6 chữ số)");
-            }
-            if (licenseAccountRepository.existsByToolAndToken(tool, t)) {
-                throw new IllegalArgumentException("Token '" + t + "' đã tồn tại trong tool này");
-            }
-        }
-
-        // Lưu
+        // Validate & thêm
         for (String token : tokens) {
+            if (token == null || !token.matches("^\\d{6}$")) {
+                throw new IllegalArgumentException("Token không hợp lệ: '" + token + "' (phải 6 chữ số)");
+            }
+            if (licenseAccountRepository.existsByToolAndToken(tool, token)) {
+                throw new IllegalArgumentException("Token '" + token + "' đã tồn tại trong tool này.");
+            }
+
             LicenseAccount acc = new LicenseAccount();
             acc.setTool(tool);
             acc.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
@@ -79,21 +86,25 @@ public class TokenService {
         }
     }
 
-    /**
-     * ✅ Xoá 1 token (DB mode)
-     * (Tuân thủ logic business: chỉ cho xoá khi phù hợp, ví dụ chưa used...)
-     */
+    // ==========================================================
+    // 🔹 XOÁ TOKEN
+    // ==========================================================
+
+    /** ✅ Xoá một token (chỉ khi chưa dùng / còn active) */
     public void deleteToken(Long tokenId) {
-        LicenseAccount acc = licenseAccountRepository.findById(tokenId)
-                .orElseThrow(() -> new IllegalArgumentException("Token không tồn tại"));
-        // Nếu có ràng buộc business khác (VD: acc.getUsed() == true thì không xoá) thì kiểm tra tại đây
-        licenseAccountRepository.delete(acc);
+        if (!licenseAccountRepository.existsById(tokenId)) {
+            throw new IllegalArgumentException("Token không tồn tại.");
+        }
+        licenseAccountRepository.deleteById(tokenId);
     }
 
+    // ==========================================================
+    // 🔹 FINALIZE TOOL TỪ PHIÊN (FLOW 2 BƯỚC)
+    // ==========================================================
+
     /**
-     * ✅ Finalize từ phiên tạm: tạo Tool + Licenses + Tokens trong 1 transaction
-     *  - Dùng khi flow 2 bước (tool-add → token-manage → finalize)
-     *  - Giữ nguyên nguyên tắc: Tool sau khi tạo luôn PENDING
+     * ✅ Finalize Tool (khi seller đã nhập token sau khi tạo tool tạm)
+     * - Tạo Tool, Licenses, và Tokens cùng lúc
      */
     public Tool finalizeTool(Account seller,
                              Tool tempTool,
@@ -101,50 +112,56 @@ public class TokenService {
                              List<Integer> licenseDays,
                              List<Double> licensePrices) {
 
-        if (tempTool == null) throw new IllegalArgumentException("Phiên tool tạm không tồn tại");
-        if (tokens == null || tokens.isEmpty()) throw new IllegalArgumentException("Vui lòng nhập token");
-        if (licenseDays == null || licensePrices == null || licenseDays.isEmpty() || licensePrices.isEmpty()) {
-            throw new IllegalArgumentException("Thiếu gói license");
-        }
-        if (licenseDays.size() != licensePrices.size()) {
-            throw new IllegalArgumentException("Danh sách days/price không khớp nhau");
-        }
-        if (tempTool.getQuantity() == null) {
-            throw new IllegalArgumentException("Quantity không hợp lệ");
+        if (tempTool == null)
+            throw new IllegalArgumentException("Phiên tool tạm không tồn tại.");
+
+        if (tokens == null || tokens.isEmpty())
+            throw new IllegalArgumentException("Vui lòng nhập danh sách token.");
+
+        if (licenseDays == null || licensePrices == null ||
+                licenseDays.isEmpty() || licensePrices.isEmpty()) {
+            throw new IllegalArgumentException("Thiếu thông tin license.");
         }
 
-        // So khớp số lượng token với quantity
+        if (licenseDays.size() != licensePrices.size()) {
+            throw new IllegalArgumentException("Danh sách ngày và giá không khớp nhau.");
+        }
+
+        if (tempTool.getQuantity() == null)
+            throw new IllegalArgumentException("Số lượng tool không hợp lệ.");
+
         int expected = tempTool.getQuantity();
         int actual = tokens.size();
+
         if (actual < expected) {
-            throw new IllegalArgumentException("Thiếu token. Cần thêm " + (expected - actual) + " token");
+            throw new IllegalArgumentException("Thiếu token. Cần thêm " + (expected - actual) + " token.");
         }
         if (actual > expected) {
-            throw new IllegalArgumentException("Thừa token. Cần xoá bớt " + (actual - expected) + " token");
+            throw new IllegalArgumentException("Thừa token. Cần xoá bớt " + (actual - expected) + " token.");
         }
 
-        // Gán seller & trạng thái
+        // Cập nhật metadata
         tempTool.setSeller(seller);
-        tempTool.setStatus(Tool.Status.PENDING); // luôn Pending sau khi tạo mới
+        tempTool.setStatus(Tool.Status.PENDING);
         tempTool.setCreatedAt(LocalDateTime.now());
         tempTool.setUpdatedAt(LocalDateTime.now());
 
-        // Lưu Tool
+        // ✅ Lưu Tool
         Tool saved = toolRepository.save(tempTool);
 
-        // Lưu Licenses
-        List<License> toSave = new ArrayList<>();
+        // ✅ Lưu Licenses
+        List<License> licenseEntities = new ArrayList<>();
         for (int i = 0; i < licenseDays.size(); i++) {
             License l = new License();
             l.setTool(saved);
             l.setDurationDays(licenseDays.get(i));
             l.setPrice(licensePrices.get(i));
             l.setCreatedAt(LocalDateTime.now());
-            toSave.add(l);
+            licenseEntities.add(l);
         }
-        licenseRepository.saveAll(toSave);
+        licenseRepository.saveAll(licenseEntities);
 
-        // Lưu Tokens thành LicenseAccount
+        // ✅ Lưu Tokens
         for (String token : tokens) {
             if (!token.matches("^\\d{6}$")) {
                 throw new IllegalArgumentException("Token không hợp lệ: '" + token + "' (phải 6 chữ số)");
@@ -159,5 +176,29 @@ public class TokenService {
         }
 
         return saved;
+    }
+
+    // ==========================================================
+    // 🔹 CẬP NHẬT TOKEN KHI EDIT TOOL (FLOW TOKEN-EDIT)
+    // ==========================================================
+
+    /** ✅ Xoá toàn bộ token cũ và ghi lại token mới (finalize edit) */
+    @Transactional
+    public void updateTokensForTool(Tool tool, List<String> tokens) {
+        licenseAccountRepository.deleteByTool(tool);
+
+        for (String token : tokens) {
+            if (token == null || !token.matches("^\\d{6}$")) {
+                throw new IllegalArgumentException("Token không hợp lệ: '" + token + "' (phải 6 chữ số)");
+            }
+
+            LicenseAccount acc = new LicenseAccount();
+            acc.setTool(tool);
+            acc.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
+            acc.setToken(token);
+            acc.setStatus(LicenseAccount.Status.ACTIVE);
+            acc.setCreatedAt(LocalDateTime.now());
+            licenseAccountRepository.save(acc);
+        }
     }
 }
