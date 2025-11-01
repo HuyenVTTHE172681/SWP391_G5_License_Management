@@ -1,104 +1,169 @@
 package swp391.fa25.lms.service.seller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.model.LicenseAccount;
-import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.repository.LicenseAccountRepository;
-import swp391.fa25.lms.repository.ToolFileRepository;
-import swp391.fa25.lms.repository.ToolRepository;
+import swp391.fa25.lms.model.*;
+import swp391.fa25.lms.repository.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Service("seller")
+@Service("sellerToolService")
+@Transactional
 public class ToolService {
 
     @Autowired
-    private ToolFileRepository toolFileRepository;
-
+    private ToolRepository toolRepository;
     @Autowired
-    private ToolRepository toolRepo;
-
+    private CategoryRepository categoryRepository;
     @Autowired
-    private LicenseAccountRepository licenseAccountRepo;
+    private LicenseToolRepository licenseRepository;
+    @Autowired
+    private LicenseAccountRepository licenseAccountRepository;
 
-    @Transactional
-    public Tool addTool(Tool tool, Account seller) {
-        tool.setSeller(seller);
-        tool.setStatus(Tool.Status.PENDING);
+    /**
+     * ✅ Tạo mới Tool (chỉ lưu DB, không xử lý file hoặc token)
+     * Sau khi tạo → luôn ở trạng thái PENDING
+     */
+    public Tool createTool(Tool tool, Category category) {
+        tool.setCategory(category);
+        tool.setStatus(Tool.Status.PENDING); // luôn ở trạng thái chờ duyệt
         tool.setCreatedAt(LocalDateTime.now());
         tool.setUpdatedAt(LocalDateTime.now());
-        return toolRepo.save(tool);
-    }
-
-
-    public Tool save(Tool tool) {
-        tool.setUpdatedAt(LocalDateTime.now());
-        return toolRepo.save(tool);
+        return toolRepository.save(tool);
     }
 
     /**
-     *  Update tool info + quantity validation
+     * ✅ Cập nhật Tool hiện có
      */
-    @Transactional
-    public Tool updateTool(Long id, Tool newToolData, Account seller) {
-        Tool tool = toolRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tool not found"));
+    public Tool updateTool(Long id, Tool updatedTool) {
+        Tool existing = toolRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tool not found with ID: " + id));
 
-        // 1 Kiểm tra xem tool này có thuộc seller đang đăng nhập không
-        if (!tool.getSeller().getAccountId().equals(seller.getAccountId())) {
-            throw new RuntimeException("You are not allowed to edit this tool");
+        existing.setToolName(updatedTool.getToolName());
+        existing.setDescription(updatedTool.getDescription());
+        existing.setCategory(updatedTool.getCategory());
+        existing.setLoginMethod(updatedTool.getLoginMethod());
+        existing.setNote(updatedTool.getNote());
+        existing.setQuantity(updatedTool.getQuantity());
+        existing.setUpdatedAt(LocalDateTime.now());
+
+        // Khi update tool, nếu có thay đổi lớn, có thể set lại PENDING để admin duyệt lại
+        existing.setStatus(Tool.Status.PENDING);
+
+        return toolRepository.save(existing);
+    }
+
+    /**
+     * ✅ “Xóa” tool — thực tế là chuyển trạng thái sang DEACTIVE
+     */
+    public void deactivateTool(Long id) {
+        Tool tool = toolRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tool not found with ID: " + id));
+        tool.setStatus(Tool.Status.DEACTIVE);
+        tool.setUpdatedAt(LocalDateTime.now());
+        toolRepository.save(tool);
+    }
+
+    /**
+     * ✅ Lấy tool theo ID
+     */
+    public Tool getToolById(Long id) {
+        return toolRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tool not found"));
+    }
+
+    /**
+     * ✅ Lấy toàn bộ tool của 1 seller (trừ tool DEACTIVE)
+     */
+    public List<Tool> getToolsBySeller(Account seller) {
+        return toolRepository.findBySellerAndStatusNot(seller, Tool.Status.DEACTIVE);
+    }
+
+    /**
+     * ✅ Lấy tất cả category (dùng cho dropdown)
+     */
+    public List<Category> getAllCategories() {
+        return categoryRepository.findAll();
+    }
+
+    /**
+     * ✅ Tạo License cho Tool
+     */
+    public void createLicensesForTool(Tool tool, List<License> licenses) {
+        for (License license : licenses) {
+            license.setTool(tool);
+            license.setCreatedAt(LocalDateTime.now());
+            licenseRepository.save(license);
         }
+    }
 
-        // 2 Đếm số lượng token key đã cấp (đã dùng)
-        long usedTokenCount = licenseAccountRepo.countByToolToolIdAndLoginMethod(
-                id, LicenseAccount.LoginMethod.TOKEN
+    /**
+     * ✅ Tạo LicenseAccount cho Tool (nếu loginMethod = TOKEN)
+     */
+    public void createLicenseAccountsForTool(Tool tool, List<String> tokens) {
+        for (String token : tokens) {
+            LicenseAccount acc = new LicenseAccount();
+            acc.setTool(tool);
+            acc.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
+            acc.setToken(token);
+            acc.setStatus(LicenseAccount.Status.ACTIVE);
+            acc.setCreatedAt(LocalDateTime.now());
+            licenseAccountRepository.save(acc);
+        }
+    }
+
+    /**
+     * ✅ Tìm Category theo ID (dùng để validate)
+     */
+    public Category getCategoryById(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+    }
+
+    /**
+     * ✅ Đổi trạng thái Tool (VD: Admin duyệt)
+     */
+    public void changeToolStatus(Long id, Tool.Status status) {
+        Tool tool = getToolById(id);
+        tool.setStatus(status);
+        tool.setUpdatedAt(LocalDateTime.now());
+        toolRepository.save(tool);
+    }
+
+    /**
+     * ✅ Kiểm tra trùng tên Tool
+     */
+    public boolean existsByToolName(String name) {
+        return toolRepository.existsByToolName(name);
+
+    }
+
+    public Page<Tool> searchToolsForSeller(
+            Long sellerId,
+            String keyword,
+            Long categoryId,
+            String status,
+            String loginMethod,
+            Double minPrice,
+            Double maxPrice,
+            Pageable pageable
+    ) {
+        Tool.LoginMethod loginEnum = null;
+        if (loginMethod != null && !loginMethod.isBlank()) {
+            try {
+                loginEnum = Tool.LoginMethod.valueOf(loginMethod);
+            } catch (IllegalArgumentException ex) {
+                // Nếu không khớp enum (vd: giá trị lạ) thì để null
+                loginEnum = null;
+            }
+        }
+        return toolRepository.searchToolsForSeller(
+                sellerId, keyword, categoryId, status, loginEnum, minPrice, maxPrice, pageable
         );
 
-        // 3 Kiểm tra quantity hợp lệ
-        Integer newQuantity = newToolData.getQuantity();
-        if (newQuantity != null && newQuantity < usedTokenCount) {
-            throw new RuntimeException("Quantity cannot be less than the number of used token keys (" + usedTokenCount + ")");
-        }
-
-        // 4 Cập nhật các field
-        tool.setToolName(newToolData.getToolName());
-        tool.setDescription(newToolData.getDescription());
-        tool.setImage(newToolData.getImage());
-        tool.setCategory(newToolData.getCategory());
-        tool.setUpdatedAt(LocalDateTime.now());
-
-        if (newQuantity != null) {
-            tool.setQuantity(newQuantity);
-        }
-
-        return toolRepo.save(tool);
     }
-    @Transactional
-    public void toggleToolStatus(Long id, Account seller) {
-        Tool tool = toolRepo.findByToolIdAndSeller(id, seller)
-                .orElseThrow(() -> new RuntimeException("Tool not found or unauthorized"));
-
-        if (tool.getStatus() == Tool.Status.PUBLISHED) {
-            tool.setStatus(Tool.Status.DEACTIVE);
-        } else {
-            tool.setStatus(Tool.Status.PUBLISHED);
-        }
-
-        tool.setUpdatedAt(LocalDateTime.now());
-        toolRepo.save(tool);
-    }
-
-    public List<Tool> getToolsBySeller(Account seller) {
-        return toolRepo.findBySeller(seller);
-    }
-
-    public Tool getToolById(Long id) {
-        return toolRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tool not found"));
-    }
-
 }

@@ -32,8 +32,8 @@ public class Tool {
     private String toolName;
 
 
-     @Column(nullable = false)
-     private String image;
+    @Column(nullable = false)
+    private String image;
 
     @NotBlank(message = "Description cannot be blank")
     @Size(max = 500, message = "Description must be under 500 characters")

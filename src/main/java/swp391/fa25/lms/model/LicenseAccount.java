@@ -16,11 +16,11 @@ public class LicenseAccount {
     private Long licenseAccountId;
 
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String username;
 
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @ManyToOne
@@ -66,6 +66,7 @@ public class LicenseAccount {
 
     public LicenseAccount() {
     }
+    private LocalDateTime createdAt;
 
     public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, Tool tool, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime lastLogin, String deviceInfo, Integer maxDevices) {
         this.licenseAccountId = licenseAccountId;
@@ -217,6 +218,14 @@ public class LicenseAccount {
 
     public void setActivatedAt(LocalDateTime activatedAt) {
         this.activatedAt = activatedAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
 
