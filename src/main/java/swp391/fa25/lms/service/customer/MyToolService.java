@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import swp391.fa25.lms.model.*;
 import swp391.fa25.lms.repository.*;
+import swp391.fa25.lms.model.WalletTransaction;
 
 import java.math.BigDecimal;
 import java.nio.file.*;
@@ -60,7 +61,10 @@ public class MyToolService {
         var acc = order.getLicenseAccount();
         if (acc == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa được cấp license.");
 
-        List<ToolFile> files = fileRepo.findByTool_ToolIdOrderByCreatedAtDesc(order.getTool().getToolId());
+        var latestWrappedOpt = fileRepo.findTopByTool_ToolIdAndFileTypeOrderByCreatedAtDesc(
+                order.getTool().getToolId(), ToolFile.FileType.WRAPPED
+        );
+        List<ToolFile> files = latestWrappedOpt.map(List::of).orElseGet(List::of);
         List<License> licenses = licenseRepo.findByToolToolId(order.getTool().getToolId());
 
         var method = acc.getLoginMethod() != null
@@ -213,5 +217,44 @@ public class MyToolService {
         if (order.getOrderStatus() != CustomerOrder.OrderStatus.SUCCESS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa thành công.");
         }
+    }
+    @Transactional
+    public String renewWithTransaction(Long orderId, Long licenseId, WalletTransaction tx) {
+        var order = loadOrderOr404(orderId);
+        ensureOrderSuccess(order);
+
+        var acc = order.getLicenseAccount();
+        if (acc == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn chưa được cấp license.");
+
+        var lic = licenseRepo.findById(licenseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gói license không hợp lệ."));
+        if (!lic.getTool().getToolId().equals(order.getTool().getToolId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gói license không thuộc tool này.");
+        }
+
+        int days = (lic.getDurationDays() != null) ? lic.getDurationDays() : 30;
+        var now = LocalDateTime.now();
+        var base = (acc.getEndDate() != null && acc.getEndDate().isAfter(now)) ? acc.getEndDate() : now;
+        var newEnd = base.plusDays(days);
+
+        acc.setEndDate(newEnd);
+        if (acc.getStartDate() == null) acc.setStartDate(now);
+        acc.setStatus(LicenseAccount.Status.ACTIVE);
+        accRepo.save(acc);
+
+        var log = new LicenseRenewLog();
+        log.setLicenseAccount(acc);
+        log.setRenewDate(now);
+        log.setNewEndDate(newEnd);
+        // ưu tiên số tiền từ transaction
+        log.setAmountPaid(tx != null && tx.getAmount() != null ? tx.getAmount() :
+                lic.getPrice() != null ? BigDecimal.valueOf(lic.getPrice()) : BigDecimal.ZERO);
+        // gắn transaction (cần có field @ManyToOne WalletTransaction transaction trong LicenseRenewLog)
+        if (tx != null) {
+            log.setTransaction(tx);
+        }
+        renewRepo.save(log);
+
+        return "Gia hạn thành công " + days + " ngày · Hạn mới: " + newEnd;
     }
 }
