@@ -25,6 +25,15 @@
         .btn i {
             margin-right: 2px;
         }
+        .custom-modal-height {
+            height: 90vh; /* Chiều cao tối đa = 90% viewport */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .custom-modal-height .modal-content {
+            height: 100%;
+        }
     </style>
 
 </head>
@@ -113,9 +122,19 @@
         </div>
     </form>
 
+    <!-- Thông báo -->
+    <div th:if="${message}" class="alert alert-info alert-dismissible fade show mt-2" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+
     <!-- DANH SÁCH ĐƠN HÀNG -->
-    <!-- id="orderTableContainer" là nơi HTMX sẽ render lại nội dung -->
-    <!-- th:fragment giúp server trả về riêng phần này nếu chỉ cần update -->
     <div id="orderTableContainer" th:fragment="orderTableFragment">
 
         <!-- Nếu không có dữ liệu -->
@@ -155,7 +174,7 @@
                                 </span>
                 </td>
                 <td class="text-center">
-                    <!-- THÊM: Eye button với HTMX load modal -->
+                    <!-- Xem chi tiết -->
                     <a th:href="@{/orders/{id}(id=${order.orderId})}"
                        th:attr="hx-get=@{/orders/{id}(id=${order.orderId})}"
                        class="btn btn-sm btn-primary"
@@ -165,46 +184,35 @@
                        hx-swap="innerHTML">
                         <i class="bi bi-eye"></i>
                     </a>
-
-                    <!-- Chỉ show nếu SUCCESS: Feedback -->
-                    <!--                    <button th:if="${order.orderStatus.name() == 'SUCCESS'}"-->
-                    <!--                            class="btn btn-sm btn-warning" th:disabled="${!order.canFeedbackOrReport}"-->
-                    <!--                            th:onclick="'window.location.href=\'/feedback/create?orderId=' + ${order.orderId}">-->
-                    <!--                        Feedback-->
-                    <!--                    </button>-->
+                    <!-- Gưi Feedback  -->
                     <span th:if="${order.orderStatus.name() == 'SUCCESS'}">
-        <span th:if="${order.canFeedbackOrReport}">
-            <a class="btn btn-sm btn-warning"
-               th:href="@{|/orders/${order.orderId}/feedback|}">
-                Feedback
-            </a>
-        </span>
-        <span th:unless="${order.canFeedbackOrReport}">
-            <button class="btn btn-sm btn-warning" disabled>Feedback</button>
-        </span>
-    </span>
-
+                        <span th:if="${order.canFeedbackOrReport}">
+                            <a class="btn btn-sm btn-warning"
+                                th:href="@{|/orders/${order.orderId}/feedback|}">
+                                Feedback
+                            </a>
+                        </span>
+                    </span>
+                    <!-- Báo cáo  -->
                     <span th:if="${order.orderStatus.name() == 'SUCCESS'}">
-        <span th:if="${order.canFeedbackOrReport}">
-            <a class="btn btn-sm btn-danger"
-               th:href="@{|/orders/${order.orderId}/report|}">
-                Report
-            </a>
-        </span>
-        <span th:unless="${order.canFeedbackOrReport}">
-            <button class="btn btn-sm btn-danger" disabled>Report</button>
-        </span>
-    </span>
-
-                    <!-- Chỉ show nếu SUCCESS: Dùng dịch vụ -->
+                        <span th:if="${order.canFeedbackOrReport}">
+                            <button type="button"
+                                    class="btn btn-outline-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#reportToolModal"
+                                    th:attr="data-tool-id=${order.tool.toolId}">
+                                <i class="bi bi-flag-fill me-1"></i> Báo cáo
+                            </button>
+                        </span>
+                    </span>
+                    <!-- Dùng dịch vụ -->
                     <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
                        th:href="@{'/my-tools/' + ${order.orderId}}"
                        class="btn btn-sm btn-success"
                        th:disabled="${!order.canFeedbackOrReport}">
                         <i class="bi bi-arrow-right"></i> Dùng dịch vụ
                     </a>
-
-                    <!-- Chỉ show nếu PENDING: Thanh toán lại -->
+                    <!-- PENDING: Thanh toán lại -->
                     <a th:if="${order.orderStatus.name() == 'PENDING'}"
                        th:href="@{'/payment/create?toolId=' + ${order.tool.toolId} + '&licenseId=' + ${order.license.licenseId} + '&orderId=' + ${order.orderId}}"
                        class="btn btn-sm btn-info">
@@ -295,7 +303,6 @@
     </div>
 </div>
 
-<!-- THÊM MỚI: Fragment Nội Dung Modal -->
 <div th:fragment="orderDetailModal" th:if="${order != null}">
     <div class="order-detail p-3">
         <div class="border rounded p-3 mb-3">
@@ -368,9 +375,53 @@
     </div>
 </div>
 
+<!-- THÊM MỚI: Modal Báo cáo -->
+<div class="modal fade" id="reportToolModal" tabindex="-1" aria-labelledby="reportToolModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg custom-report-modal">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <form id="reportForm" method="post">
+                <div class="modal-header bg-danger text-white rounded-top-4">
+                    <h5 class="modal-title" id="reportToolModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Báo cáo công cụ
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Lý do</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="">-- Chọn lý do --</option>
+                            <option value="SPAM">Spam</option>
+                            <option value="MALICIOUS_CONTENT">Nội dung độc hại</option>
+                            <option value="COPYRIGHT_VIOLATION">Vi phạm bản quyền</option>
+                            <option value="INAPPROPRIATE_CONTENT">Nội dung không phù hợp</option>
+                            <option value="MISLEADING_INFO">Thông tin sai lệch</option>
+                            <option value="IRRELEVANT_CATEGORY">Danh mục không phù hợp</option>
+                            <option value="OTHER">Khác</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mô tả thêm</label>
+                        <textarea name="description" class="form-control" rows="3"
+                                  placeholder="Hãy mô tả chi tiết lý do bạn báo cáo..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-send-fill me-1"></i> Gửi báo cáo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <!-- JS cho Modal (show sau HTMX load) -->
 <script>
-    // Auto show modal sau HTMX load
+    // Hiển thị modal chi tiết sau khi HTMX load
     document.body.addEventListener('htmx:afterSwap', function(evt) {
         if (evt.detail.target.id === 'orderDetailModalBody') {
             var modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
@@ -382,6 +433,51 @@
     function showOrderModal(id) {
         window.location.href = '/orders/' + id;
     }
+
+    // Thiết lập form báo cáo
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('reportToolModal');
+        const form = document.getElementById('reportForm');
+
+        modal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const toolId = button.getAttribute('data-tool-id');
+            form.action = `/tools/${toolId}/report`;
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const url = form.action;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const message = await response.text();
+
+                if (response.ok) {
+                    alert(message);
+                } else if (response.status === 409) {
+                    alert(message); // đã báo cáo trước đó
+                } else if (response.status === 401) {
+                    alert(message); // chưa đăng nhập
+                    window.location.href = "/login";
+                } else {
+                    alert(message);
+                }
+
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                bsModal.hide();
+                form.reset();
+
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    });
 </script>
 
 <!-- htmx: thư viện giúp cập nhật từng phần HTML mà không reload trang -->
