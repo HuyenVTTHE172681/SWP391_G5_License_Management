@@ -43,8 +43,9 @@ public class ToolService {
                                            String priceFilter, Integer ratingFilter,
                                            Account account, int page, int size) {
 
-        List<Tool> tools = toolRepo.findAll(); // Lấy tất cả, filter ở memory
+        List<Tool> tools = toolRepo.findAllPublishedAndSellerActive(); // Lấy tất cả, filter ở memory
 
+//        List<Tool> tools = toolRepo.findAll();
         // Search keyword (tool name hoặc seller name)
         if (keyword != null && !keyword.isEmpty()) {
             String kwLower = keyword.toLowerCase();

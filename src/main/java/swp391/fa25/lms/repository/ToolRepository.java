@@ -41,7 +41,7 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
                                        @Param("categoryId") Long categoryId,
                                        @Param("status") Tool.Status status);
 
-    List<Tool> findByToolNameContainingIgnoreCase(String keyword);
+//    List<Tool> findByToolNameContainingIgnoreCase(String keyword);
     List<Tool> findBySeller(Account seller);
     Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
 
@@ -64,4 +64,13 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
                                      @Param("keyword") String keyword,
                                      @Param("categoryId") Long categoryId,
                                      Pageable pageable);
+
+    @Query("""
+    SELECT t FROM Tool t
+    WHERE t.status = 'PUBLISHED'
+      AND t.seller.sellerActive = true
+      AND (t.seller.sellerExpiryDate IS NULL OR t.seller.sellerExpiryDate >= CURRENT_TIMESTAMP)
+    """)
+    List<Tool> findAllPublishedAndSellerActive();
+
 }

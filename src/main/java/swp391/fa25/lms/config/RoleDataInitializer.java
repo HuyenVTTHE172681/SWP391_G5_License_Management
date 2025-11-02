@@ -128,6 +128,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             seller1.setStatus(Account.AccountStatus.ACTIVE);
             seller1.setCreatedAt(LocalDateTime.now().minusDays(30));
             seller1.setRole(sellerRole);
+            seller1.setSellerActive(true);
+            seller1.setSellerExpiryDate(LocalDateTime.now().plusDays(2));
 
             Account seller2 = new Account();
             seller2.setEmail("seller2@example.com");
@@ -137,6 +139,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             seller2.setStatus(Account.AccountStatus.ACTIVE);
             seller2.setCreatedAt(LocalDateTime.now().minusDays(15));
             seller2.setRole(sellerRole);
+            seller2.setSellerActive(true);
+            seller2.setSellerExpiryDate(LocalDateTime.of(2025, 11, 2, 22, 55, 0));
 
             Account customer1 = new Account();
             customer1.setEmail("customer1@example.com");
