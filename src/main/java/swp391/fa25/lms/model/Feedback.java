@@ -1,5 +1,6 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -9,21 +10,26 @@ public class Feedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "feedback_id")
     private Long feedbackId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
+    @JsonBackReference(value = "feedback-account")
     private Account account;
 
-    @ManyToOne
-    @JoinColumn(name = "tool_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tool_id", nullable = false)
+    @JsonBackReference(value = "feedback-tool")
     private Tool tool;
 
+    @Column(nullable = false)
     private Integer rating;
 
     @Column(columnDefinition = "NVARCHAR(100)")
     private String comment;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     public Feedback() {

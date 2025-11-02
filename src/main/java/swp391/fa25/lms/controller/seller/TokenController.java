@@ -39,6 +39,12 @@ public class TokenController {
      */
     @GetMapping
     public String showTokenManage(HttpSession session, RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login first.");
+            return "redirect:/login";
+        }
+
         var pendingTool = session.getAttribute("pendingTool");
         if (pendingTool == null) {
             redirectAttrs.addFlashAttribute("error", "No pending tool found. Please create a tool first.");
@@ -58,6 +64,11 @@ public class TokenController {
             List<@Pattern(regexp = "^[0-9]{6}$", message = "Each token must contain exactly 6 digits") String> tokens,
             HttpSession session,
             RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login first.");
+            return "redirect:/login";
+        }
 
         try {
             var pendingTool = session.getAttribute("pendingTool");
@@ -85,6 +96,11 @@ public class TokenController {
      */
     @PostMapping("/back")
     public String cancelNewToolCreation(HttpSession session, RedirectAttributes redirectAttrs) {
+           Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login first.");
+            return "redirect:/login";
+        }
         toolFlowService.cancelToolCreation(session);
         redirectAttrs.addFlashAttribute("info", "Tool creation canceled. Returning to add form.");
         return "redirect:/seller/tools/add";
@@ -99,6 +115,11 @@ public class TokenController {
      */
     @GetMapping("/edit")
     public String showEditTokenManage(HttpSession session, Model model, RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login first.");
+            return "redirect:/login";
+        }
         ToolFlowService.ToolSessionData pending =
                 (ToolFlowService.ToolSessionData) session.getAttribute("pendingEditTool");
 
@@ -122,6 +143,11 @@ public class TokenController {
             @RequestParam("token") @Pattern(regexp = "^\\d{6}$", message = "Token must be 6 digits") String token,
             HttpSession session,
             RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login first.");
+            return "redirect:/login";
+        }
 
         ToolFlowService.ToolSessionData pending =
                 (ToolFlowService.ToolSessionData) session.getAttribute("pendingEditTool");
@@ -149,6 +175,11 @@ public class TokenController {
     public String deleteTokenFromSession(@RequestParam("token") String token,
                                          HttpSession session,
                                          RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login first.");
+            return "redirect:/login";
+        }
 
         ToolFlowService.ToolSessionData pending =
                 (ToolFlowService.ToolSessionData) session.getAttribute("pendingEditTool");
@@ -175,6 +206,12 @@ public class TokenController {
     public String finalizeEditTokens(@RequestParam("tokens") String tokenString,
                                      HttpSession session,
                                      RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login first.");
+            return "redirect:/login";
+        }
+
         try {
             List<String> tokens = Arrays.stream(tokenString.split(","))
                     .map(String::trim)
@@ -196,6 +233,12 @@ public class TokenController {
      */
     @PostMapping("/edit/back")
     public String handleBackFromEdit(HttpSession session, RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login first.");
+            return "redirect:/login";
+        }
+
         toolFlowService.cancelToolCreation(session);
         redirectAttrs.addFlashAttribute("info", "Token edit canceled. Returning to tools.");
         return "redirect:/seller/tools";

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.Tool;
 
@@ -17,6 +18,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     // Tính trung bình rating
     Long countByTool(Tool tool);
+
     @Query("SELECT AVG(f.rating) FROM Feedback f WHERE f.tool.toolId = :toolId")
     Double findAverageRatingByTool(@Param("toolId") Long toolId);
 
@@ -25,4 +27,30 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     @Query("SELECT COUNT(f) FROM Feedback f WHERE f.tool.toolId = :toolId")
     Long countByToolId(Long toolId);
+
+    long countByTool_Seller(Account seller);
+
+    List<Feedback> findByTool_Seller(Account seller);
+
+    List<Feedback> findByTool_ToolIdAndTool_Seller(Long toolId, Account seller);
+
+    long countByTool_ToolIdAndTool_Seller(Long toolId, Account seller);
+
+    long countByTool_ToolId(Long toolId);
+
+    @Query("""
+    SELECT f FROM Feedback f 
+    WHERE f.tool.seller.accountId = :sellerId
+""")
+    List<Feedback> findAllBySellerId(@Param("sellerId") Long sellerId);
+
+    @Query("""
+    SELECT f FROM Feedback f 
+    WHERE f.tool.seller.accountId = :sellerId 
+      AND f.tool.toolId = :toolId
+""")
+    List<Feedback> findAllBySellerIdAndToolId(
+            @Param("sellerId") Long sellerId,
+            @Param("toolId") Long toolId
+    );
 }

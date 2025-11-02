@@ -60,7 +60,12 @@ public class ToolController {
      * ✅ Đổi trạng thái tool (VD: deactivate)
      */
     @PostMapping("/{id}/deactivate")
-    public String deactivateTool(@PathVariable Long id, RedirectAttributes redirectAttrs) {
+    public String deactivateTool(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login again.");
+            return "redirect:/login";
+        }
         try {
             toolService.deactivateTool(id);
             redirectAttrs.addFlashAttribute("success", "Tool has been deactivated.");
@@ -130,7 +135,14 @@ public class ToolController {
      * ✅ Hiển thị form Add Tool
      */
     @GetMapping("/add")
-    public String showAddToolForm(Model model, HttpSession session) {
+    public String showAddToolForm(Model model, HttpSession session,RedirectAttributes redirectAttrs) {
+
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login again.");
+            return "redirect:/login";
+        }
+
         ToolFlowService.ToolSessionData pending =
                 (ToolFlowService.ToolSessionData) session.getAttribute("pendingTool");
 
@@ -161,6 +173,11 @@ public class ToolController {
             HttpSession session,
             RedirectAttributes redirectAttrs,
             Model model) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login again.");
+            return "redirect:/login";
+        }
 
         if (result.hasErrors()) {
             model.addAttribute("categories", toolService.getAllCategories());

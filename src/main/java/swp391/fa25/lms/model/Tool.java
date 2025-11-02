@@ -74,6 +74,9 @@ public class Tool {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "feedback-tool")
+    private List<Feedback> feedbacks;
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
     @JsonIgnoreProperties({"tool", "license"})
@@ -85,6 +88,7 @@ public class Tool {
     @Column(nullable = false)
     private Integer quantity = 0;
 
+
     public String getNote() {
         return note;
     }
@@ -94,6 +98,7 @@ public class Tool {
     }
     public Tool() {
     }
+
 
     public Tool(Long toolId, String toolName, String image, String description, Account seller, Category category, Status status, List<ToolFile> files, List<License> licenses, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.toolId = toolId;
@@ -235,5 +240,13 @@ public class Tool {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public List<Feedback> getFeedbacks() {
+        return feedbacks;
+    }
+
+    public void setFeedbacks(List<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
     }
 }
