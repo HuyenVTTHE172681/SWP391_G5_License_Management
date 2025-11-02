@@ -198,6 +198,19 @@ public class CustomerOrder {
     public boolean isPending() {
         return OrderStatus.PENDING.equals(orderStatus);
     }
+
+    // Thêm tính trung bình rating của seller
+    @Transient
+    private double sellerRating;
+
+    public double getSellerRating() {
+        return sellerRating;
+    }
+
+    public void setSellerRating(double sellerRating) {
+        this.sellerRating = sellerRating;
+    }
+
 }
 
 

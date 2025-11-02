@@ -155,18 +155,23 @@
                                 </span>
                 </td>
                 <td class="text-center">
-                    <!-- Luôn show: Xem chi tiết -->
-                    <button class="btn btn-sm btn-primary" title="Xem chi tiết"
-                            >
+                    <!-- THÊM: Eye button với HTMX load modal -->
+                    <a th:href="@{/orders/{id}(id=${order.orderId})}"
+                       th:attr="hx-get=@{/orders/{id}(id=${order.orderId})}"
+                       class="btn btn-sm btn-primary"
+                       title="Xem chi tiết"
+                       hx-target="#orderDetailModalBody"
+                       hx-trigger="click"
+                       hx-swap="innerHTML">
                         <i class="bi bi-eye"></i>
-                    </button>
+                    </a>
 
                     <!-- Chỉ show nếu SUCCESS: Feedback -->
-<!--                    <button th:if="${order.orderStatus.name() == 'SUCCESS'}"-->
-<!--                            class="btn btn-sm btn-warning" th:disabled="${!order.canFeedbackOrReport}"-->
-<!--                            th:onclick="'window.location.href=\'/feedback/create?orderId=' + ${order.orderId}">-->
-<!--                        Feedback-->
-<!--                    </button>-->
+                    <!--                    <button th:if="${order.orderStatus.name() == 'SUCCESS'}"-->
+                    <!--                            class="btn btn-sm btn-warning" th:disabled="${!order.canFeedbackOrReport}"-->
+                    <!--                            th:onclick="'window.location.href=\'/feedback/create?orderId=' + ${order.orderId}">-->
+                    <!--                        Feedback-->
+                    <!--                    </button>-->
                     <span th:if="${order.orderStatus.name() == 'SUCCESS'}">
         <span th:if="${order.canFeedbackOrReport}">
             <a class="btn btn-sm btn-warning"
@@ -178,13 +183,6 @@
             <button class="btn btn-sm btn-warning" disabled>Feedback</button>
         </span>
     </span>
-
-                    <!-- Chỉ show nếu SUCCESS: Report -->
-<!--                    <button th:if="${order.orderStatus.name() == 'SUCCESS'}"-->
-<!--                            class="btn btn-sm btn-danger" th:disabled="${!order.canFeedbackOrReport}"-->
-<!--                            >-->
-<!--                        Report-->
-<!--                    </button>-->
 
                     <span th:if="${order.orderStatus.name() == 'SUCCESS'}">
         <span th:if="${order.canFeedbackOrReport}">
@@ -274,13 +272,117 @@
                 </li>
             </ul>
         </nav>
-
     </div> <!-- end orderTableContainer -->
-
 </div> <!-- end container -->
-
 <!--Footer-->
 <div th:replace="common/footer :: footer"></div>
+
+<!-- THÊM MỚI: MODAL CHI TIẾT ORDER -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailModalLabel">Chi tiết đơn hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="orderDetailModalBody">
+                <!-- HTMX load fragment vào đây -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- THÊM MỚI: Fragment Nội Dung Modal -->
+<div th:fragment="orderDetailModal" th:if="${order != null}">
+    <div class="order-detail p-3">
+        <div class="border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Mã đơn: <b th:text="${order.orderId}">DH001</b></h6>
+                    <h6 class="mb-3"><i class="bi bi-calendar3"></i> Ngày mua:
+                        <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                    </h6>
+                    <!-- Seller info -->
+                    <div class="mb-3">
+                        <h6 th:text="'👤 ' + ${order.tool.seller.fullName}"></h6>
+                        <div>
+                        <span th:each="i : ${#numbers.sequence(1, 5)}">
+                            <i th:class="${i <= sellerRating ? 'fas fa-star text-warning' : 'far fa-star text-muted'}"></i>
+                        </span>
+                            <small class="text-muted" th:text="${#numbers.formatDecimal(sellerRating,1,1)} + '/5'">4.8/5</small>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h6>Trạng thái:
+                        <span th:switch="${order.orderStatus.name()}">
+                            <span th:case="'SUCCESS'" class="badge bg-success">Thành công</span>
+                            <span th:case="'PENDING'" class="badge bg-warning text-dark">Chờ thanh toán</span>
+                            <span th:case="'FAILED'" class="badge bg-danger">Thất bại</span>
+                        </span>
+                    </h6>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product info -->
+        <div class="border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-8">
+                    <h6 class="fw-bold" th:text="${order.tool.toolName}">Email Bulk Sender Pro</h6>
+                    <p class="text-muted mb-6" th:text="${order.tool.description}">Công cụ gửi email hàng loạt chuyên nghiệp</p>
+                    <div class="col-md-5 mb-2"><strong>Category:</strong> <span th:text="${order.tool.category.categoryName}"></span></div>
+                    <div class="col-md-8 mb-2">
+                        <strong>Gói:</strong>
+                        <span th:text="${order.license.name}"></span>
+                        <span class="text-muted fst-italic">(
+                        <span th:text="${order.license.durationDays}"></span> ngày)</span>
+                    </div>
+                    <div class="col-md-8 mb-2">
+                        <strong>Hạn sử dụng: </strong><span class="fw-bold text-danger" th:text="${#temporals.format(order.licenseAccount.endDate, 'dd/MM/yyyy HH:mm')}"></span>
+                    </div>
+                    <div class="col-md-4"><strong>Giá:</strong> <span class="fw-bold text-success" th:text="${#numbers.formatDecimal(basePrice,0,'COMMA',0,'POINT')} + ' VND'"></span></div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <img th:src="${order.tool.image}" alt="Tool image" class="img-fluid rounded">
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-end gap-2">
+            <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
+               th:href="@{|/orders/${order.orderId}/feedback|}"
+               class="btn btn-warning"><i class="bi bi-chat-left-dots"></i> Gửi Feedback</a>
+            <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
+               th:href="@{|/orders/${order.orderId}/report|}"
+               class="btn btn-outline-danger"><i class="bi bi-flag"></i> Báo cáo</a>
+            <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
+               th:href="@{'/my-tools/' + ${order.orderId}}"
+               class="btn btn-success"><i class="bi bi-play-circle"></i> Dùng dịch vụ này</a>
+        </div>
+    </div>
+</div>
+
+<!-- JS cho Modal (show sau HTMX load) -->
+<script>
+    // Auto show modal sau HTMX load
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'orderDetailModalBody') {
+            var modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+            modal.show();
+        }
+    });
+
+    // Fallback if no HTMX (direct href)
+    function showOrderModal(id) {
+        window.location.href = '/orders/' + id;
+    }
+</script>
 
 <!-- htmx: thư viện giúp cập nhật từng phần HTML mà không reload trang -->
 <script src="https://unpkg.com/htmx.org@1.9.3"></script>
