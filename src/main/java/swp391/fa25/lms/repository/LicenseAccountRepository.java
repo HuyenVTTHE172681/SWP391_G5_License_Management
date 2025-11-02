@@ -18,6 +18,8 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
     boolean existsByToken(String token);
     @Transactional
     void deleteByTool(Tool tool);
+    LicenseAccount findByToken(String token);
+    List<LicenseAccount> findAllByTool(Tool tool);
 }
 
 

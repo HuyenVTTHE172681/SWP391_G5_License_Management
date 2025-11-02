@@ -11,6 +11,8 @@ import swp391.fa25.lms.repository.ToolRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -185,20 +187,45 @@ public class TokenService {
     /** ✅ Xoá toàn bộ token cũ và ghi lại token mới (finalize edit) */
     @Transactional
     public void updateTokensForTool(Tool tool, List<String> tokens) {
-        licenseAccountRepository.deleteByTool(tool);
 
+        if (tool == null)
+            throw new IllegalArgumentException("Tool không hợp lệ (null).");
+
+        if (tokens == null || tokens.isEmpty())
+            throw new IllegalArgumentException("Danh sách token trống. Vui lòng thêm ít nhất 1 token.");
+
+        // Lấy danh sách token hiện có trong DB
+        List<LicenseAccount> existingAccounts = licenseAccountRepository.findAllByTool(tool);
+        Set<String> existingTokens = existingAccounts.stream()
+                .map(LicenseAccount::getToken)
+                .collect(Collectors.toSet());
+
+        // ✅ 1. Xoá các token bị gỡ khỏi danh sách
+        for (LicenseAccount acc : existingAccounts) {
+            if (!tokens.contains(acc.getToken())) {
+                licenseAccountRepository.delete(acc);
+            }
+        }
+
+        // ✅ 2. Thêm các token mới chưa tồn tại
         for (String token : tokens) {
             if (token == null || !token.matches("^\\d{6}$")) {
-                throw new IllegalArgumentException("Token không hợp lệ: '" + token + "' (phải 6 chữ số)");
+                throw new IllegalArgumentException("Token không hợp lệ: '" + token + "' (phải gồm 6 chữ số).");
             }
 
-            LicenseAccount acc = new LicenseAccount();
-            acc.setTool(tool);
-            acc.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
-            acc.setToken(token);
-            acc.setStatus(LicenseAccount.Status.ACTIVE);
-            acc.setCreatedAt(LocalDateTime.now());
-            licenseAccountRepository.save(acc);
+            // Token đã tồn tại trong tool → bỏ qua
+            if (existingTokens.contains(token)) {
+                continue;
+            }
+
+            // Token mới → thêm vào DB
+            LicenseAccount newAcc = new LicenseAccount();
+            newAcc.setTool(tool);
+            newAcc.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
+            newAcc.setToken(token);
+            newAcc.setStatus(LicenseAccount.Status.ACTIVE);
+            newAcc.setCreatedAt(LocalDateTime.now());
+            licenseAccountRepository.save(newAcc);
         }
     }
 }

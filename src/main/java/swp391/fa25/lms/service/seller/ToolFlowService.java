@@ -208,28 +208,35 @@ public class ToolFlowService {
         if (tool == null)
             throw new IllegalStateException("Tool data missing in session.");
 
-        if (tokens == null || tokens.isEmpty())
-            throw new IllegalArgumentException("Danh sách token trống. Vui lòng thêm ít nhất 1 token trước khi lưu.");
+        Long currentToolId = tool.getToolId();
 
-        // ✅ Check trùng token trong DB trước khi update
+        if (tokens == null || tokens.isEmpty()) {
+            throw new IllegalArgumentException("Danh sách token trống. Vui lòng thêm ít nhất 1 token trước khi lưu.");
+        }
+
+        // ✅ Kiểm tra token hợp lệ và tránh trùng với tool khác
         for (String token : tokens) {
             if (token == null || !token.matches("^\\d{6}$")) {
-                throw new IllegalArgumentException("Token không hợp lệ: '" + token + "' (phải gồm 6 chữ số)");
+                throw new IllegalArgumentException("Token không hợp lệ: '" + token + "' (phải gồm 6 chữ số).");
             }
 
-            boolean exists = licenseAccountRepository.existsByToken(token);
-            if (exists) {
-                throw new IllegalArgumentException("Token '" + token + "' đã tồn tại trong hệ thống!");
+            LicenseAccount existing = licenseAccountRepository.findByToken(token);
+
+            // ⚠️ Token đã tồn tại và KHÔNG thuộc tool hiện tại → báo lỗi
+            if (existing != null && !existing.getTool().getToolId().equals(currentToolId)) {
+                throw new IllegalArgumentException("Token '" + token + "' đã tồn tại trong tool khác!");
             }
         }
 
-        // ✅ Cập nhật quantity = số lượng token mới
+        // ✅ Đồng bộ token mới: thêm cái mới, xóa cái đã bỏ
+        tokenService.updateTokensForTool(tool, tokens);
+
+        // ✅ Cập nhật lại số lượng theo token
         int newQuantity = tokens.size();
         tool.setQuantity(newQuantity);
 
-        // ✅ Cập nhật lại licenses + tokens trong DB
+        // ✅ Cập nhật lại licenses và quantity
         toolService.updateQuantityAndLicenses(tool.getToolId(), newQuantity, pending.getLicenses());
-        tokenService.updateTokensForTool(tool, tokens);
 
         // ✅ Xoá session sau khi finalize xong
         session.removeAttribute(SESSION_PENDING_EDIT);

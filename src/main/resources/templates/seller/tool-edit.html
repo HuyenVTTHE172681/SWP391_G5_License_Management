@@ -20,7 +20,10 @@
     <div th:if="${info}" class="alert alert-info" th:text="${info}"></div>
 
     <!-- Form -->
-    <form th:action="@{|/seller/tools/edit/${tool.toolId}|}" th:object="${tool}" method="post" enctype="multipart/form-data">
+    <form th:action="@{|/seller/tools/edit/${tool.toolId}|}"
+          th:object="${tool}"
+          method="post"
+          enctype="multipart/form-data">
 
         <div class="form-group">
             <label class="form-label">Tool Name</label>
@@ -31,10 +34,10 @@
             <label class="form-label">Upload Image</label>
             <input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg" onchange="previewImg(event)">
             <img id="imgPreview"
-                  class="preview-img"
-                  th:if="${tool.image != null}"
-                  th:src="@{'/' + ${tool.image}}"
-                  alt="Current tool image">
+                 class="preview-img"
+                 th:if="${tool.image != null}"
+                 th:src="@{'/' + ${tool.image}}"
+                 alt="Current tool image">
         </div>
 
         <div class="form-group">
@@ -61,10 +64,20 @@
             <input type="hidden" th:field="*{loginMethod}">
         </div>
 
+        <!-- ✅ Quantity: Lock khi là TOKEN -->
         <div class="form-group">
             <label class="form-label">Quantity</label>
-            <input type="number" th:field="*{quantity}" class="form-input" min="0" required>
-            <small>Nếu login method là TOKEN, số lượng sẽ cập nhật khi finalize tokens.</small>
+            <input type="number"
+                   th:field="*{quantity}"
+                   class="form-input"
+                   min="0"
+                   required
+                   th:attr="readonly=${tool.loginMethod.name() == 'TOKEN'}">
+            <small th:if="${tool.loginMethod.name() == 'TOKEN'}" class="text-muted">
+                🔒 Locked — quantity will update when click <b>Finalize Tokens</b>.
+            </small>
+            <small th:if="${tool.loginMethod.name() != 'TOKEN'}" class="text-muted">
+            </small>
         </div>
 
         <div class="form-group">
@@ -82,6 +95,7 @@
         <div class="form-actions">
             <a th:href="@{/seller/tools}" class="cancel-btn">Cancel</a>
 
+            <!-- TOKEN tool -->
             <button th:if="${isTokenLogin}"
                     type="submit"
                     name="action"
@@ -89,6 +103,7 @@
                     class="submit-btn"
                     style="background:#f59e0b;">Next → Tokens</button>
 
+            <!-- USER_PASSWORD tool -->
             <button th:if="${!isTokenLogin}"
                     type="submit"
                     name="action"
@@ -113,10 +128,10 @@
         const row = document.createElement("div");
         row.className = "license-row";
         row.innerHTML = `
-      <input type="number" name="licenseDays" class="form-input" placeholder="Days" min="1" required>
-      <input type="number" name="licensePrices" class="form-input" placeholder="Price (VND)" min="0" required>
-      <button type="button" class="remove-btn" onclick="removeRow(this)">×</button>
-    `;
+            <input type="number" name="licenseDays" class="form-input" placeholder="Days" min="1" required>
+            <input type="number" name="licensePrices" class="form-input" placeholder="Price (VND)" min="0" required>
+            <button type="button" class="remove-btn" onclick="removeRow(this)">×</button>
+        `;
         container.appendChild(row);
     }
 
@@ -128,6 +143,15 @@
         }
         btn.closest(".license-row").remove();
     }
+
+    // ✅ JS fallback: nếu loginMethod = TOKEN, lock quantity
+    document.addEventListener("DOMContentLoaded", () => {
+        const loginInput = document.querySelector('input[name="loginMethod"]');
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        if (loginInput && quantityInput && loginInput.value === 'TOKEN') {
+            quantityInput.readOnly = true;
+        }
+    });
 </script>
 </body>
 </html>
