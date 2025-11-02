@@ -1,6 +1,7 @@
 package swp391.fa25.lms.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -23,7 +24,7 @@ public class Account {
     private String password;
 
     @NotBlank(message = "Họ và tên không được để trống")
-    @Size(min = 10, max = 20, message = "Họ và tên đầy đủ phải từ 10 đến 20 ký tự")
+    @Size(min = 5, max = 20, message = "Họ và tên đầy đủ phải từ 5 đến 20 ký tự")
     @Column(name = "fullName", columnDefinition = "NVARCHAR(100)")
     private String fullName;
 
@@ -59,10 +60,12 @@ public class Account {
     private Role role;
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"transactions"})
     private Wallet wallet;
 
     // quan hệ với các bảng con
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"account", "license", "tool", "transaction"})
     private List<CustomerOrder> orders;
 
     @OneToMany(mappedBy = "account")
@@ -72,12 +75,28 @@ public class Account {
     private List<Favorite> favorites;
 
     @OneToMany(mappedBy = "seller")
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "tool-seller")
     private List<Tool> tools;
+
+    @OneToMany(mappedBy = "uploadedBy")
+    @JsonManagedReference(value = "file-uploader")
+    private List<ToolFile> uploadedFiles;
+
+
+    @ManyToOne
+    @JoinColumn(name = "seller_package_id") // tên cột trong bảng Account
+    private SellerPackage sellerPackage;
+
+    @Column(name = "seller_active")
+    private Boolean sellerActive = false;
+
+    @Column(name = "seller_expiry_date")
+    private LocalDateTime sellerExpiryDate;
 
     public Account() {
     }
 
-    public Account(Long accountId, String email, String password, String fullName, AccountStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationCode, LocalDateTime codeExpiry, Role role, Wallet wallet, List<CustomerOrder> orders, List<Feedback> feedbacks, List<Favorite> favorites, List<Tool> tools) {
+    public Account(Long accountId, String email, String password, String fullName, LocalDateTime createdAt, AccountStatus status, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationCode, LocalDateTime codeExpiry, String confirmPassword, Role role, Wallet wallet, LocalDateTime sellerExpiryDate, Boolean sellerActive, SellerPackage sellerPackage, List<Tool> tools, List<Favorite> favorites, List<Feedback> feedbacks, List<CustomerOrder> orders) {
         this.accountId = accountId;
         this.email = email;
         this.password = password;
@@ -90,12 +109,24 @@ public class Account {
         this.verified = verified;
         this.verificationCode = verificationCode;
         this.codeExpiry = codeExpiry;
+        this.confirmPassword = confirmPassword;
         this.role = role;
         this.wallet = wallet;
-        this.orders = orders;
-        this.feedbacks = feedbacks;
-        this.favorites = favorites;
+        this.sellerExpiryDate = sellerExpiryDate;
+        this.sellerActive = sellerActive;
+        this.sellerPackage = sellerPackage;
         this.tools = tools;
+        this.favorites = favorites;
+        this.feedbacks = feedbacks;
+        this.orders = orders;
+    }
+
+    public List<ToolFile> getUploadedFiles() {
+        return uploadedFiles;
+    }
+
+    public void setUploadedFiles(List<ToolFile> uploadedFiles) {
+        this.uploadedFiles = uploadedFiles;
     }
 
     public Long getAccountId() {
@@ -248,5 +279,29 @@ public class Account {
 
     public void setConfirmPassword(String confirmPassword) {
         this.confirmPassword = confirmPassword;
+    }
+
+    public SellerPackage getSellerPackage() {
+        return sellerPackage;
+    }
+
+    public void setSellerPackage(SellerPackage sellerPackage) {
+        this.sellerPackage = sellerPackage;
+    }
+
+    public Boolean getSellerActive() {
+        return sellerActive;
+    }
+
+    public void setSellerActive(Boolean sellerActive) {
+        this.sellerActive = sellerActive;
+    }
+
+    public LocalDateTime getSellerExpiryDate() {
+        return sellerExpiryDate;
+    }
+
+    public void setSellerExpiryDate(LocalDateTime sellerExpiryDate) {
+        this.sellerExpiryDate = sellerExpiryDate;
     }
 }

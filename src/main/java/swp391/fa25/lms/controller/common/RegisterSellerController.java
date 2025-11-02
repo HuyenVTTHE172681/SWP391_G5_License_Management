@@ -62,6 +62,62 @@ public class RegisterSellerController {
                                         @RequestParam String password,
                                         Model model) {
 
+        if(fullName.isEmpty() || email.isEmpty() ||
+                phone.isEmpty() || address.isEmpty() || password.isEmpty()) {
+            model.addAttribute("error", "Vui lòng nhập thông tin");
+            return "public/registerGuestToSeller";
+        }
+
+        if(fullName.matches(".*[@$!%*?&^#()_+=-].*")){
+            model.addAttribute("error", "Tên khách hàng không được có ký tự đặc biệt");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!email.contains("@gmail.com")){
+            model.addAttribute("error", "Vui lòng nhập lại Email");
+            return "public/registerGuestToSeller";
+        }
+
+        if (!phone.matches("^0\\d{9}$")) {
+            model.addAttribute("error", "Số điện thoại không hợp lệ. Vui lòng nhập 10 chữ số và bắt đầu bằng 0.");
+            return "public/registerGuestToSeller";
+        }
+
+        if(address.matches(".*[@$!%*?&^#()_+=-].*")){
+            model.addAttribute("error", "Điạ chỉ không có ký tự đặc biệt");
+            return "public/registerGuestToSeller";
+        }
+
+        if(password.length() < 8){
+            model.addAttribute("error", "Vui lòng nhập mật khẩu có độ dài ít nhất là 8");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!password.matches(".*[a-z].*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 ký tự in thường");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!password.matches(".*[A-Z].*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 ký tự in hoa");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!password.matches(".*[@$!%*?&^#()_+=-].*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhát 1 ký tự đặc biệt");
+            return "public/registerGuestToSeller";
+        }
+
+        if(!password.matches(".*\\d.*")){
+            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 chữ số");
+            return "public/registerGuestToSeller";
+        }
+
+        if(password.contains(" ")){
+            model.addAttribute("error", "Mật khẩu không được có dấu cách");
+            return "public/registerGuestToSeller";
+        }
+
         Optional<Account> existingOpt = accountRepo.findByEmail(email);
         Account account = existingOpt.orElse(new Account());
 

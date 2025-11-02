@@ -1,347 +1,157 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Edit Tool</title>
-
-    <style>
-        body {
-            background-color: #f9fafb;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .header-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-        }
-
-        .header-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #16a34a;
-        }
-
-        .back-btn {
-            background-color: #e5e7eb;
-            color: #374151;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: background-color 0.2s ease;
-        }
-
-        .back-btn:hover { background-color: #d1d5db; }
-
-        .form-section {
-            max-width: 700px;
-            margin: 2rem auto;
-            background-color: white;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .form-group { margin-bottom: 1.5rem; }
-
-        .form-label {
-            display: block;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 0.4rem;
-        }
-
-        .form-input, .form-select, .form-textarea {
-            width: 100%;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            padding: 0.6rem;
-            font-size: 1rem;
-            background-color: white;
-            outline: none;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            border-color: #16a34a;
-            box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
-        }
-
-        .image-gallery {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .error-message {
-            color: #dc2626;
-            font-size: 0.85rem;
-            margin-top: 4px;
-        }
-
-        .error-border {
-            border: 2px solid #dc2626 !important;
-            background-color: #fff5f5;
-        }
-
-        .image-gallery img {
-            width: 100px;
-            height: 100px;
-            border-radius: 8px;
-            border: 2px solid transparent;
-            cursor: pointer;
-            object-fit: cover;
-        }
-
-        .image-gallery img.selected {
-            border-color: #16a34a;
-            box-shadow: 0 0 4px rgba(22,163,74,0.5);
-        }
-
-        .preview-img {
-            display: block;
-            margin-top: 10px;
-            width: 150px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .submit-btn {
-            background-color: #16a34a;
-            color: white;
-            border: none;
-            padding: 0.6rem 1.5rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        .license-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .remove-btn {
-            background-color: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #dc2626;
-            border-radius: 6px;
-            width: 32px;
-            height: 32px;
-            font-weight: bold;
-            line-height: 1;
-            cursor: pointer;
-            transition: 0.2s;
-            flex-shrink: 0;
-        }
-        .remove-btn:hover {
-            background-color: #dc2626;
-            color: white;
-        }
-        .submit-btn:hover { background-color: #15803d; }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/tool-edit.css}">
 </head>
-
 <body>
-<header>
-    <div class="header-container">
-        <h1 class="header-title">Edit Tool</h1>
+
+<div class="container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">Edit Tool</h1>
         <a th:href="@{/seller/tools}" class="back-btn">← Back</a>
     </div>
-</header>
 
-<section class="form-section">
-    <form id="toolEditForm"
-          th:action="@{'/seller/tools/edit/' + ${tool.toolId}}"
+    <!-- Alerts -->
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+    <div th:if="${info}" class="alert alert-info" th:text="${info}"></div>
+
+    <!-- Form -->
+    <form th:action="@{|/seller/tools/edit/${tool.toolId}|}"
           th:object="${tool}"
           method="post"
           enctype="multipart/form-data">
 
-        <input type="hidden" th:field="*{toolId}" />
-        <!-- 🧾 Tool Name -->
         <div class="form-group">
             <label class="form-label">Tool Name</label>
-            <input type="text" th:field="*{toolName}" class="form-input"
-                   placeholder="Enter tool name"
-                   th:classappend="${#fields.hasErrors('toolName')} ? 'error-border' : ''">
-            <!-- 🟥 Hiện lỗi ngay bên dưới -->
-            <div class="error-message" th:if="${#fields.hasErrors('toolName')}"
-                 th:errors="*{toolName}"></div>
+            <input type="text" th:field="*{toolName}" class="form-input" placeholder="Enter tool name" required>
         </div>
 
-
-        <!-- 🖼 Current Image -->
         <div class="form-group">
-            <label class="form-label">Current Image</label>
-            <img th:src="@{'/images/tools/' + ${tool.image}}" alt="Current Image" class="preview-img"
-                 onerror="this.src='/images/default-placeholder.png'">
+            <label class="form-label">Upload Image</label>
+            <input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg" onchange="previewImg(event)">
+            <img id="imgPreview"
+                 class="preview-img"
+                 th:if="${tool.image != null}"
+                 th:src="@{'/' + ${tool.image}}"
+                 alt="Current tool image">
         </div>
 
-        <!-- 🖼 Upload New Image -->
         <div class="form-group">
-            <label class="form-label">Upload New Image</label>
-            <input type="file" name="imageFile" class="form-input" accept="image/*" onchange="previewNewImage(event)">
-            <img id="previewImage" class="preview-img" style="display:none;">
+            <label class="form-label">Upload Tool File (.exe, .zip, .rar)</label>
+            <input type="file" name="toolFile" class="form-control" accept=".exe,.zip,.rar">
         </div>
 
-        <!-- 🗂 Category -->
         <div class="form-group">
             <label class="form-label">Category</label>
-            <select th:field="*{category.categoryId}" class="form-select">
+            <select th:field="*{category.categoryId}" class="form-select" required>
                 <option value="">-- Select category --</option>
-                <option th:each="c : ${categories}"
-                        th:value="${c.categoryId}"
-                        th:text="${c.categoryName}"
-                        th:selected="${tool.category?.categoryId == c.categoryId}">
-                </option>
+                <option th:each="c : ${categories}" th:value="${c.categoryId}" th:text="${c.categoryName}"></option>
             </select>
         </div>
 
-        <!-- 📝 Description -->
         <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea th:field="*{description}" rows="4" class="form-textarea"
-                      placeholder="Enter description"></textarea>
+            <textarea th:field="*{description}" class="form-textarea" placeholder="Enter description" required></textarea>
         </div>
-        <!-- 🔐 Login Method (readonly) -->
+
         <div class="form-group">
             <label class="form-label">Login Method</label>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="text" class="form-input" th:value="${tool.loginMethod}" readonly>
-
-                <!-- ✅ Nút Edit Tokens (chỉ hiện nếu loginMethod là TOKEN) -->
-                <a th:if="${tool.loginMethod?.name() == 'TOKEN'}"
-                   th:href="@{'/seller/tokens/manage/' + ${tool.toolId}}"
-                   class="submit-btn"
-                   style="background-color: #2563eb; padding: 0.5rem 1rem; text-decoration: none;">
-                    ⚙ Edit Tokens
-                </a>
-            </div>
+            <input class="form-input" th:value="*{loginMethod}" readonly>
+            <input type="hidden" th:field="*{loginMethod}">
         </div>
 
-        <!-- 🔢 Quantity -->
+        <!-- ✅ Quantity: Lock khi là TOKEN -->
         <div class="form-group">
-            <label class="form-label">Tool Quantity</label>
-            <input type="number" th:field="*{quantity}" class="form-input" min="1">
-        </div>
-
-        <!-- 💰 License Pricing -->
-        <div class="form-group">
-            <label class="form-label">Pricing Options</label>
-            <div id="licenseContainer">
-                <div th:each="license : ${tool.licenses}" class="license-row" style="margin-bottom:8px;">
-                    <input type="number" name="licenseDays" th:value="${license.durationDays}"
-                           class="form-input" min="1" placeholder="Days">
-                    <input type="number" name="licensePrices" th:value="${license.price}"
-                           class="form-input" min="0" placeholder="Price (VND)">
-                    <button type="button" class="remove-btn" onclick="removeLicenseRow(this)">×</button>
-                </div>
-
-                <div th:if="${#lists.isEmpty(tool.licenses)}" class="license-row" style="margin-bottom:8px;">
-                    <input type="number" name="licenseDays" min="1" class="form-input" placeholder="Days">
-                    <input type="number" name="licensePrices" min="0" class="form-input" placeholder="Price (VND)">
-                    <button type="button" class="remove-btn" onclick="removeLicenseRow(this)">×</button>
-                </div>
-            </div>
-
-            <button type="button" class="submit-btn"
-                    style="background:#e5e7eb; color:#374151; margin-top:0.5rem;"
-                    onclick="addLicenseRow()">+ Add another</button>
-
-            <small id="error-license" class="text-danger error-message" style="display:none;">
-                Please complete all pricing rows correctly.
+            <label class="form-label">Quantity</label>
+            <input type="number"
+                   th:field="*{quantity}"
+                   class="form-input"
+                   min="0"
+                   required
+                   th:attr="readonly=${tool.loginMethod.name() == 'TOKEN'}">
+            <small th:if="${tool.loginMethod.name() == 'TOKEN'}" class="text-muted">
+                🔒 Locked — quantity will update when click <b>Finalize Tokens</b>.
+            </small>
+            <small th:if="${tool.loginMethod.name() != 'TOKEN'}" class="text-muted">
             </small>
         </div>
-        <!-- ✅ Submit -->
+
+        <div class="form-group">
+            <label class="form-label">License Packages</label>
+            <div id="licenseContainer">
+                <div class="license-row" th:each="lic : ${tool.licenses}">
+                    <input type="number" name="licenseDays" th:value="${lic.durationDays}" class="form-input" placeholder="Days" min="1" required>
+                    <input type="number" name="licensePrices" th:value="${lic.price}" class="form-input" placeholder="Price (VND)" min="0" required>
+                    <button type="button" class="remove-btn" onclick="removeRow(this)">×</button>
+                </div>
+            </div>
+            <button type="button" class="add-btn" onclick="addRow()">+ Add another</button>
+        </div>
+
         <div class="form-actions">
-            <button type="submit" class="submit-btn">Save Changes</button>
+            <a th:href="@{/seller/tools}" class="cancel-btn">Cancel</a>
+
+            <!-- TOKEN tool -->
+            <button th:if="${isTokenLogin}"
+                    type="submit"
+                    name="action"
+                    value="token"
+                    class="submit-btn"
+                    style="background:#f59e0b;">Next → Tokens</button>
+
+            <!-- USER_PASSWORD tool -->
+            <button th:if="${!isTokenLogin}"
+                    type="submit"
+                    name="action"
+                    value="save"
+                    class="submit-btn">Save Changes</button>
         </div>
     </form>
-</section>
+</div>
 
 <script>
-    // ✅ Preview ảnh mới khi chọn file
-    function previewNewImage(event) {
-        const img = document.getElementById("previewImage");
-        const file = event.target.files[0];
-        if (file) {
-            img.src = URL.createObjectURL(file);
-            img.style.display = "block";
-        } else {
-            img.style.display = "none";
-        }
+    function previewImg(e) {
+        const file = e.target.files[0];
+        const img = document.getElementById("imgPreview");
+        if (!file || !img) return;
+        const reader = new FileReader();
+        reader.onload = ev => img.src = ev.target.result;
+        reader.readAsDataURL(file);
     }
 
-    // ✅ Add new license row
-    function addLicenseRow() {
-        const container = document.getElementById('licenseContainer');
-        const row = document.createElement('div');
-        row.className = 'license-row';
-        row.style.marginBottom = '8px';
+    function addRow() {
+        const container = document.getElementById("licenseContainer");
+        const row = document.createElement("div");
+        row.className = "license-row";
         row.innerHTML = `
-            <input type="number" name="licenseDays" min="1" class="form-input" placeholder="Days">
-            <input type="number" name="licensePrices" min="0" class="form-input" placeholder="Price (VND)">
-            <button type="button" class="remove-btn" onclick="removeLicenseRow(this)">×</button>
+            <input type="number" name="licenseDays" class="form-input" placeholder="Days" min="1" required>
+            <input type="number" name="licensePrices" class="form-input" placeholder="Price (VND)" min="0" required>
+            <button type="button" class="remove-btn" onclick="removeRow(this)">×</button>
         `;
         container.appendChild(row);
     }
 
-    // ✅ Remove row (always keep at least one)
-    function removeLicenseRow(btn) {
-        const container = document.getElementById('licenseContainer');
-        const rows = container.querySelectorAll('.license-row');
-        if (rows.length > 1) btn.closest('.license-row').remove();
+    function removeRow(btn) {
+        const container = document.getElementById("licenseContainer");
+        if (container.children.length <= 1) {
+            alert("Cần ít nhất 1 license!");
+            return;
+        }
+        btn.closest(".license-row").remove();
     }
 
-    // ✅ Validate before submit
-    document.getElementById('toolEditForm').addEventListener('submit', function (e) {
-        let valid = true;
-        const rows = document.querySelectorAll('#licenseContainer .license-row');
-        const errorEl = document.getElementById('error-license');
-        errorEl.style.display = 'none';
-
-        for (const row of rows) {
-            const day = row.querySelector('input[name="licenseDays"]').value.trim();
-            const price = row.querySelector('input[name="licensePrices"]').value.trim();
-
-            if (!day || !price || day <= 0 || price < 0) {
-                valid = false;
-                row.querySelectorAll('input').forEach(i => i.classList.add('error-border'));
-            } else {
-                row.querySelectorAll('input').forEach(i => i.classList.remove('error-border'));
-            }
-        }
-
-        if (!valid) {
-            e.preventDefault();
-            errorEl.style.display = 'block';
-            errorEl.textContent = 'Please complete all pricing rows correctly.';
-            window.scrollTo({ top: 200, behavior: 'smooth' });
+    // ✅ JS fallback: nếu loginMethod = TOKEN, lock quantity
+    document.addEventListener("DOMContentLoaded", () => {
+        const loginInput = document.querySelector('input[name="loginMethod"]');
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        if (loginInput && quantityInput && loginInput.value === 'TOKEN') {
+            quantityInput.readOnly = true;
         }
     });
-
 </script>
 </body>
 </html>

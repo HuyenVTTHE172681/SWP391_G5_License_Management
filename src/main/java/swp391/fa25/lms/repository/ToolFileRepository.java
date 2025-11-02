@@ -24,4 +24,5 @@ public interface ToolFileRepository extends JpaRepository<ToolFile, Long> {
     Optional<ToolFile> findTopByTool_ToolIdAndFileTypeOrderByCreatedAtDesc(
             Long toolId, ToolFile.FileType fileType
     );
+
 }

@@ -1,199 +1,65 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Manage Tokens</title>
+    <link rel="stylesheet" th:href="@{/css/token.css}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f9fafb;
-            font-family: 'Segoe UI', sans-serif;
-        }
-        .container {
-            max-width: 800px;
-            margin: 3rem auto;
-        }
-        h2 {
-            color: #16a34a;
-            font-weight: 700;
-        }
-        .card {
-            border-radius: 14px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
-        .btn-success {
-            background-color: #16a34a;
-            border: none;
-        }
-        .btn-success:hover {
-            background-color: #15803d;
-        }
-        .btn-outline-danger {
-            border-radius: 8px;
-        }
-        input.form-control {
-            border-radius: 8px;
-        }
-        .token-input-row {
-            margin-bottom: 0.5rem;
-        }
-    </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 class="mb-4">Manage Tokens</h2>
+    <h2 class="mb-4 text-success">Token Management</h2>
 
-    <!-- 🔹 Back link -->
-    <a th:if="${isTemp}"
-       th:href="@{/seller/tokens/back}"
-       class="back-link">
-        ← Back to Tool Setup
-    </a>
+    <div th:if="${success}" class="alert alert-success text-center" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger text-center" th:text="${error}"></div>
+    <div th:if="${info}" class="alert alert-info text-center" th:text="${info}"></div>
 
-    <a th:if="${!isTemp}"
-       th:href="@{'/seller/tools/edit/' + ${tool.toolId}}"
-       class="back-link">
-        ← Back to Tool Setup
-    </a>
-
-    <!-- 🔹 Notifications -->
-    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-
-    <!-- 🔹 Tool Info -->
-    <div class="card p-4 mb-4">
-        <h4 class="fw-bold mb-3" th:text="'Tool: ' + ${tool.toolName}"></h4>
-
-        <!-- 🟢 Form Add Tokens -->
-        <form th:if="${isTemp}"
-              th:action="@{/seller/tokens/add-multiple}"
-              method="post">
-
-            <label class="form-label fw-semibold">Add New Tokens</label>
-
-            <div id="tokenContainer">
-                <div class="row token-input-row">
-                    <div class="col-10">
-                        <input type="text" name="tokens" class="form-control"
-                               placeholder="Enter token key..."
-                               required
-                               pattern="^[A-Za-z0-9_-]+$"
-                               title="Token chỉ được chứa chữ, số, dấu '-' hoặc '_' (không có khoảng trắng hoặc ký tự đặc biệt)">
-                    </div>
-                    <div class="col-2">
-                        <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">×</button>
-                    </div>
-                </div>
-            </div>
-
-            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addRow()">+ Add another</button>
-            <button type="submit" class="btn btn-success mt-3 float-end">Add Tokens</button>
-        </form>
-
-        <!-- 🟣 DB Mode: Add Token to Existing Tool -->
-        <form th:if="${!isTemp}"
-              th:action="@{'/seller/tokens/add/' + ${tool.toolId}}"
-              method="post">
-
-            <label class="form-label fw-semibold">Add New Token</label>
-            <div class="row token-input-row">
+    <form th:action="@{/seller/token-manage/submit}" method="post">
+        <div id="tokenContainer">
+            <div class="row mb-2">
                 <div class="col-10">
-                    <input type="text" name="tokenKey" class="form-control"
-                           placeholder="Enter token key..."
-                           required
-                           pattern="^[0-9]{6}$"
-                           title="Token phải gồm đúng 6 chữ số">
+                    <input type="text" name="tokens" class="form-control"
+                           placeholder="Enter 6-digit token"
+                           required pattern="^[0-9]{6}$" title="Token must have exactly 6 digits">
                 </div>
                 <div class="col-2">
-                    <button type="submit" class="btn btn-success w-100">Add</button>
+                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">×</button>
                 </div>
             </div>
-        </form>
-    </div>
+        </div>
 
-    <!-- 🔹 Token List -->
-    <div class="card p-3">
-        <h5 class="fw-semibold mb-3">Current Tokens</h5>
-        <table class="table align-middle">
-            <thead class="table-light">
-            <tr>
-                <th>#</th>
-                <th>Token Key</th>
-                <th>Action</th>
-            </tr>
-            </thead>
-            <tbody>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addRow()">+ Add another</button>
 
-            <!-- 🟢 Session mode -->
-            <tr th:if="${isTemp}" th:each="token, stat : ${tokens}">
-                <td th:text="${stat.index + 1}"></td>
-                <td th:text="${token}"></td>
-                <td>
-                    <form th:action="@{/seller/tokens/delete}" method="post" class="d-inline">
-                        <input type="hidden" name="index" th:value="${stat.index}">
-                        <button type="submit" class="btn btn-sm btn-outline-danger"
-                                onclick="return confirm('Delete this token?')">Delete</button>
-                    </form>
-                </td>
-            </tr>
-
-            <!-- 🟣 DB mode -->
-            <tr th:if="${!isTemp}" th:each="token, stat : ${tokens}">
-                <td th:text="${stat.index + 1}"></td>
-                <td th:text="${token.token}"></td>
-                <td>
-                    <a th:href="@{'/seller/tokens/delete/' + ${token.licenseAccountId}}"
-                       class="btn btn-sm btn-outline-danger"
-                       onclick="return confirm('Delete this token?')">Delete</a>
-                </td>
-            </tr>
-
-            <tr th:if="${#lists.isEmpty(tokens)}">
-                <td colspan="3" class="text-center text-muted">No tokens added yet</td>
-            </tr>
-            </tbody>
-        </table>
-
-        <!-- 🟢 Only show finalize when in session mode -->
-        <form th:if="${isTemp}" th:action="@{/seller/tokens/finalize}" method="post" class="mt-3 text-end"
-              onsubmit="return validateFinalize()">
-            <button type="submit" class="btn btn-success">
-                ✅ Finalize Tool Creation
-            </button>
-        </form>
-    </div>
+        <div class="mt-4 d-flex justify-content-between">
+            <form th:action="@{/seller/token-manage/back}" method="post">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/seller/tools/add'">
+                    ← Back
+                </button>
+            </form>
+            <button type="submit" class="btn btn-success">Finalize Tool</button>
+        </div>
+    </form>
 </div>
 
 <script>
-    function validateFinalize() {
-        const rows = document.querySelectorAll("table tbody tr");
-        if (rows.length === 1 && rows[0].innerText.includes("No tokens added yet")) {
-            alert("❌ Bạn phải thêm ít nhất 1 token trước khi hoàn tất!");
-            return false;
-        }
-        return confirm("Bạn có chắc muốn hoàn tất tạo tool?");
-    }
     function addRow() {
         const container = document.getElementById('tokenContainer');
         const row = document.createElement('div');
-        row.className = 'row token-input-row';
+        row.className = 'row mb-2';
         row.innerHTML = `
-        <div class="col-10">
-            <input type="text" name="tokens" class="form-control"
-                   placeholder="Enter token key..."
-                   required
-                   pattern="^[A-Za-z0-9_-]+$"
-                   title="Token chỉ được chứa chữ, số, '-' hoặc '_' (không có khoảng trắng hoặc ký tự đặc biệt)">
-        </div>
-        <div class="col-2">
-            <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">×</button>
-        </div>`;
+            <div class="col-10">
+                <input type="text" name="tokens" class="form-control"
+                       placeholder="Enter 6-digit token"
+                       required pattern="^[0-9]{6}$"
+                       title="Token must have exactly 6 digits">
+            </div>
+            <div class="col-2">
+                <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">×</button>
+            </div>`;
         container.appendChild(row);
     }
-    function removeRow(btn) {
-        btn.closest('.token-input-row').remove();
-    }
+    function removeRow(btn) { btn.closest('.row').remove(); }
 </script>
 
 </body>

@@ -1,5 +1,6 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -13,10 +14,12 @@ public class Favorite {
 
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"favorites", "tools", "wallet", "orders"})
     private Account account;
 
     @ManyToOne
     @JoinColumn(name = "tool_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"seller", "licenses", "files", "orders"})
     private Tool tool;
 
     public Favorite() {

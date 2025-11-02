@@ -19,6 +19,9 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
 
     // Lấy danh sách order của 1 user, mới nhất trước
     List<CustomerOrder> findByAccount_AccountIdOrderByCreatedAtDesc(Long accountId);
+    List<CustomerOrder> findByTool_Seller_AccountId(Long sellerId);
+
+    List<CustomerOrder> findByTool_ToolIdAndTool_Seller_AccountId(Long toolId, Long sellerId);
     @Query("""
            select o from CustomerOrder o
            join fetch o.tool t

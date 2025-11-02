@@ -1,0 +1,213 @@
+/* ========== Global Layout ========== */
+body {
+    background-color: #f7f9fb;
+    font-family: "Inter", "Segoe UI", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    color: #222;
+}
+
+/* ========== Container Card ========== */
+.container {
+    max-width: 1100px;
+    width: 85%;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    padding: 36px 48px;
+    transition: all 0.3s ease;
+}
+
+.container:hover {
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== Header ========== */
+.container h3 {
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+    color: #111827;
+}
+
+.container h3::before {
+    content: "🛡️";
+    margin-right: 10px;
+    font-size: 1.3rem;
+}
+
+/* ========== Buttons ========== */
+.btn {
+    display: inline-block;
+    padding: 8px 18px;
+    font-size: 0.95rem;
+    border: 1px solid #c7c9cc;
+    border-radius: 8px;
+    background: #fff;
+    color: #111;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn:hover {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+    border: none;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+/* ========== Table Styling ========== */
+.token-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    margin-top: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.token-table thead th {
+    background: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+    padding: 14px 18px;
+    border-bottom: 2px solid #e1e4e8;
+    text-align: center;
+}
+
+.token-table th:first-child,
+.token-table td:first-child {
+    text-align: left;
+    width: 5%;
+}
+
+.token-table td {
+    padding: 12px 18px;
+    text-align: center;
+    vertical-align: middle;
+    color: #111;
+}
+
+.token-table td:nth-child(2) {
+    text-align: left;
+    width: 35%;
+}
+
+.token-table tbody tr:nth-child(even) {
+    background-color: #fafbfc;
+}
+
+.token-table tbody tr:hover {
+    background-color: #f1f5f9;
+    transition: background-color 0.2s ease;
+}
+
+/* ========== Token Value Style ========== */
+.token-value {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #eef2ff;
+    color: #3730a3;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* ========== Action Buttons ========== */
+.action-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #111;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: #ef4444;
+    color: #fff;
+    border-color: #ef4444;
+}
+
+/* ========== Footer Actions ========== */
+.actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+}
+
+.finalize-btn {
+    background: #2563eb;
+    color: #fff;
+    border: none;
+}
+
+.finalize-btn:hover {
+    background: #1d4ed8;
+}
+
+/* ========== Alerts ========== */
+.alert {
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.alert-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 24px;
+    }
+
+    .token-table th,
+    .token-table td {
+        font-size: 0.85rem;
+        padding: 10px;
+    }
+
+    .actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn, .finalize-btn {
+        width: 100%;
+        text-align: center;
+    }
+}

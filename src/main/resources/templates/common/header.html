@@ -50,12 +50,14 @@
                     </a>
 
                     <!--Đăng ký seller-->
+                    <form th:if="${account == null}">
                     <a th:href="@{/register-guest-seller}"
                        class="btn btn-outline-dark me-3 fw-semibold"
                        style="border-radius: 6px;"
                     >
                         <i class="bi bi-shop me-1"></i> Register Seller
                     </a>
+                    </form>
 
                     <!-- Nếu chưa đăng nhập -->
                     <a th:if="${account == null}" th:href="@{/login}" class="btn-login text-decoration-none fw-bolder">

@@ -35,6 +35,7 @@ public class PaymentController {
         // Kiểm tra session (nếu chưa đăng nhập thì bắt đăng nhập lại)
         HttpSession session = request.getSession(false);
         if (session == null) {
+            // No session → force login
             return new RedirectView("/login");
         }
 
@@ -67,11 +68,23 @@ public class PaymentController {
                                 Map<String, Object> model) {
         // Gọi service xử lý callback từ VNPay
         boolean success = paymentService.handlePaymentCallback(params);
+        String orderInfo = params.get("vnp_OrderInfo");
 
+        // ⚡ Phân biệt loại giao dịch
+        if (orderInfo != null && orderInfo.startsWith("SELLER_")) {
+            if (success) {
+                return "seller/paymentSuccess";
+            } else {
+                return "seller/paymentFailed";
+            }
+        }
+
+        // 🧾 Thanh toán tool
         // Kết quả ra view
         model.put("success", success);
         model.put("vnpParams", params);
 
         return "public/payment-result"; // Trả về kết quả thanh toán
+        return "public/payment-result";
     }
 }
