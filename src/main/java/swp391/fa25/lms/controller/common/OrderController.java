@@ -2,8 +2,10 @@ package swp391.fa25.lms.controller.common;
 
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.CustomerOrder;
 import swp391.fa25.lms.model.WalletTransaction;
@@ -11,37 +13,84 @@ import swp391.fa25.lms.repository.CustomerOrderRepository;
 import swp391.fa25.lms.repository.WalletRepository;
 import swp391.fa25.lms.repository.WalletTransactionRepository;
 import org.springframework.ui.Model;
+import swp391.fa25.lms.service.customer.OrderService;
 
 import java.util.List;
 
 @Controller
 public class OrderController {
     @Autowired
-    private CustomerOrderRepository orderRepository;
-
-    @Autowired
     private WalletRepository walletRepository;
 
     @Autowired
     private WalletTransactionRepository transactionRepository;
 
+    @Autowired
+    private OrderService orderService;
+
     /**
      * Trang hiển thị danh sách đơn hàng mà người dùng đã mua
      */
     @GetMapping("/orders")
-    public String viewOrders(HttpSession session, Model model) {
-        // Lấy thông tin người dùng đang đăng nhập
+    public String viewOrders(
+            HttpSession session,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "createdAt") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            Model model) {
+
         Account account = (Account) session.getAttribute("loggedInAccount");
-        if (account == null) {
-            return "redirect:/login"; // nếu chưa login → chuyển đến trang login
-        }
+        if (account == null) return "redirect:/login";
 
-        // Lấy danh sách các đơn hàng của user
-        List<CustomerOrder> orders = orderRepository.findByAccount_AccountIdOrderByCreatedAtDesc(account.getAccountId());
+        Page<CustomerOrder> ordersPage = orderService.getFilteredOrders(
+                account, keyword, status, page, size, sortField, sortDir
+        );
 
-        // Đưa danh sách order sang view
-        model.addAttribute("orders", orders);
-        return "customer/orders"; // Trả về template orders.html
+        model.addAttribute("ordersPage", ordersPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", ordersPage.getTotalPages());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("status", status);
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+
+        return "customer/orders";
+    }
+
+    /**
+     * Trả về fragment HTML (phần bảng đơn hàng)
+     */
+    @GetMapping("/orders/filter")
+    public String filterOrdersFragment(
+            HttpSession session,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "createdAt") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            Model model) {
+
+        Account account = (Account) session.getAttribute("loggedInAccount");
+        if (account == null) return "redirect:/login";
+
+        Page<CustomerOrder> ordersPage = orderService.getFilteredOrders(
+                account, keyword, status, page, size, sortField, sortDir
+        );
+
+        model.addAttribute("ordersPage", ordersPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", ordersPage.getTotalPages());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("status", status);
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+
+        // Trả về fragment (phần tbody + pagination)
+        return "customer/order-table :: orderTable";
     }
 
     /**

@@ -54,11 +54,20 @@ public class PaymentController {
     public String paymentReturn(@RequestParam Map<String, String> params,
                                 Map<String, Object> model) {
         boolean success = paymentService.handlePaymentCallback(params);
+        String orderInfo = params.get("vnp_OrderInfo");
 
-        // Put result info into model for the result page to read and show details
+        // ⚡ Phân biệt loại giao dịch
+        if (orderInfo != null && orderInfo.startsWith("SELLER_")) {
+            if (success) {
+                return "seller/paymentSuccess";
+            } else {
+                return "seller/paymentFailed";
+            }
+        }
+
+        // 🧾 Thanh toán tool
         model.put("success", success);
         model.put("vnpParams", params);
-
-        return "public/payment-result"; // template to show success/failure + order details
+        return "public/payment-result";
     }
 }

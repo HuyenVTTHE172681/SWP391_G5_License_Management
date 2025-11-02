@@ -46,10 +46,6 @@ public class Account {
     @Column(name = "is_verified")
     private Boolean verified = false;
 
-    private String verificationToken;
-
-    private LocalDateTime tokenExpiry;
-
     @Column(name = "verification_code")
     private String verificationCode;
 
@@ -86,10 +82,21 @@ public class Account {
     @JsonManagedReference(value = "file-uploader")
     private List<ToolFile> uploadedFiles;
 
+
+    @ManyToOne
+    @JoinColumn(name = "seller_package_id") // tên cột trong bảng Account
+    private SellerPackage sellerPackage;
+
+    @Column(name = "seller_active")
+    private Boolean sellerActive = false;
+
+    @Column(name = "seller_expiry_date")
+    private LocalDateTime sellerExpiryDate;
+
     public Account() {
     }
 
-    public Account(Long accountId, String email, String password, String fullName, AccountStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationToken, LocalDateTime tokenExpiry, String verificationCode, LocalDateTime codeExpiry, Role role, Wallet wallet, List<CustomerOrder> orders, List<Feedback> feedbacks, List<Favorite> favorites, List<Tool> tools) {
+    public Account(Long accountId, String email, String password, String fullName, LocalDateTime createdAt, AccountStatus status, LocalDateTime updatedAt, String phone, String address, Boolean verified, String verificationCode, LocalDateTime codeExpiry, String confirmPassword, Role role, Wallet wallet, LocalDateTime sellerExpiryDate, Boolean sellerActive, SellerPackage sellerPackage, List<Tool> tools, List<Favorite> favorites, List<Feedback> feedbacks, List<CustomerOrder> orders) {
         this.accountId = accountId;
         this.email = email;
         this.password = password;
@@ -100,16 +107,18 @@ public class Account {
         this.phone = phone;
         this.address = address;
         this.verified = verified;
-        this.verificationToken = verificationToken;
-        this.tokenExpiry = tokenExpiry;
         this.verificationCode = verificationCode;
         this.codeExpiry = codeExpiry;
+        this.confirmPassword = confirmPassword;
         this.role = role;
         this.wallet = wallet;
-        this.orders = orders;
-        this.feedbacks = feedbacks;
-        this.favorites = favorites;
+        this.sellerExpiryDate = sellerExpiryDate;
+        this.sellerActive = sellerActive;
+        this.sellerPackage = sellerPackage;
         this.tools = tools;
+        this.favorites = favorites;
+        this.feedbacks = feedbacks;
+        this.orders = orders;
     }
 
     public List<ToolFile> getUploadedFiles() {
@@ -200,22 +209,6 @@ public class Account {
         this.verified = verified;
     }
 
-    public String getVerificationToken() {
-        return verificationToken;
-    }
-
-    public void setVerificationToken(String verificationToken) {
-        this.verificationToken = verificationToken;
-    }
-
-    public LocalDateTime getTokenExpiry() {
-        return tokenExpiry;
-    }
-
-    public void setTokenExpiry(LocalDateTime tokenExpiry) {
-        this.tokenExpiry = tokenExpiry;
-    }
-
     public String getVerificationCode() {
         return verificationCode;
     }
@@ -286,5 +279,29 @@ public class Account {
 
     public void setConfirmPassword(String confirmPassword) {
         this.confirmPassword = confirmPassword;
+    }
+
+    public SellerPackage getSellerPackage() {
+        return sellerPackage;
+    }
+
+    public void setSellerPackage(SellerPackage sellerPackage) {
+        this.sellerPackage = sellerPackage;
+    }
+
+    public Boolean getSellerActive() {
+        return sellerActive;
+    }
+
+    public void setSellerActive(Boolean sellerActive) {
+        this.sellerActive = sellerActive;
+    }
+
+    public LocalDateTime getSellerExpiryDate() {
+        return sellerExpiryDate;
+    }
+
+    public void setSellerExpiryDate(LocalDateTime sellerExpiryDate) {
+        this.sellerExpiryDate = sellerExpiryDate;
     }
 }

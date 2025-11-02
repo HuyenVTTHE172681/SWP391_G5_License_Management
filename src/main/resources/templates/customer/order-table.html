@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="orderTable">
+
+    <!-- Nếu rỗng -->
+    <div th:if="${ordersPage.empty}" class="alert alert-warning text-center">
+        Không có đơn hàng nào phù hợp với bộ lọc.
+    </div>
+
+    <!-- Nếu có dữ liệu -->
+    <table th:if="${!ordersPage.empty}" class="table table-bordered table-hover align-middle">
+        <thead class="table-primary text-center">
+        <tr>
+            <th>Mã đơn hàng</th>
+            <th>Ngày mua</th>
+            <th>Người bán</th>
+            <th>Mặt hàng</th>
+            <th>License</th>
+            <th>Đơn giá</th>
+            <th>Trạng thái</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="order : ${ordersPage.content}">
+            <td th:text="${order.orderId}"></td>
+            <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${order.tool.seller.fullName}"></td>
+            <td th:text="${order.tool.toolName}"></td>
+            <td th:text="${order.license.name}"></td>
+            <td th:text="${#numbers.formatDecimal(order.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></td>
+            <td class="text-center">
+                <span th:switch="${order.orderStatus.name()}">
+                    <span th:case="'SUCCESS'" class="badge bg-success">Thành công</span>
+                    <span th:case="'PENDING'" class="badge bg-warning text-dark">Đang xử lý</span>
+                    <span th:case="'FAILED'" class="badge bg-danger">Thất bại</span>
+                    <span th:case="*">Không xác định</span>
+                </span>
+            </td>
+            <td class="text-center">
+                <a th:href="@{'/order/' + ${order.orderId}}" class="btn btn-sm btn-primary text-white">
+                    <i class="bi bi-eye"></i> Xem
+                </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- 🔁 Phân trang -->
+    <nav th:if="${ordersPage.totalPages > 1}">
+        <ul class="pagination justify-content-center">
+
+            <!-- Prev -->
+            <li class="page-item" th:classappend="${ordersPage.first} ? 'disabled'">
+                <a class="page-link"
+                   hx-get="@{'/orders/filter?page=' + ${currentPage - 1}
+                            + '&keyword=' + ${keyword}
+                            + '&status=' + ${status}
+                            + '&dateRange=' + ${dateRange}
+                            + '&priceRange=' + ${priceRange}
+                            + '&sortField=' + ${sortField}
+                            + '&sortDir=' + ${sortDir}}"
+                   hx-target="#orderTableContainer"
+                   hx-swap="innerHTML">Previous</a>
+            </li>
+
+            <!-- Page numbers -->
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence(0, ordersPage.totalPages - 1)}"
+                th:classappend="${i == currentPage} ? 'active'">
+                <a class="page-link"
+                   hx-get="@{'/orders/filter?page=' + ${i}
+                            + '&keyword=' + ${keyword}
+                            + '&status=' + ${status}
+                            + '&dateRange=' + ${dateRange}
+                            + '&priceRange=' + ${priceRange}
+                            + '&sortField=' + ${sortField}
+                            + '&sortDir=' + ${sortDir}}"
+                   hx-target="#orderTableContainer"
+                   hx-swap="innerHTML"
+                   th:text="${i + 1}"></a>
+            </li>
+
+            <!-- Next -->
+            <li class="page-item" th:classappend="${ordersPage.last} ? 'disabled'">
+                <a class="page-link"
+                   hx-get="@{'/orders/filter?page=' + ${currentPage + 1}
+                            + '&keyword=' + ${keyword}
+                            + '&status=' + ${status}
+                            + '&dateRange=' + ${dateRange}
+                            + '&priceRange=' + ${priceRange}
+                            + '&sortField=' + ${sortField}
+                            + '&sortDir=' + ${sortDir}}"
+                   hx-target="#orderTableContainer"
+                   hx-swap="innerHTML">Next</a>
+            </li>
+
+        </ul>
+    </nav>
+</div>
+</body>
+</html>

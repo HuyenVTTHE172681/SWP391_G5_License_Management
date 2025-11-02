@@ -50,7 +50,7 @@ public class SellerOrderController {
         // 🔍 Lọc theo trạng thái
         if (status != null && !status.isBlank()) {
             orders = orders.stream()
-                    .filter(o -> o.getStatus().name().equalsIgnoreCase(status))
+                    .filter(o -> o.getOrderStatus().name().equalsIgnoreCase(status))
                     .toList();
         }
 
@@ -77,7 +77,7 @@ public class SellerOrderController {
 
         // 💰 Tổng doanh thu
         double totalRevenue = orders.stream()
-                .filter(o -> o.getStatus() == CustomerOrder.OrderStatus.SUCCESS)
+                .filter(o -> o.getOrderStatus() == CustomerOrder.OrderStatus.SUCCESS)
                 .mapToDouble(CustomerOrder::getPrice)
                 .sum();
 

@@ -13,7 +13,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     // --- Tra cứu cơ bản ---
     Optional<Account> findByEmail(String email);
-    Optional<Account> findByVerificationToken(String token);
     boolean existsByEmail(String email);
 
     // Tìm kiếm theo keyword (email hoặc fullName)

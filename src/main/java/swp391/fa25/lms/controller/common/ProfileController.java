@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.service.used.AccountService;
+import swp391.fa25.lms.service.customer.AccountService;
 
 @Controller
 
