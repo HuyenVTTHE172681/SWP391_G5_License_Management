@@ -44,6 +44,7 @@ public class ToolController {
      */
     @GetMapping
     public String showToolList(Model model, HttpSession session, RedirectAttributes redirectAttrs) {
+
         Account seller = (Account) session.getAttribute("loggedInAccount");
         if (seller == null) {
             redirectAttrs.addFlashAttribute("error", "Session expired. Please login again.");

@@ -30,8 +30,8 @@ public class SellerOrderController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false, defaultValue = "newest") String sort,
-            @RequestParam(defaultValue = "1") int page,     // ✅ Thêm page
-            @RequestParam(defaultValue = "6") int size,    // ✅ Thêm size (số dòng/trang)
+            @RequestParam(defaultValue = "1") int page,     
+            @RequestParam(defaultValue = "6") int size,
             Model model,
             Principal principal
     ) {
