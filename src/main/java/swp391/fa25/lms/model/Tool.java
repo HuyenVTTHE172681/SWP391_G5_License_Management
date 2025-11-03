@@ -14,7 +14,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "Tool")
-@JsonIgnoreProperties({ "toolFiles"})
+@JsonIgnoreProperties({
+        "hibernateLazyInitializer", "handler",
+        "feedbacks", "orders", "files", "toolFiles"
+})
 public class Tool {
 
     @Id
@@ -57,7 +60,7 @@ public class Tool {
     @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
-    @JsonBackReference(value = "tool-category")
+    @JsonIgnoreProperties("tools")
     private Category category;
 
     @Enumerated(EnumType.STRING)

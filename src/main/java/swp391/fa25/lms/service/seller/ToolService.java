@@ -206,6 +206,14 @@ public class ToolService {
             Double maxPrice,
             Pageable pageable
     ) {
+        Tool.Status statusEnum = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                statusEnum = Tool.Status.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                statusEnum = null;
+            }
+        }
         Tool.LoginMethod loginEnum = null;
         if (loginMethod != null && !loginMethod.isBlank()) {
             try {
@@ -216,7 +224,7 @@ public class ToolService {
         }
 
         return toolRepository.searchToolsForSeller(
-                sellerId, keyword, categoryId, status, loginEnum, minPrice, maxPrice, pageable
+                sellerId, keyword, categoryId, statusEnum, loginEnum, minPrice, maxPrice, pageable
         );
     }
 

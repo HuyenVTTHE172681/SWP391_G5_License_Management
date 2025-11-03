@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
+import swp391.fa25.lms.service.seller.AccountService;
 import swp391.fa25.lms.service.seller.FileStorageService;
 import swp391.fa25.lms.service.seller.ToolFlowService;
 import swp391.fa25.lms.service.seller.ToolService;
@@ -35,6 +36,10 @@ public class ToolController {
     @Autowired
     private ToolFlowService toolFlowService;
 
+    @Autowired
+    @Qualifier("sellerAccountService")
+    private AccountService accountService;
+
     // ==========================================================
     // 🔹 FLOW 1: TOOL LIST + MANAGEMENT
     // ==========================================================
@@ -44,15 +49,24 @@ public class ToolController {
      */
     @GetMapping
     public String showToolList(Model model, HttpSession session, RedirectAttributes redirectAttrs) {
-
         Account seller = (Account) session.getAttribute("loggedInAccount");
         if (seller == null) {
             redirectAttrs.addFlashAttribute("error", "Session expired. Please login again.");
             return "redirect:/login";
         }
 
+        // ✅ Kiểm tra hạn sử dụng
+        boolean isActive = accountService.isSellerActive(seller);
+        model.addAttribute("sellerExpired", !isActive);
+
+        // Nếu đã hết hạn, có thể cập nhật trạng thái DB (optional)
+        if (!isActive && Boolean.TRUE.equals(seller.getSellerActive())) {
+            seller.setSellerActive(false);
+        }
+
         model.addAttribute("categories", toolService.getAllCategories());
         model.addAttribute("tools", toolService.getToolsBySeller(seller));
+
         return "seller/tool-list";
     }
 
