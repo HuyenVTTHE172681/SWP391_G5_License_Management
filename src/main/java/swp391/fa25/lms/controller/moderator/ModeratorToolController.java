@@ -1,5 +1,6 @@
 package swp391.fa25.lms.controller.moderator;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -7,20 +8,26 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Category;
 import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.model.ToolFile;
+import swp391.fa25.lms.model.ToolReport;
 import swp391.fa25.lms.service.moderator.ToolFileService;
+import swp391.fa25.lms.service.moderator.ToolReportService;
 import swp391.fa25.lms.service.moderator.ToolService;
 import swp391.fa25.lms.service.customer.CategoryService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
 @RequestMapping("/moderator")
-public class ModeratorDashboardController {
+public class ModeratorToolController {
 
+    @Autowired
+    @Qualifier("moderatorToolReportService")
+    private ToolReportService toolReportService;
     @Autowired
     @Qualifier("moderatorToolService")
     private ToolService toolService;
@@ -30,14 +37,14 @@ public class ModeratorDashboardController {
     @Autowired
     private CategoryService categoryService;
 
-    @GetMapping({"", "/"})
+    @GetMapping({"", "/dashboard"})
     public String moderatorDashboard(Model model) {
         model.addAttribute("activePage", "dashboard");
         return "moderator/dashboard";
     }
     // View tool uploaded
     @GetMapping("/history")
-    public String displayHistoryUploadedRequest(
+    public String displayUploadedRequest(
             @RequestParam(required = false) Long sellerId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String status,
@@ -58,6 +65,7 @@ public class ModeratorDashboardController {
                 uploadTo,
                 approvedFrom,
                 approvedTo,
+                "MOD",
                 status
         );
 
@@ -76,15 +84,15 @@ public class ModeratorDashboardController {
         return "moderator/uploaded";
     }
 
-    //view request upload tool  pending
+    //View request upload tool  pending
     @GetMapping("/uploadRequest")
-    public String displayRequestForm(@RequestParam(required = false) Long sellerId,
-                                     @RequestParam(required = false) Long categoryId,
-                                     @RequestParam(required = false)
-                                     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
-                                     @RequestParam(required = false)
-                                     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
-                                     Model model) {
+    public String displayUploadRequest(@RequestParam(required = false) Long sellerId,
+                                       @RequestParam(required = false) Long categoryId,
+                                       @RequestParam(required = false)
+                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
+                                       @RequestParam(required = false)
+                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
+                                       Model model) {
         List<Tool> toolList = toolService.filterPendingTools(sellerId, categoryId, uploadFrom, uploadTo);
         List<Category> categories = categoryService.getAllCategories();
         model.addAttribute("toolList", toolList);
@@ -96,55 +104,85 @@ public class ModeratorDashboardController {
         return "moderator/request";
     }
 
-    // ✅ 2️⃣ Xem chi tiết tool
+    // View tool detail
     @GetMapping("/tool/{id}")
     public String viewToolDetail(@PathVariable("id") Long id, Model model) {
         Tool tool = toolService.findById(id);
-        List<ToolFile> toolFiles = toolFileService.findByTool(tool);
         if (tool == null) {
-            model.addAttribute("errorMessage", "Không tìm thấy tool.");
+            model.addAttribute("errorMessage", "Tool not found");
             return "redirect:/moderator/uploadRequest";
         }
         model.addAttribute("tool", tool);
-        model.addAttribute("toolFiles", toolFiles);
         return "moderator/toolDetail";
     }
 
-    // ✅ Approve tool
+    //  Approve tool
     @PostMapping("/tool/{id}/approve")
-    public String approveTool(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+    public String approveTool(@PathVariable("id") Long id, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         Tool tool = toolService.findById(id);
+        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
+
         if (tool == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "❌ Không tìm thấy tool để duyệt.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Tool not found");
             return "redirect:/moderator/uploadRequest";
         }
-        tool.setStatus(Tool.Status.APPROVED);
-//        tool.setNote(null);
-        tool.setUpdatedAt(LocalDateTime.now());
-        toolService.save(tool);
+        toolService.approveTool(tool, account.getRole().getRoleName().toString());
 
-        redirectAttributes.addFlashAttribute("successMessage", "✅ Tool đã được duyệt thành công!");
+        redirectAttributes.addFlashAttribute("successMessage", "Approved");
         return "redirect:/moderator/uploadRequest";
     }
 
-    // ✅ Reject tool
+    //  Reject tool
     @PostMapping("/tool/{id}/reject")
     public String rejectTool(@PathVariable("id") Long id,
                              @RequestParam("reason") String reason,
-                             RedirectAttributes redirectAttributes) {
+                             RedirectAttributes redirectAttributes,
+                             HttpServletRequest request) {
         Tool tool = toolService.findById(id);
+        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
         if (tool == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "❌ Không tìm thấy tool để từ chối.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Tool not found.");
             return "redirect:/moderator/uploadRequest";
         }
 
-        tool.setStatus(Tool.Status.REJECTED);
-//        tool.setNote(reason);
-        tool.setUpdatedAt(LocalDateTime.now());
-        toolService.save(tool);
+        toolService.rejectTool(tool, reason, account.getRole().getRoleName().toString());
 
-        redirectAttributes.addFlashAttribute("errorMessage", "❌ Tool đã bị từ chối với lý do: " + reason);
+        redirectAttributes.addFlashAttribute("errorMessage", "Rejected because" + reason);
         return "redirect:/moderator/uploadRequest";
     }
 
+    @GetMapping("/tool/report")
+    public String viewToolReports(
+            @RequestParam(required = false) ToolReport.Status status,
+            @RequestParam(required = false) Long toolId,
+            @RequestParam(required = false) Long reporterId,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate fromDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate toDate,
+            Model model) {
+
+        List<ToolReport> reports = toolReportService.filterReports(status, toolId, reporterId, fromDate, toDate);
+
+        model.addAttribute("reports", reports);
+        model.addAttribute("status", status);
+        model.addAttribute("toolId", toolId);
+        model.addAttribute("reporterId", reporterId);
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
+
+        return "moderator/tool-report";
+    }
+    @PostMapping("/tool/report/{id}/approve")
+    public String approveReport(@PathVariable Long id, RedirectAttributes redirect) {
+        toolReportService.updateStatus(id, ToolReport.Status.APPROVED);
+        redirect.addFlashAttribute("success", "✅ Report approved successfully!");
+        return "redirect:/moderator/tool/report";
+    }
+    @PostMapping("/tool/report/{id}/reject")
+    public String rejectReport(@PathVariable Long id, RedirectAttributes redirect) {
+        toolReportService.updateStatus(id, ToolReport.Status.REJECTED);
+        redirect.addFlashAttribute("error", "Report rejected.");
+        return "redirect:/moderator/tool/report";
+    }
 }

@@ -28,11 +28,8 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     List<Tool> findAllByToolNameContainingIgnoreCase(String toolName, Sort sort);
 
     List<Tool> findAll(Sort sort);
-
     List<Tool> findAll(Specification<Tool> spec);
-
     Tool findByToolId(long toolId);
-
     List<Tool> findByStatus(Tool.Status status);
 
     @Query("""
@@ -47,15 +44,34 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
                                        @Param("status") Tool.Status status);
 
     List<Tool> findByToolNameContainingIgnoreCase(String keyword);
-
+//    List<Tool> findByToolNameContainingIgnoreCase(String keyword);
+    List<Tool> findBySeller(Account seller);
     List<Tool> findByStatusNot(Tool.Status status);
 
     // Lấy Tool theo id status PUBLISHED
     @EntityGraph(attributePaths = {"licenses", "seller", "category"})
     Optional<Tool> findByToolIdAndStatus(Long toolId, Tool.Status status);
-
     Optional<Tool> findById(Long toolId);
     Optional<Tool> findByToolName(String toolName);
+
+    @Query("""
+       SELECT t FROM Tool t
+       WHERE t.seller.accountId = :sellerId
+         AND (:keyword IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+         AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+       """)
+    Page<Tool> findBySellerAndFilter(@Param("sellerId") Long sellerId,
+                                     @Param("keyword") String keyword,
+                                     @Param("categoryId") Long categoryId,
+                                     Pageable pageable);
+
+    @Query("""
+    SELECT t FROM Tool t
+    WHERE t.status = 'PUBLISHED'
+      AND t.seller.sellerActive = true
+      AND (t.seller.sellerExpiryDate IS NULL OR t.seller.sellerExpiryDate >= CURRENT_TIMESTAMP)
+    """)
+    List<Tool> findAllPublishedAndSellerActive();
 
 
     @Query("""

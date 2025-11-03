@@ -64,7 +64,7 @@ public class WebAuthController {
             return switch (roleName) {
                 case "ADMIN" -> "redirect:/admin/accounts";
                 case "SELLER" -> "redirect:/seller/tools";
-                case "MOD" -> "redirect:/moderator/";
+                case "MOD" -> "redirect:/moderator/dashboard";
                 case "MANAGER" -> "redirect:/manager/dashboard";
                 default -> "redirect:/home";
             };

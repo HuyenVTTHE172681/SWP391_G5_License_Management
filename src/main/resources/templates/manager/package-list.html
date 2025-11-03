@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Seller Package Management</title>
+    <link rel="stylesheet" th:href="@{/css/package.css}">
+    <script>
+        function validateFilter(event) {
+            const minPrice = parseFloat(document.getElementById("minPrice").value);
+            const maxPrice = parseFloat(document.getElementById("maxPrice").value);
+            const minDuration = parseInt(document.getElementById("minDuration").value);
+            const maxDuration = parseInt(document.getElementById("maxDuration").value);
+            const errors = [];
+
+            if (!isNaN(minPrice) && (minPrice < 0)) {
+                errors.push("Min Price must be greater than 0");
+            }
+            if (!isNaN(maxPrice) && (maxPrice < 0)) {
+                errors.push("Max Price must be greater than 0");
+            }
+            if (!isNaN(minPrice) && !isNaN(maxPrice) && minPrice > maxPrice) {
+                errors.push("Min Price cannot be greater than Max Price.");
+            }
+
+            if (!isNaN(minDuration) && (minDuration < 1 || minDuration > 60)) {
+                errors.push("Min Duration must be between 1 and 60 months.");
+            }
+            if (!isNaN(maxDuration) && (maxDuration < 1 || maxDuration > 60)) {
+                errors.push("Max Duration must be between 1 and 60 months.");
+            }
+            if (!isNaN(minDuration) && !isNaN(maxDuration) && minDuration > maxDuration) {
+                errors.push("Min Duration cannot be greater than Max Duration.");
+            }
+
+            if (errors.length > 0) {
+                alert(errors.join("\n"));
+                event.preventDefault();
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="layout">
+
+    <!-- 🧭 SIDEBAR -->
+    <aside class="sidebar">
+        <h2 class="sidebar-title">Manager Panel</h2>
+        <nav>
+            <a th:href="@{/manager/}" class="nav-link" th:classappend="${active == 'dashboard'} ? 'active' : ''">Dashboard</a>
+            <a th:href="@{/manager/tool/list}" class="nav-link" th:classappend="${active == 'tools'} ? 'active' : ''">Tools</a>
+            <a th:href="@{/manager/category/list}" class="nav-link" th:classappend="${active == 'categories'} ? 'active' : ''">Categories</a>
+            <a th:href="@{/manager/package/list}" class="nav-link" th:classappend="${active == 'packages'} ? 'active' : ''">Packages</a>
+            <a th:href="@{/manager/upload-tool}" class="nav-link" th:classappend="${active == 'upload'} ? 'active' : ''">Upload Tools</a>
+            <a th:href="@{/logout}" class="nav-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <!-- 📋 MAIN CONTENT -->
+    <main class="content">
+        <div class="container">
+            <h1>Seller Package Management</h1>
+
+            <!-- 🔍 Filter -->
+            <form method="get" th:action="@{/manager/package/list}" class="filter-form" onsubmit="validateFilter(event)">
+                <input type="text" name="name" placeholder="Package name..." th:value="${searchName}">
+                <input id="minPrice" type="number" step="0.01" name="minPrice" placeholder="Min price" th:value="${minPrice}">
+                <input id="maxPrice" type="number" step="0.01" name="maxPrice" placeholder="Max price" th:value="${maxPrice}">
+                <input id="minDuration" type="number" name="minDuration" placeholder="Min duration" th:value="${minDuration}">
+                <input id="maxDuration" type="number" name="maxDuration" placeholder="Max duration" th:value="${maxDuration}">
+                <select name="status">
+                    <option value="" th:selected="${selectedStatus == null}">All Status</option>
+                    <option value="ACTIVE" th:selected="${selectedStatus?.name() == 'ACTIVE'}">ACTIVE</option>
+                    <option value="DEACTIVATED" th:selected="${selectedStatus?.name() == 'DEACTIVATED'}">DEACTIVATED</option>
+                </select>
+                <button type="submit" class="btn btn-filter">Filter</button>
+                <a th:href="@{/manager/package/create}" class="btn btn-create">➕ Create</a>
+            </form>
+
+            <!-- 📋 List -->
+            <table class="package-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Package Name</th>
+                    <th>Duration (months)</th>
+                    <th>Price</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${packages}">
+                    <td th:text="${p.id}"></td>
+                    <td th:text="${p.packageName}"></td>
+                    <td th:text="${p.durationInMonths}"></td>
+                    <td th:text="${#numbers.formatDecimal(p.price, 1, 2)} + ' vnđ'"></td>
+                    <td th:text="${p.description}"></td>
+                    <td><span th:text="${p.status}" th:class="'status ' + ${p.status}"></span></td>
+                    <td>
+                        <a th:href="@{'/manager/package/edit/' + ${p.id}}" class="btn btn-edit">Edit</a>
+                        <a th:if="${p.status?.name() == 'ACTIVE'}"
+                           th:href="@{'/manager/package/deactivate/' + ${p.id}}"
+                           class="btn btn-delete"
+                           onclick="return confirm('Deactivate this package?')">Deactivate</a>
+                        <a th:if="${p.status?.name() == 'DEACTIVATED'}"
+                           th:href="@{'/manager/package/restore/' + ${p.id}}"
+                           class="btn btn-restore"
+                           onclick="return confirm('Restore this package?')">Restore</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(packages)}">
+                    <td colspan="7" class="no-data">No packages found</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

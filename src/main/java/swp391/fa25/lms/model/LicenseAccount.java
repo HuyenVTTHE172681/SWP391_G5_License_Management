@@ -15,12 +15,12 @@ public class LicenseAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long licenseAccountId;
 
-
-    @Column(nullable = true)
+    @NotBlank(message = "User name can not blank")
+    @Column(nullable = false)
     private String username;
 
-
-    @Column(nullable = true)
+    @NotBlank(message = "Password name cannot be blank")
+    @Column(nullable = false)
     private String password;
 
     @ManyToOne
@@ -47,7 +47,7 @@ public class LicenseAccount {
     private LocalDateTime endDate;
     private LocalDateTime lastLogin;
     private String deviceInfo;
-    private Integer maxDevices = 1;
+    private Integer maxDevices;
 
     // ===== NEW FIELDS =====
     @Enumerated(EnumType.STRING)

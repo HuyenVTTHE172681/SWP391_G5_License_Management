@@ -48,4 +48,12 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     Long countByToolId(Long toolId);
     List<Feedback> findByTool_Seller_AccountIdOrderByCreatedAtDesc(Long sellerId);
     List<Feedback> findByTool_Seller_AccountIdAndTool_ToolIdOrderByCreatedAtDesc(Long sellerId, Long toolId);
+
+    @Query(value = "SELECT COALESCE(AVG(f.rating), 0) AS avg_rating " +
+            "FROM feedback f " +
+            "JOIN tool t ON f.tool_id = t.tool_id " +
+            "WHERE t.seller_id = :sellerId " +
+            "AND f.status = 'PUBLISHED'",
+            nativeQuery = true)
+    Double findAverageRatingBySellerId(@Param("sellerId") Long sellerId);
 }

@@ -12,6 +12,7 @@ import swp391.fa25.lms.model.ToolFile;
 import java.util.List;
 import java.util.List;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface ToolFileRepository extends JpaRepository<ToolFile, Long> {
@@ -21,6 +22,7 @@ public interface ToolFileRepository extends JpaRepository<ToolFile, Long> {
     @Transactional
     @Query("DELETE FROM ToolFile tf WHERE tf.tool.toolId = :toolId")
     void deleteAllByToolToolId(Long toolId);
+    List<ToolFile> findByTool_ToolIdOrderByCreatedAtDesc(Long toolId);
     Optional<ToolFile> findTopByTool_ToolIdAndFileTypeOrderByCreatedAtDesc(
             Long toolId, ToolFile.FileType fileType
     );

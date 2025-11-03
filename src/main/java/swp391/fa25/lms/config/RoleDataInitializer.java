@@ -118,6 +118,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             Role customerRole = roleRepository.findByRoleName(RoleName.CUSTOMER).get();
             Role adminRole = roleRepository.findByRoleName(RoleName.ADMIN).get();
             Role modRole = roleRepository.findByRoleName(RoleName.MOD).get();
+            Role managerRole = roleRepository.findByRoleName(RoleName.MANAGER).get();
 
             Account seller1 = new Account();
             seller1.setEmail("seller1@example.com");
@@ -127,6 +128,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             seller1.setStatus(Account.AccountStatus.ACTIVE);
             seller1.setCreatedAt(LocalDateTime.now().minusDays(30));
             seller1.setRole(sellerRole);
+            seller1.setSellerActive(true);
+            seller1.setSellerExpiryDate(LocalDateTime.now().plusDays(2));
 
             Account seller2 = new Account();
             seller2.setEmail("seller2@example.com");
@@ -136,6 +139,8 @@ public class RoleDataInitializer implements CommandLineRunner {
             seller2.setStatus(Account.AccountStatus.ACTIVE);
             seller2.setCreatedAt(LocalDateTime.now().minusDays(15));
             seller2.setRole(sellerRole);
+            seller2.setSellerActive(true);
+            seller2.setSellerExpiryDate(LocalDateTime.of(2025, 11, 2, 22, 55, 0));
 
             Account customer1 = new Account();
             customer1.setEmail("customer1@example.com");
@@ -379,6 +384,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             f1.setRating(5);
             f1.setComment("Rất hữu ích, dễ sử dụng!");
             f1.setCreatedAt(LocalDateTime.now().minusDays(2));
+            f1.setStatus(Feedback.Status.PUBLISHED);
 
             Feedback f2 = new Feedback();
             f2.setAccount(customer);
@@ -386,6 +392,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             f2.setRating(4);
             f2.setComment("Tốt, nhưng cần thêm tính năng lọc.");
             f2.setCreatedAt(LocalDateTime.now().minusDays(1));
+            f2.setStatus(Feedback.Status.PUBLISHED);
 
             Feedback f3 = new Feedback();
             f3.setAccount(customer);
@@ -393,8 +400,25 @@ public class RoleDataInitializer implements CommandLineRunner {
             f3.setRating(5);
             f3.setComment("Phân tích rất chi tiết, đáng tiền!");
             f3.setCreatedAt(LocalDateTime.now());
+            f3.setStatus(Feedback.Status.PUBLISHED);
 
-            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3));
+            Feedback f4 = new Feedback();
+            f4.setAccount(customer);
+            f4.setTool(tools.get(1));
+            f4.setRating(4);
+            f4.setComment("Tốt, nhưng cần thêm tính năng lọc.");
+            f4.setCreatedAt(LocalDateTime.now().minusDays(1));
+            f4.setStatus(Feedback.Status.PUBLISHED);
+
+            Feedback f5 = new Feedback();
+            f5.setAccount(customer);
+            f5.setTool(tools.get(1));
+            f5.setRating(4);
+            f5.setComment("Tốt, nhưng cần thêm tính năng lọc.");
+            f5.setCreatedAt(LocalDateTime.now().minusDays(1));
+            f5.setStatus(Feedback.Status.PUBLISHED);
+
+            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3, f4, f5));
         } else {
             System.out.println("Feedback already exist, skipping initialization.");
         }
@@ -524,23 +548,23 @@ public class RoleDataInitializer implements CommandLineRunner {
 
 
         // ============ WALLET ============
-        // Tạo ví mặc định cho tất cả Seller (nếu chưa có)
-        List<Account> allSellers = accountRepo.findAll()
-                .stream()
-                .filter(acc -> acc.getRole() != null && acc.getRole().getRoleName() == RoleName.SELLER)
-                .toList();
+// Tạo ví mặc định cho TẤT CẢ Account (không chỉ seller)
+        List<Account> allAccounts = accountRepo.findAll();  // THAY: Không filter seller
 
-        for (Account seller : allSellers) {
-            // Kiểm tra xem seller đã có ví chưa
-            boolean hasWallet = walletRepository.findByAccount(seller).isPresent();
+        for (Account acc : allAccounts) {
+            // Kiểm tra xem account đã có ví chưa
+            boolean hasWallet = walletRepository.findByAccount(acc).isPresent();
             if (!hasWallet) {
                 Wallet wallet = new Wallet();
-                wallet.setAccount(seller);
+                wallet.setAccount(acc);
                 wallet.setBalance(java.math.BigDecimal.ZERO);
                 wallet.setCurrency("VND");
+//                wallet.setCreatedAt(LocalDateTime.now());
                 wallet.setUpdatedAt(LocalDateTime.now());
                 walletRepository.save(wallet);
-                System.out.println("Created default wallet for seller: " + seller.getEmail());
+                acc.setWallet(wallet);  // Link back
+                accountRepo.save(acc);  // Update account
+                System.out.println("Created default wallet for account: " + acc.getEmail() + " (Role: " + acc.getRole().getRoleName() + ")");
             }
         }
 

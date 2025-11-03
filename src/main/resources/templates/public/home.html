@@ -132,15 +132,6 @@
                     </select>
                 </div>
 
-                <!-- Page Size -->
-<!--                <div class="col-md-1">-->
-<!--                    <select class="form-select" name="size">-->
-<!--                        <option value="6" th:selected="${pageSize==6}">6</option>-->
-<!--                        <option value="9" th:selected="${pageSize==9}">9</option>-->
-<!--                        <option value="12" th:selected="${pageSize==12}">12</option>-->
-<!--                    </select>-->
-<!--                </div>-->
-
                 <div class="col-md-auto">
                     <button type="submit" class="btn btn-primary px-4">
                         <i class="bi bi-search"></i> Tìm kiếm
@@ -165,8 +156,7 @@
                 </th:block>
                 <div class="row g-4">
                     <div class="col-md-4" th:each="tool : ${tools}">
-                                        <a th:href="@{'/tools/' + ${tool.toolId}}" class="product-card">
-<!--                        <a  class="product-card">-->
+                        <a th:href="@{'/tools/' + ${tool.toolId}}" class="product-card">
                             <div class="product-image">
                                 <div class="favorite-icon" th:attr="data-tool-id=${tool.toolId}">
                                     <i class="far fa-heart" th:classappend="${tool.isFavorite} ? 'fas' : 'far'"></i>
@@ -258,6 +248,22 @@
 <!-- Thêm Bootstrap JS Bundle ở cuối -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Global function để header có thể gọi
+    window.loadFavoriteCount = async function() {
+        const badge = document.getElementById("favoriteCountBadge");
+        if (!badge) return;
+        try {
+            const res = await fetch("/favorite/count", { credentials: "include" });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const count = await res.json();
+            badge.textContent = count;
+            console.log("Favorite count từ API:", count);
+        } catch (error) {
+            console.error("Lỗi khi load favorite count:", error);
+            badge.textContent = "0";
+        }
+    };
+
     document.addEventListener("DOMContentLoaded", function () {
         const filterForm = document.getElementById("filterForm");
         const productListContainer = document.getElementById("product-list");
@@ -276,7 +282,6 @@
 
                 if (!formData.has("page")) formData.set("page", "0");
 
-                // Lấy size hiện tại (nếu có)
                 let size = params.size || (document.getElementById("pageSizeSelect")?.value || "9");
                 formData.set("size", size);
 
@@ -297,13 +302,13 @@
 
                 attachPaginationListeners();
                 attachPageSizeListener();
-                syncFavoriteIcons();
+                window.loadFavoriteCount();
             } catch (err) {
                 console.error("loadTools() error:", err);
             }
         }
 
-        // ======================= FAVORITE  =======================
+        // ======================= FAVORITE TOGGLE =======================
         productListContainer.addEventListener("click", async function (ev) {
             const favEl = ev.target.closest(".favorite-icon");
             if (!favEl) return;
@@ -327,16 +332,31 @@
                 }
 
                 const result = await res.text();
+                console.log("Toggle result:", result.trim());
+
                 const icon = favEl.querySelector("i");
                 if (!icon) return;
 
+                let currentCount = parseInt(document.getElementById("favoriteCountBadge").textContent) || 0;
+                let newCount = currentCount;
+
                 if (result.trim() === "added") {
+                    // Toggle to filled + increase count
                     icon.classList.remove("far");
                     icon.classList.add("fas", "text-danger");
+                    newCount = currentCount + 1;
                 } else {
+                    // Toggle to empty + decrease count
                     icon.classList.remove("fas", "text-danger");
                     icon.classList.add("far");
+                    newCount = Math.max(0, currentCount - 1);
                 }
+
+                // Update badge local
+                document.getElementById("favoriteCountBadge").textContent = newCount;
+
+                document.dispatchEvent(new Event("favorite-changed"));
+                console.log("Favorite toggled smoothly! New count:", newCount);
             } catch (err) {
                 console.error("toggle favorite error:", err);
             }
@@ -362,7 +382,6 @@
             const sizeSelect = document.getElementById("pageSizeSelect");
             if (!sizeSelect) return;
 
-            // Reset listener cũ (nếu có)
             const newSelect = sizeSelect.cloneNode(true);
             sizeSelect.parentNode.replaceChild(newSelect, sizeSelect);
 
@@ -388,21 +407,11 @@
             });
         }
 
-        // ======================= ĐỒNG BỘ ICON  YÊU THÍCH SAU RELOAD =======================
-        function syncFavoriteIcons() {
-            document.querySelectorAll(".favorite-icon i").forEach(icon => {
-                if (icon.classList.contains("text-danger")) {
-                    icon.classList.add("fas");
-                    icon.classList.remove("far");
-                }
-            });
-        }
-
         // ======================= GỌI LẦN ĐẦU =======================
         loadTools();
     });
 
-    // Show category
+    // Category carousel (giữ nguyên)
     document.addEventListener("DOMContentLoaded", function () {
         const items = document.querySelectorAll(".category-item");
         const nextBtn = document.getElementById("nextBtn");
@@ -416,7 +425,6 @@
                 items[i].style.display = "block";
             }
 
-            // Ẩn/hiện nút điều hướng
             prevBtn.style.display = currentIndex === 0 ? "none" : "block";
             nextBtn.style.display = currentIndex + itemsPerPage >= items.length ? "none" : "block";
         }
@@ -435,31 +443,11 @@
             }
         });
 
-        showItems(); // Hiển thị ban đầu
+        showItems();
     });
 
-    // Filter Tool
-    document.getElementById("filterForm").addEventListener("submit", function (e) {
-        e.preventDefault(); // Không reload trang
-
-        const formData = new FormData(this);
-        const params = new URLSearchParams(formData).toString();
-
-        fetch(`/home/tools?${params}`)
-            .then(res => res.text())
-            .then(html => {
-                document.getElementById("toolContainer").innerHTML = html;
-            });
-    });
-
-    // Button Clear
-    document.getElementById("clearFilters").addEventListener("click", function() {
-        const form = document.getElementById("filterForm");
-        form.reset(); // Reset tất cả input/select
-        form.dispatchEvent(new Event("submit")); // Reload tools
-    });
-
-
+    // Listen global event cho header (backup)
+    document.addEventListener("favorite-changed", window.loadFavoriteCount);
 </script>
 
 </body>

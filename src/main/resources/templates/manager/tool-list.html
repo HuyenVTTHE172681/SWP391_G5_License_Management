@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager - Tool List</title>
+    <link rel="stylesheet" th:href="@{/css/manager-tool-list.css}">
+</head>
+<body>
+<div class="layout">
+
+    <!-- 🧭 SIDEBAR -->
+    <aside class="sidebar">
+        <h2 class="sidebar-title">Manager Panel</h2>
+        <nav>
+            <a th:href="@{/manager/}" class="nav-link" th:classappend="${active == 'dashboard'} ? 'active' : ''">Dashboard</a>
+            <a th:href="@{/manager/tool/list}" class="nav-link" th:classappend="${active == 'tools'} ? 'active' : ''">Tools</a>
+            <a th:href="@{/manager/category/list}" class="nav-link" th:classappend="${active == 'categories'} ? 'active' : ''">Categories</a>
+            <a th:href="@{/manager/package/list}" class="nav-link" th:classappend="${active == 'packages'} ? 'active' : ''">Packages</a>
+            <a th:href="@{/manager/upload-tool}" class="nav-link" th:classappend="${active == 'upload'} ? 'active' : ''">Upload Tools</a>
+            <a th:href="@{/logout}" class="nav-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <!-- 📋 MAIN CONTENT -->
+    <main class="content">
+        <div class="container">
+            <h1>Tool List</h1>
+
+            <!-- 🔍 FILTER FORM -->
+            <form method="get" th:action="@{/manager/tool/list}" class="filter-form">
+                <div class="filter-group">
+                    <label>Seller ID:</label>
+                    <input type="number" name="sellerId" th:value="${selectedSellerId}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Category ID:</label>
+                    <input type="number" name="categoryId" th:value="${selectedCategoryId}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Upload From:</label>
+                    <input type="datetime-local" name="uploadFrom"
+                           th:value="${uploadFrom != null ? #temporals.format(uploadFrom, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                    <label>To:</label>
+                    <input type="datetime-local" name="uploadTo"
+                           th:value="${uploadTo != null ? #temporals.format(uploadTo, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Approved From:</label>
+                    <input type="datetime-local" name="approvedFrom"
+                           th:value="${approvedFrom != null ? #temporals.format(approvedFrom, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                    <label>To:</label>
+                    <input type="datetime-local" name="approvedTo"
+                           th:value="${approvedTo != null ? #temporals.format(approvedTo, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Reviewed By:</label>
+                    <select name="reviewedBy">
+                        <option value="">All</option>
+                        <option value="MOD" th:selected="${reviewedBy == 'MOD'}">MODERATOR</option>
+                        <option value="MANAGER" th:selected="${reviewedBy == 'MANAGER'}">MANAGER</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select name="status">
+                        <option value="">All</option>
+                        <option value="PUBLISHED" th:selected="${status == 'PUBLISHED'}">PUBLISHED</option>
+                        <option value="APPROVED" th:selected="${status == 'APPROVED'}">APPROVED</option>
+                        <option value="REJECTED" th:selected="${status == 'REJECTED'}">REJECTED</option>
+                        <option value="SUSPECT" th:selected="${status == 'SUSPECT'}">SUSPECT</option>
+                        <option value="VIOLATED" th:selected="${status == 'VIOLATED'}">VIOLATED</option>
+                        <option value="DEACTIVATED" th:selected="${status == 'DEACTIVATED'}">DEACTIVATED</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn">Filter</button>
+            </form>
+
+            <!-- 📊 TOOL TABLE -->
+            <table class="tool-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tool Name</th>
+                    <th>Seller</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Reviewed By</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${tools}">
+                    <td th:text="${t.toolId}"></td>
+                    <td th:text="${t.toolName}"></td>
+                    <td th:text="${t.seller.fullName}"></td>
+                    <td th:text="${t.category.categoryName}"></td>
+                    <td><span th:text="${t.status}" th:class="'status ' + ${t.status}"></span></td>
+                    <td th:text="${t.reviewedBy}"></td>
+                    <td th:text="${#temporals.format(t.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td th:text="${#temporals.format(t.updatedAt, 'yyyy-MM-dd HH:mm')}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(tools)}">
+                    <td colspan="8" class="no-data">No tools found</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -123,6 +123,12 @@
                                             onclick="confirmDeleteFeedback(this)">
                                         <i class="fa-regular fa-trash-can"></i> Xoá
                                     </button>
+                                    <!-- feedback Report -->
+                                    <button class="btn btn-sm btn-outline-warning">
+<!--                                            th:attr="data-fid=${fb.feedbackId}"-->
+<!--                                            onclick="reportFeedback(this)"-->
+                                        <i class="fa-regular fa-flag"></i> Báo cáo
+                                    </button>
                                 </div>
                             </div>
 
@@ -384,6 +390,40 @@
         });
     }
     /*]]>*/
+
+    // Feedback report
+    async function reportFeedback(btn){
+        const fid = btn.getAttribute('data-fid');
+        if (!fid) return;
+        if (!confirm('Bạn có chắc muốn báo cáo đánh giá này là không phù hợp?')) return;
+
+        const csrfParam = document.querySelector('meta[name="_csrf_parameter"]')?.content;
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+
+        const body = new URLSearchParams();
+        if (csrfParam && csrfToken) body.set(csrfParam, csrfToken);
+
+        try {
+            const res = await fetch(`/feedback/${fid}/report`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body: body.toString()
+            });
+
+            if (!res.ok) throw new Error(await res.text());
+            const data = await res.json();
+
+            alert('Đã báo cáo đánh giá. Cảm ơn bạn!');
+            // Ẩn feedback bị report ngay lập tức (vì nó sẽ không còn status PUBLISHED)
+            btn.closest('.review-item').remove();
+        } catch(err){
+            alert(err.message || 'Có lỗi xảy ra khi báo cáo feedback.');
+        }
+    }
 </script>
 
 </body>

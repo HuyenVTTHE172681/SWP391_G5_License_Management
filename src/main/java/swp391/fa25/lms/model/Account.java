@@ -82,7 +82,6 @@ public class Account {
     @JsonManagedReference(value = "file-uploader")
     private List<ToolFile> uploadedFiles;
 
-
     @ManyToOne
     @JoinColumn(name = "seller_package_id") // tên cột trong bảng Account
     private SellerPackage sellerPackage;
@@ -103,6 +102,7 @@ public class Account {
         this.fullName = fullName;
         this.status = status;
         this.createdAt = createdAt;
+        this.status = status;
         this.updatedAt = updatedAt;
         this.phone = phone;
         this.address = address;

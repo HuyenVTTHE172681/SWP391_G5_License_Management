@@ -11,24 +11,19 @@ public class SellerSubscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    // ✅ Liên kết tới tài khoản
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    // ✅ Liên kết tới gói seller
     @ManyToOne
     @JoinColumn(name = "package_id", nullable = false)
     private SellerPackage sellerPackage;
 
-    // ✅ Thời gian gia hạn
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
-    // ✅ Giá trị tiền (ghi lại tại thời điểm mua)
     private double priceAtPurchase;
 
-    // ✅ Trạng thái (đang hoạt động / đã hết hạn)
     private boolean active;
 
     public SellerSubscription() {}

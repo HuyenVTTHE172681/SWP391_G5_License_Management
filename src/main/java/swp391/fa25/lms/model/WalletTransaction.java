@@ -40,6 +40,10 @@ public class WalletTransaction {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    // THÊM MỚI: updatedAt cho update callback
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     public WalletTransaction() {
     }
 
@@ -52,6 +56,14 @@ public class WalletTransaction {
         this.customerOrders = customerOrders;
         this.licenseRenewLogs = licenseRenewLogs;
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public Long getTransactionId() {

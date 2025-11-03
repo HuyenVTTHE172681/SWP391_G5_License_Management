@@ -19,6 +19,10 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
 
     // Lấy danh sách order của 1 user, mới nhất trước
     List<CustomerOrder> findByAccount_AccountIdOrderByCreatedAtDesc(Long accountId);
+
+    // THÊM MỚI: Tìm order bằng lastTxnRef cho callback retry
+    @Query("SELECT o FROM CustomerOrder o WHERE o.lastTxnRef = :lastTxnRef")
+    Optional<CustomerOrder> findByLastTxnRef(@Param("lastTxnRef") String lastTxnRef);
     List<CustomerOrder> findByTool_Seller_AccountId(Long sellerId);
 
     List<CustomerOrder> findByTool_ToolIdAndTool_Seller_AccountId(Long toolId, Long sellerId);
@@ -39,4 +43,12 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
             "licenseAccount.renewAcc"   // <— load lịch sử gia hạn
     })
     Optional<CustomerOrder> findByOrderId(Long orderId);
+
+    // THÊM MỚI: Load order by ID và account (secure, chỉ owner)
+    @Query("SELECT o FROM CustomerOrder o WHERE o.orderId = :orderId AND o.account.accountId = :accountId")
+    Optional<CustomerOrder> findByIdAndAccountId(@Param("orderId") Long orderId, @Param("accountId") Long accountId);
+
+
+
+
 }

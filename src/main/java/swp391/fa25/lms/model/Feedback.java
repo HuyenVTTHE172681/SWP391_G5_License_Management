@@ -26,6 +26,11 @@ public class Feedback {
     @Column(nullable = false)
     private Integer rating;
 
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    public enum Status {PUBLISHED, SUSPECT, HIDDEN}
+
     @Column(columnDefinition = "NVARCHAR(100)")
     private String comment;
 
@@ -89,5 +94,13 @@ public class Feedback {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 }

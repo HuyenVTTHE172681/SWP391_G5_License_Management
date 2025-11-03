@@ -1,5 +1,7 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -7,15 +9,21 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
-
+import java.util.Set;
+import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "Tool")
-@JsonIgnoreProperties({ "toolFiles"})
+@JsonIgnoreProperties({"toolFiles"})
 public class Tool {
 
     @Id
@@ -32,23 +40,25 @@ public class Tool {
 //    )
     private String toolName;
 
+    private String reviewedBy;
 
     @Column(nullable = false)
     private String image;
 
     @NotBlank(message = "Description cannot be blank")
-    @Size(max = 500, message = "Description must be under 500 characters")
     @Column(columnDefinition = "NVARCHAR(100)", nullable = false)
     private String description;
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
     @com.fasterxml.jackson.annotation.JsonBackReference(value = "tool-seller")
+    @JsonManagedReference(value = "tool-seller")
     private Account seller;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "login_method", nullable = false)
     private LoginMethod loginMethod;
+
     public enum LoginMethod {
         USER_PASSWORD,
         TOKEN
@@ -62,7 +72,7 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, DEACTIVATED }
+    public enum Status {PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED,  VIOLATED}
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference(value = "tool-files")
@@ -78,6 +88,7 @@ public class Tool {
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
     @JsonIgnoreProperties({"tool", "license"})
     private List<CustomerOrder> orders;
+
 
     @Column(columnDefinition = "NVARCHAR(255)")
     private String note;
@@ -123,14 +134,6 @@ public class Tool {
 
     public void setToolName(@NotBlank(message = "Tool name cannot be blank") String toolName) {
         this.toolName = toolName;
-    }
-
-    public List<CustomerOrder> getOrders() {
-        return orders;
-    }
-
-    public void setOrders(List<CustomerOrder> orders) {
-        this.orders = orders;
     }
 
     public String getImage() { return image; }
@@ -222,15 +225,6 @@ public class Tool {
         this.totalReviews = totalReviews;
     }
 
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-
     public LoginMethod getLoginMethod() {
         return loginMethod;
     }
@@ -271,4 +265,42 @@ public class Tool {
 
     public boolean isIsFavorite() { return isFavorite; }
     public void setIsFavorite(boolean isFavorite) { this.isFavorite = isFavorite; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Tool tool = (Tool) o;
+        return Objects.equals(toolId, tool.toolId);  // So sánh chỉ ID
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(toolId);  // Hash dựa ID
+    }
+
+    public String getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(String reviewedBy) {
+        this.reviewedBy = reviewedBy;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public List<CustomerOrder> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<CustomerOrder> orders) {
+        this.orders = orders;
+    }
+
 }

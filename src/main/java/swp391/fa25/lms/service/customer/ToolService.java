@@ -3,6 +3,7 @@ package swp391.fa25.lms.service.customer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.License;
 import swp391.fa25.lms.model.Tool;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class ToolService {
@@ -22,6 +24,9 @@ public class ToolService {
     @Autowired
     private FeedbackRepository feedbackRepo;
 
+    @Autowired
+    private FavoriteService favoriteService;
+
     /**
      * Search + Filter nâng cao
      * @param keyword Tool name hoặc seller name
@@ -29,16 +34,18 @@ public class ToolService {
      * @param dateFilter Ngày đăng
      * @param priceFilter Giá: "all", "under100k", "100k-500k", "500k-1m", "above1m"
      * @param ratingFilter Số sao tối thiểu
+     * @param account Account hiện tại (null nếu chưa login)
      * @param page Trang
      * @param size Số item mỗi trang
      * @return Page<Tool>
      */
     public Page<Tool> searchAndFilterTools(String keyword, Long categoryId, String dateFilter,
                                            String priceFilter, Integer ratingFilter,
-                                           int page, int size) {
+                                           Account account, int page, int size) {
 
-        List<Tool> tools = toolRepo.findAll(); // Lấy tất cả, filter ở memory
+        List<Tool> tools = toolRepo.findAllPublishedAndSellerActive(); // Lấy tất cả, filter ở memory
 
+//        List<Tool> tools = toolRepo.findAll();
         // Search keyword (tool name hoặc seller name)
         if (keyword != null && !keyword.isEmpty()) {
             String kwLower = keyword.toLowerCase();
@@ -118,6 +125,14 @@ public class ToolService {
             tools = tools.stream()
                     .filter(t -> t.getAverageRating() >= ratingFilter)
                     .toList();
+        }
+
+        // Set isFavorite cho mỗi tool (nếu có account)
+        if (account != null) {
+            Set<Long> favoriteToolIds = favoriteService.getFavoriteToolIds(account);
+            tools.forEach(tool -> tool.setIsFavorite(favoriteToolIds.contains(tool.getToolId())));
+        } else {
+            tools.forEach(tool -> tool.setIsFavorite(false));  // Chưa login: không favorite
         }
 
         // Pagination
