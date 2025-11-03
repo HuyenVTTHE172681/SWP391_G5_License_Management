@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.service.customer.FeedbackRepositoryImpl;
 
 import java.security.Principal;
@@ -62,27 +63,27 @@ public class FeedbackController {
         return "customer/feedback-edit-form";
     }
 
-    /** Update feedback (POST) */
     @PostMapping("/feedback/{feedbackId}/edit")
     public String updateFeedback(@PathVariable Long feedbackId,
                                  @RequestParam @Min(1) @Max(5) Integer rating,
                                  @RequestParam(required = false) @Size(max = 100) String comment,
+                                 @RequestParam(required = false, name = "status") Feedback.Status status,
                                  RedirectAttributes ra,
                                  Principal principal) {
-        Long toolId = feedbackService.updateFeedback(feedbackId, rating, comment, principal);
+        Long toolId = feedbackService.updateFeedback(feedbackId, rating, comment, status, principal);
         ra.addFlashAttribute("ok", "Đã cập nhật đánh giá.");
         return "redirect:/tools/" + toolId + "#review";
     }
 
     // ================== DELETE ==================
 
-    /** Xoá feedback của chính chủ */
+    /** “Xoá” feedback => đánh dấu SUSPECT (soft-delete) */
     @PostMapping("/feedback/{feedbackId}/delete")
     public String deleteFeedback(@PathVariable Long feedbackId,
                                  RedirectAttributes ra,
                                  Principal principal) {
         Long toolId = feedbackService.deleteFeedback(feedbackId, principal);
-        ra.addFlashAttribute("ok", "Đã xoá đánh giá.");
+        ra.addFlashAttribute("ok", "Đã ẩn đánh giá."); // đổi thông điệp cho đúng hành vi soft-delete
         return "redirect:/tools/" + toolId + "#review";
     }
 }

@@ -20,19 +20,12 @@
         .star-row > label { direction: ltr; }
     </style>
 </head>
+<!-- ... phần <head> giữ nguyên ... -->
 <body>
 <div th:replace="common/header :: header"></div>
 
 <main class="container my-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
-            <li class="breadcrumb-item">
-                <a th:href="@{|/tools/${tool.toolId}|}" th:text="${tool.toolName}">Tool</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">Sửa đánh giá</li>
-        </ol>
-    </nav>
+    <!-- breadcrumb giữ nguyên -->
 
     <div class="row justify-content-center">
         <div class="col-lg-8 col-xl-7">
@@ -51,39 +44,70 @@
 
                         <!-- Rating (1-5 sao) -->
                         <div class="mb-3">
-                            <label class="form-label">Đánh giá</label>
+                            <label class="form-label d-block">Đánh giá</label>
                             <div class="star-group">
                                 <div class="star-row">
-                                    <input type="radio" id="r5" name="rating" value="5" th:checked="${fb.rating != null and fb.rating == 5}"/>
-                                    <label for="r5" title="Rất tốt"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="r5" name="rating" value="5"
+                                           th:checked="${fb.rating != null and fb.rating == 5}">
+                                    <label for="r5" title="Tuyệt vời">&#9733;</label>
 
-                                    <input type="radio" id="r4" name="rating" value="4" th:checked="${fb.rating != null and fb.rating == 4}"/>
-                                    <label for="r4" title="Tốt"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="r4" name="rating" value="4"
+                                           th:checked="${fb.rating != null and fb.rating == 4}">
+                                    <label for="r4" title="Tốt">&#9733;</label>
 
-                                    <input type="radio" id="r3" name="rating" value="3" th:checked="${fb.rating != null and fb.rating == 3}"/>
-                                    <label for="r3" title="Bình thường"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="r3" name="rating" value="3"
+                                           th:checked="${fb.rating != null and fb.rating == 3}">
+                                    <label for="r3" title="Bình thường">&#9733;</label>
 
-                                    <input type="radio" id="r2" name="rating" value="2" th:checked="${fb.rating != null and fb.rating == 2}"/>
-                                    <label for="r2" title="Chưa tốt"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="r2" name="rating" value="2"
+                                           th:checked="${fb.rating != null and fb.rating == 2}">
+                                    <label for="r2" title="Chưa hài lòng">&#9733;</label>
 
-                                    <input type="radio" id="r1" name="rating" value="1" th:checked="${fb.rating != null and fb.rating == 1}"/>
-                                    <label for="r1" title="Tệ"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="r1" name="rating" value="1"
+                                           th:checked="${fb.rating != null and fb.rating == 1}">
+                                    <label for="r1" title="Tệ">&#9733;</label>
                                 </div>
                             </div>
-                            <div class="form-text">Chọn từ 1 đến 5 sao.</div>
+                            <div class="form-text">Chọn từ 1–5 sao.</div>
                         </div>
 
                         <!-- Comment (≤100 ký tự) -->
                         <div class="mb-3">
-                            <label for="comment" class="form-label">Nhận xét (không bắt buộc)</label>
-                            <textarea id="comment" name="comment" class="form-control"
-                                      maxlength="100" rows="3" spellcheck="false"
-                                      placeholder="Viết nhận xét tối đa 100 ký tự..."
-                                      th:text="${fb.comment}"></textarea>
-                            <div class="invalid-feedback">Vui lòng không chèn khoảng trắng giữa từng ký tự.</div>
-                            <div class="d-flex justify-content-between mt-1">
-                                <div class="form-text">Tối đa 100 ký tự.</div>
-                                <div class="form-text"><span id="cc">0</span>/100</div>
+                            <label class="form-label" for="comment">
+                                Nội dung (tối đa 100 ký tự)
+                                <small class="text-muted ms-1">
+      <span id="cc"
+            th:text="${fb.comment != null ? #strings.length(fb.comment) : 0}">0</span>/100
+                                </small>
+                            </label>
+
+                            <textarea id="comment"
+                                      name="comment"
+                                      class="form-control"
+                                      rows="4"
+                                      maxlength="100"
+                                      placeholder="Chia sẻ cảm nhận của bạn (không bắt buộc)"
+                                      th:text="${fb.comment} ?: ''"></textarea>
+
+                            <div class="invalid-feedback">
+                                Vui lòng không gõ theo kiểu “c h ữ  c á c h 1 space”.
+                            </div>
+                        </div>
+                        <!-- NEW: Chọn trạng thái -->
+                        <div class="mb-3">
+                            <label class="form-label">Trạng thái hiển thị</label>
+                            <select class="form-select" name="status">
+                                <option value="PUBLISHED"
+                                        th:selected="${fb.status != null and fb.status.name() == 'PUBLISHED'}">
+                                    PUBLISHED (hiển thị công khai)
+                                </option>
+                                <option value="HIDDEN"
+                                        th:selected="${fb.status != null and fb.status.name() == 'HIDDEN'}">
+                                    HIDDEN (ẩn khỏi công khai)
+                                </option>
+                            </select>
+                            <div class="form-text">
+                                Lưu ý: Khi nhấn “Xoá đánh giá”, trạng thái sẽ chuyển thành <code>SUSPECT</code>.
                             </div>
                         </div>
 
@@ -97,7 +121,7 @@
 
                     <hr class="my-4"/>
 
-                    <!-- Form DELETE -->
+                    <!-- Form DELETE (soft-delete => SUSPECT) giữ nguyên -->
                     <form th:action="@{|/feedback/${fb.feedbackId}/delete|}" method="post"
                           onsubmit="return confirm('Bạn chắc chắn xoá đánh giá này?');">
                         <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -111,6 +135,11 @@
         </div>
     </div>
 </main>
+
+<!-- script validate giữ nguyên -->
+</body>
+</html>
+
 
 <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
 <script>

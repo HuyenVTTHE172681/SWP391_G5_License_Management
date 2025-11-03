@@ -14,13 +14,12 @@ import swp391.fa25.lms.service.customer.FeedbackReadService;
 import swp391.fa25.lms.service.customer.ToolService;
 
 import java.util.Optional;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @Controller
 public class ToolCommonController {
+
     @Autowired
     private ToolService toolService;
 
@@ -31,45 +30,52 @@ public class ToolCommonController {
     private FeedbackReadService feedbackReadService;
 
     /**
-     * Hiển thị trang detail tool
+     * Hiển thị trang detail tool (chỉ cho Tool ở trạng thái PUBLISHED).
+     * Feedback cũng chỉ lấy PUBLISHED (hoặc NULL nếu DB cũ) theo logic trong Service.
      */
     @GetMapping("/tools/{id}")
     public String showToolDetail(@PathVariable("id") Long id,
                                  @RequestParam(value = "reviewPage", defaultValue = "0") int reviewPage,
                                  Model model) {
 
-        // Lấy tool theo id
+        // Lấy tool theo id, CHỈ trạng thái PUBLISHED
         Optional<Tool> maybeTool = toolService.findPublishedToolById(id);
         if (maybeTool.isEmpty()) {
             model.addAttribute("errorMessage", "Không tìm thấy sản phẩm hoặc sản phẩm chưa công khai.");
-            return "public/404"; // 404.html
+            return "public/404";
         }
 
         Tool tool = maybeTool.get();
 
-        // Lấy danh sách feedback
-        Page<Feedback> feedbackPage = toolService.getFeedbackPageForTool(tool, reviewPage, 5);
+        // Guard trang âm
+        int page = Math.max(0, reviewPage);
 
-        // ===== THÊM: nạp repliesMap để hiển thị phản hồi seller ngay dưới feedback =====
+        // Lấy danh sách feedback CHỈ PUBLISHED (theo Cách B: Sort nằm ở Pageable trong Service)
+        Page<Feedback> feedbackPage = toolService.getFeedbackPageForTool(
+                tool, page, 5, Feedback.Status.PUBLISHED
+        );
+
+        // Nạp repliesMap để hiển thị phản hồi seller dưới từng feedback
         List<Long> fbIds = feedbackPage.getContent()
                 .stream()
                 .map(Feedback::getFeedbackId)
                 .collect(Collectors.toList());
         var repliesMap = feedbackReadService.mapRepliesByFeedbackIds(fbIds);
         model.addAttribute("repliesMap", repliesMap);
-        // ==============================================================================
 
-        // Tính rating trung bình
-        double avgRating = toolService.getAverageRatingForTool(tool);
-        // Tổng số review
-        long totalReviews = toolService.getTotalReviewsForTool(tool);
+        // Tính rating trung bình & tổng review (chỉ PUBLISHED)
+        double avgRating = toolService.getAverageRatingForTool(tool, Feedback.Status.PUBLISHED);
+        long totalReviews = toolService.getTotalReviewsForTool(tool, Feedback.Status.PUBLISHED);
 
-        // Data view
+        // Data cho view
         model.addAttribute("tool", tool);
         model.addAttribute("feedbackPage", feedbackPage);
         model.addAttribute("avgRating", avgRating);
         model.addAttribute("totalReviews", totalReviews);
         model.addAttribute("categories", categoryService.getAllCategories());
+
+        // Tham số để view biết đang lọc theo status nào (nếu cần hiển thị)
+        model.addAttribute("feedbackStatus", Feedback.Status.PUBLISHED.name());
 
         return "public/tool-detail";
     }

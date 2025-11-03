@@ -99,21 +99,27 @@
             </div>
 
             <div class="tab-pane fade" id="review" role="tabpanel">
-                <div th:if="${feedbackPage.content.size() == 0}" class="text-muted">Chưa có review</div>
+                <!-- Dữ liệu đã paging/ lọc từ server; nếu rỗng thì thông báo -->
+                <div th:if="${feedbackPage.totalElements == 0}" class="text-muted">Chưa có review</div>
 
+                <!-- Render từng feedback -->
                 <div th:each="fb : ${feedbackPage.content}" class="review-item py-3 border-bottom">
+
                     <div class="d-flex align-items-start">
                         <div class="me-3"><div style="width:48px;height:48px;border-radius:50%;background:#ddd;"></div></div>
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
-                                    <strong th:text="${fb.account.fullName}">Người dùng</strong>
+                                    <!-- NULL-SAFE tên người dùng -->
+                                    <strong th:text="${fb.account != null && fb.account.fullName != null ? fb.account.fullName : 'Người dùng'}">
+                                        Người dùng
+                                    </strong>
                                     <small class="text-muted ms-2"
                                            th:if="${fb.createdAt != null}"
                                            th:text="${#temporals.format(fb.createdAt, 'dd/MM/yyyy HH:mm')}">10/10/2025 12:34</small>
                                 </div>
 
-                                <div th:if="${account != null and fb.account.accountId == account.accountId}">
+                                <div th:if="${account != null and fb.account != null and fb.account.accountId == account.accountId}">
                                     <a class="btn btn-sm btn-outline-primary me-1"
                                        th:href="@{/feedback/{fid}/edit(fid=${fb.feedbackId})}">
                                         <i class="fa-regular fa-pen-to-square"></i> Sửa
@@ -121,24 +127,21 @@
                                     <button class="btn btn-sm btn-outline-danger"
                                             th:attr="data-fid=${fb.feedbackId}"
                                             onclick="confirmDeleteFeedback(this)">
-                                        <i class="fa-regular fa-trash-can"></i> Xoá
+                                        <i class="fa-regular fa-trash-can"></i> Ẩn
                                     </button>
-                                    <!-- feedback Report -->
                                     <button class="btn btn-sm btn-outline-warning">
-<!--                                            th:attr="data-fid=${fb.feedbackId}"-->
-<!--                                            onclick="reportFeedback(this)"-->
                                         <i class="fa-regular fa-flag"></i> Báo cáo
                                     </button>
                                 </div>
                             </div>
 
                             <div class="stars my-1">
-                                <span th:each="i : ${#numbers.sequence(1,5)}">
-                                    <i th:class="${i <= fb.rating ? 'fas fa-star text-warning' : 'far fa-star text-secondary'}"></i>
-                                </span>
+                    <span th:each="i : ${#numbers.sequence(1,5)}">
+                        <i th:class="${i <= fb.rating ? 'fas fa-star text-warning' : 'far fa-star text-secondary'}"></i>
+                    </span>
                             </div>
 
-                            <div th:text="${fb.comment}">Comment...</div>
+                            <div th:text="${fb.comment != null ? fb.comment : ''}">Comment...</div>
 
                             <div class="mt-3 ps-3 border-start"
                                  th:with="reps=${repliesMap != null ? repliesMap[fb.feedbackId] : null}"
@@ -147,11 +150,12 @@
                                     <div th:each="rep : ${reps}" class="mb-2">
                                         <div class="small text-muted">
                                             <i class="fa-solid fa-reply"></i>
-                                            <strong th:text="${rep.seller.fullName}">Seller</strong>
+                                            <!-- NULL-SAFE tên seller -->
+                                            <strong th:text="${rep.seller != null && rep.seller.fullName != null ? rep.seller.fullName : 'Seller'}">Seller</strong>
                                             <span th:if="${rep.createdAt != null}"
                                                   th:text="' • ' + ${#temporals.format(rep.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
                                         </div>
-                                        <div th:text="${rep.content}">Nội dung phản hồi…</div>
+                                        <div th:text="${rep.content != null ? rep.content : ''}">Nội dung phản hồi…</div>
                                     </div>
                                 </div>
 
@@ -171,7 +175,7 @@
                     </div>
                 </div>
 
-                <!-- Pagination (sửa cú pháp URL) -->
+                <!-- Giữ nguyên phân trang -->
                 <nav th:if="${feedbackPage.totalPages > 1}" class="mt-3">
                     <ul class="pagination">
                         <li class="page-item" th:classappend="${feedbackPage.first} ? 'disabled'">
