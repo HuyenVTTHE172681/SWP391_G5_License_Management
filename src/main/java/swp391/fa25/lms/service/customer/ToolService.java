@@ -155,7 +155,10 @@ public class ToolService {
      */
     public Page<Feedback> getFeedbackPageForTool(Tool tool, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return feedbackRepo.findByTool(tool, pageable);
+        return feedbackRepo.findByToolAndStatus(
+                tool,
+                Feedback.Status.PUBLISHED,
+                pageable);
     }
 
     /**

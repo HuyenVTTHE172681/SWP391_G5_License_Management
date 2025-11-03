@@ -1,19 +1,29 @@
 // src/main/java/swp391/fa25/lms/controller/common/FeedbackController.java
 package swp391.fa25.lms.controller.common;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import swp391.fa25.lms.model.Account;
+import swp391.fa25.lms.model.Feedback;
+import swp391.fa25.lms.repository.AccountRepository;
+import swp391.fa25.lms.repository.FeedbackRepository;
 import swp391.fa25.lms.service.customer.FeedbackRepositoryImpl;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @Validated
@@ -21,6 +31,11 @@ public class FeedbackController {
      @Autowired
      @Qualifier("customerFeedBack")
     private FeedbackRepositoryImpl feedbackService;
+
+     @Autowired
+     private FeedbackRepository feedbackRepo;
+     @Autowired
+     private AccountRepository accountRepo;
 
     public FeedbackController(FeedbackRepositoryImpl feedbackService) {
         this.feedbackService = feedbackService;
@@ -84,5 +99,37 @@ public class FeedbackController {
         Long toolId = feedbackService.deleteFeedback(feedbackId, principal);
         ra.addFlashAttribute("ok", "Đã xoá đánh giá.");
         return "redirect:/tools/" + toolId + "#review";
+    }
+
+    // ================== REPORT ==================
+    @PostMapping("/feedback/{fid}/report")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<?> reportFeedback(@PathVariable Long fid, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Bạn cần đăng nhập để báo cáo.");
+        }
+
+        Optional<Feedback> opt = feedbackRepo.findById(fid);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy feedback.");
+        }
+
+        Feedback fb = opt.get();
+
+        // Không cho chính chủ feedback tự báo cáo
+//        Account acc = accountRepo.findByEmail(principal.getName());
+//        Account acc = accountRepo.findByEmail(principal.getName()).orElse("Null")
+//        if (fb.getAccount().getAccountId().equals(acc.getAccountId())) {
+//            return ResponseEntity.badRequest().body("Không thể tự báo cáo feedback của chính bạn.");
+//        }
+
+        fb.setStatus(Feedback.Status.SUSPECT);
+        feedbackRepo.save(fb);
+
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("status", "SUSPECT");
+        resp.put("feedbackId", fb.getFeedbackId());
+        return ResponseEntity.ok(resp);
     }
 }

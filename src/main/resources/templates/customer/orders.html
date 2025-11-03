@@ -173,7 +173,7 @@
                                     <span th:case="*">Không xác định</span>
                                 </span>
                 </td>
-                <td class="text-center">
+                <td class="text-start align-middle">
                     <!-- Xem chi tiết -->
                     <a th:href="@{/orders/{id}(id=${order.orderId})}"
                        th:attr="hx-get=@{/orders/{id}(id=${order.orderId})}"
@@ -349,8 +349,14 @@
                         <span class="text-muted fst-italic">(
                         <span th:text="${order.license.durationDays}"></span> ngày)</span>
                     </div>
-                    <div class="col-md-8 mb-2">
+<!--                    <div class="col-md-8 mb-2">-->
+<!--                        <strong>Hạn sử dụng: </strong><span class="fw-bold text-danger" th:text="${#temporals.format(order.licenseAccount.endDate, 'dd/MM/yyyy HH:mm')}"></span>-->
+<!--                    </div>-->
+                    <div class="col-md-8 mb-2" th:if="${order.licenseAccount != null and order.licenseAccount.endDate != null}">
                         <strong>Hạn sử dụng: </strong><span class="fw-bold text-danger" th:text="${#temporals.format(order.licenseAccount.endDate, 'dd/MM/yyyy HH:mm')}"></span>
+                    </div>
+                    <div class="col-md-8 mb-2" th:if="${order.licenseAccount == null or order.licenseAccount.endDate == null}">
+                        <strong>Hạn sử dụng: </strong><span class="text-muted">Chưa xác định (đơn hàng chưa hoàn tất)</span>
                     </div>
                     <div class="col-md-4"><strong>Giá:</strong> <span class="fw-bold text-success" th:text="${#numbers.formatDecimal(basePrice,0,'COMMA',0,'POINT')} + ' VND'"></span></div>
                 </div>

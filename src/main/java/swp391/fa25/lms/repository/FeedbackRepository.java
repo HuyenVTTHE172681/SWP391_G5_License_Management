@@ -56,4 +56,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
             "AND f.status = 'PUBLISHED'",
             nativeQuery = true)
     Double findAverageRatingBySellerId(@Param("sellerId") Long sellerId);
+
+    // Lấy feedback theo tool + status
+    Page<Feedback> findByToolAndStatus(Tool tool, Feedback.Status status, Pageable pageable);
 }

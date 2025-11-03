@@ -324,7 +324,18 @@ public class RoleDataInitializer implements CommandLineRunner {
             userPassTool.setQuantity(10);
             userPassTool.setCreatedAt(LocalDateTime.now().minusDays(1));
 
-            toolRepo.saveAll(Arrays.asList(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, tokenTool, userPassTool));
+            Tool t11 = new Tool();
+            t11.setToolName("Instagram Auto Poster");
+            t11.setDescription("Tự động đăng bài Instagram, hỗ trợ nhiều tài khoản.");
+            t11.setImage("/images/tools/insta_poster.png");
+            t11.setSeller(seller1);
+            t11.setCategory(categories.get(1)); // Phần mềm
+            t11.setStatus(Tool.Status.PUBLISHED);
+            t11.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            t11.setQuantity(100);
+            t11.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+            toolRepo.saveAll(Arrays.asList(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10,t11, tokenTool, userPassTool));
         } else {
             System.out.println("Tool already exist, skipping initialization.");
         }

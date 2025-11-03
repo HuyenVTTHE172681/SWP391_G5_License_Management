@@ -64,7 +64,6 @@ public class PaymentService {
             buyerWallet.setAccount(buyer);
             buyerWallet.setBalance(BigDecimal.ZERO);
             buyerWallet.setCurrency("VND");
-//            buyerWallet.setCreatedAt(LocalDateTime.now());
             buyerWallet.setUpdatedAt(LocalDateTime.now());
             walletRepository.save(buyerWallet);
             buyer.setWallet(buyerWallet);
@@ -72,7 +71,7 @@ public class PaymentService {
             System.out.println("Created default wallet for buyer: " + buyer.getEmail());
         }
 
-        // Tạo order PENDING trước thanh toán
+        // Tạo order PENDING trước thanh toán (lưu DB ngay để xử lý thoát)
         CustomerOrder order = new CustomerOrder();
         order.setAccount(buyer);
         order.setTool(tool);
@@ -94,30 +93,30 @@ public class PaymentService {
         order.setTransaction(tx);
         orderRepository.save(order);
 
-        // Tạo txnRef giống C#: DateTime.Now.Ticks (unique timestamp)
-        String txnRef = String.valueOf(System.currentTimeMillis());  // Equivalent to Ticks, unique
+        // Tạo txnRef unique (timestamp)
+        String txnRef = String.valueOf(System.currentTimeMillis());
 
-        // OrderInfo cho initial: toolId_licenseId_buyerId (giống C# OrderInfo = codePayment, nhưng dùng orderId)
+        // OrderInfo: orderId (để callback match)
         String orderInfo = String.valueOf(order.getOrderId());
 
-        // Tạo params VNPay (giống C# AddRequestData)
+        // Tạo params VNPay
         long amountInt = Math.round(order.getPrice() * 100);
 
         Map<String, String> vnpParams = new HashMap<>();
-        vnpParams.put("vnp_Version", "2.1.0");  // Fixed version như C#
+        vnpParams.put("vnp_Version", "2.1.0");
         vnpParams.put("vnp_Command", "pay");
         vnpParams.put("vnp_TmnCode", tmnCode.trim());
         vnpParams.put("vnp_Amount", String.valueOf(amountInt));
         vnpParams.put("vnp_CurrCode", "VND");
-        vnpParams.put("vnp_TxnRef", txnRef);  // Unique timestamp
+        vnpParams.put("vnp_TxnRef", txnRef);
         vnpParams.put("vnp_OrderInfo", orderInfo);
-        vnpParams.put("vnp_OrderType", "billpayment");  // Giống C# TypePayment
+        vnpParams.put("vnp_OrderType", "billpayment");
         vnpParams.put("vnp_Locale", "vn");
         vnpParams.put("vnp_ReturnUrl", returnUrl.trim());
         vnpParams.put("vnp_IpAddr", request.getRemoteAddr());
         vnpParams.put("vnp_CreateDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 
-        // Build hash/query (giống C# vnpay.CreateRequestUrl)
+        // Build hash/query
         String hashDataStr = buildVnpHashData(vnpParams);
         String queryStr = buildVnpQuery(vnpParams);
 
@@ -139,22 +138,24 @@ public class PaymentService {
         CustomerOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order không tồn tại"));
 
-        if (order.getOrderStatus() != CustomerOrder.OrderStatus.PENDING) {
-            throw new RuntimeException("Chỉ có thể retry order PENDING!");
+        if (order.getOrderStatus() != CustomerOrder.OrderStatus.PENDING &&
+                order.getOrderStatus() != CustomerOrder.OrderStatus.FAILED) {  // Sửa: Cho phép retry FAILED
+            throw new RuntimeException("Chỉ có thể retry order PENDING/FAILED!");
         }
 
-        // Cập nhật license/price
+        // Cập nhật license/price nếu thay đổi
         License license = licenseToolRepository.findById(licenseId).orElseThrow();
         order.setLicense(license);
         order.setPrice(license.getPrice() == null ? 0.0 : license.getPrice());
         orderRepository.save(order);
 
-        // Reset transaction PENDING
+        // Reset transaction PENDING (nếu FAILED thì tạo mới hoặc reset)
         WalletTransaction tx = order.getTransaction();
-        if (tx == null) {
+        if (tx == null || tx.getStatus() == WalletTransaction.TransactionStatus.FAILED) {
             tx = new WalletTransaction();
             tx.setWallet(buyer.getWallet());
             tx.setTransactionType(WalletTransaction.TransactionType.BUY);
+            tx.setStatus(WalletTransaction.TransactionStatus.PENDING);
             tx.setAmount(BigDecimal.valueOf(order.getPrice()));
             tx.setCreatedAt(LocalDateTime.now());
             transactionRepository.save(tx);
@@ -167,10 +168,8 @@ public class PaymentService {
             transactionRepository.save(tx);
         }
 
-        // Tạo unique txnRef cho retry (timestamp giống C# Ticks)
+        // Tạo unique txnRef mới cho retry
         String uniqueTxnRef = String.valueOf(System.currentTimeMillis());
-
-        // OrderInfo cho retry (giống C#, dùng orderId)
         String orderInfo = String.valueOf(orderId);
 
         long amountInt = Math.round(order.getPrice() * 100);
@@ -196,7 +195,7 @@ public class PaymentService {
         String secureHash = hmacSHA512(hashSecret.trim(), hashDataStr).toUpperCase(Locale.ROOT);
         String paymentUrl = baseUrl + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
 
-        // Lưu unique txnRef vào order để callback match
+        // Lưu txnRef mới
         order.setLastTxnRef(uniqueTxnRef);
         orderRepository.save(order);
 
@@ -271,7 +270,7 @@ public class PaymentService {
 
             boolean success = "00".equals(responseCode);
 
-            // FIX OPTIONAL: Tìm order bằng lastTxnRef
+            // Tìm order bằng lastTxnRef
             Optional<CustomerOrder> optionalOrder = orderRepository.findByLastTxnRef(txnRef);
             CustomerOrder order = optionalOrder.orElseThrow(() -> new RuntimeException("Order không tồn tại với txnRef: " + txnRef));
 
@@ -306,8 +305,8 @@ public class PaymentService {
                 // Tạo license account + gửi email
                 createAndAssignLicense(order);
             } else {
-                // Fail: Giữ PENDING để retry
-                order.setOrderStatus(CustomerOrder.OrderStatus.PENDING);
+                // Sửa: Fail → FAILED (không giữ PENDING)
+                order.setOrderStatus(CustomerOrder.OrderStatus.FAILED);
                 String message = params.get("vnp_Message") != null ? params.get("vnp_Message") : "Unknown error";
                 System.err.println("Payment failed for order " + order.getOrderId() + ": " + message + " (Code: " + responseCode + ")");
             }
@@ -321,7 +320,6 @@ public class PaymentService {
             return false;
         }
     }
-
     // REFACTOR: Tách tạo license account (giống code cũ)
     private void createAndAssignLicense(CustomerOrder order) {
         Tool tool = order.getTool();
