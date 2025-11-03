@@ -55,11 +55,11 @@
 </section>
 
 <!-- 🔹 Thông báo hết hạn gói Seller -->
-<div th:if="${sellerExpired}" class="alert alert-warning text-center my-4 mx-3">
-    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-    <strong>Your account has expired.</strong>
-    Please register again at
-    <a href="/seller/renew" class="text-primary text-decoration-underline">Renew Package</a>.
+<div th:if="${sellerExpired}" class="alert alert-danger text-center my-4 mx-3">
+    <i class="bi bi-exclamation-octagon-fill me-2"></i>
+    <strong>Your seller package has expired!</strong>
+    You no longer have access to add, edit, or manage tools.<br>
+    Please <a href="/seller/renew" class="text-light fw-bold text-decoration-underline">renew your package</a> to continue using seller features.
 </div>
 
 <!-- Main section -->
@@ -94,7 +94,7 @@
                         <option value="APPROVED">Approved</option>
                         <option value="REJECTED">Rejected</option>
                         <option value="PUBLISHED">Published</option>
-                        <option value="DEACTIVE">Deactivated</option>
+                        <option value="DEACTIVATED">Deactivated</option>
                     </select>
                 </div>
                 <div class="col-lg-2 col-md-3 col-sm-6">

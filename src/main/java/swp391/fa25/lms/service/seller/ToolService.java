@@ -48,15 +48,19 @@ public class ToolService {
 
     /** ✅ Lấy danh sách Tool của Seller (trừ DEACTIVE) */
     public List<Tool> getToolsBySeller(Account seller) {
-        return toolRepository.findBySellerAndStatusNot(seller, Tool.Status.DEACTIVE);
+        return toolRepository.findBySellerAndStatusNot(seller, Tool.Status.DEACTIVATED);
     }
 
-    /** ✅ Xóa Tool (thực tế là chuyển sang trạng thái DEACTIVE) */
+    @Transactional
     public void deactivateTool(Long id) {
         Tool tool = getToolById(id);
-        tool.setStatus(Tool.Status.DEACTIVE);
+        if (tool == null) {
+            throw new IllegalArgumentException("Tool not found");
+        }
+
+        tool.setStatus(Tool.Status.DEACTIVATED);
         tool.setUpdatedAt(LocalDateTime.now());
-        toolRepository.save(tool);
+        toolRepository.saveAndFlush(tool);
     }
 
     // ==========================================================

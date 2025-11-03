@@ -54,6 +54,10 @@ public class ToolController {
             redirectAttrs.addFlashAttribute("error", "Session expired. Please login again.");
             return "redirect:/login";
         }
+        if (!accountService.isSellerActive(seller)) {
+            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
+            return "redirect:/seller/renew";
+        }
 
         // ✅ Kiểm tra hạn sử dụng
         boolean isActive = accountService.isSellerActive(seller);
@@ -70,24 +74,24 @@ public class ToolController {
         return "seller/tool-list";
     }
 
-    /**
-     * ✅ Đổi trạng thái tool (VD: deactivate)
-     */
     @PostMapping("/{id}/deactivate")
-    public String deactivateTool(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttrs) {
+    public ResponseEntity<?> deactivateTool(@PathVariable Long id, HttpSession session) {
         Account seller = (Account) session.getAttribute("loggedInAccount");
         if (seller == null) {
-            redirectAttrs.addFlashAttribute("error", "Please login again.");
-            return "redirect:/login";
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please login again.");
+        }
+        if (!accountService.isSellerActive(seller)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Your seller package has expired. Please renew before continuing.");
         }
         try {
             toolService.deactivateTool(id);
-            redirectAttrs.addFlashAttribute("success", "Tool has been deactivated.");
+            return ResponseEntity.ok("Tool has been deactivated.");
         } catch (Exception e) {
-            redirectAttrs.addFlashAttribute("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-        return "redirect:/seller/tools";
     }
+
 
     /**
      * ✅ API lấy danh sách Tool của Seller (cho JS fetch)
@@ -110,6 +114,7 @@ public class ToolController {
         if (seller == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not logged in");
         }
+
 
         Pageable pageable = switch (sort) {
             case "oldest" -> PageRequest.of(page, size, Sort.by("createdAt").ascending());
@@ -157,6 +162,10 @@ public class ToolController {
             return "redirect:/login";
         }
 
+        if (!accountService.isSellerActive(seller)) {
+            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
+            return "redirect:/seller/renew";
+        }
         ToolFlowService.ToolSessionData pending =
                 (ToolFlowService.ToolSessionData) session.getAttribute("pendingTool");
 
@@ -191,6 +200,10 @@ public class ToolController {
         if (seller == null) {
             redirectAttrs.addFlashAttribute("error", "Please login again.");
             return "redirect:/login";
+        }
+        if (!accountService.isSellerActive(seller)) {
+            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
+            return "redirect:/seller/renew";
         }
 
         if (result.hasErrors()) {
@@ -273,6 +286,10 @@ public class ToolController {
         if (seller == null) {
             redirectAttrs.addFlashAttribute("error", "Please login again.");
             return "redirect:/login";
+        }
+        if (!accountService.isSellerActive(seller)) {
+            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
+            return "redirect:/seller/renew";
         }
 
         try {
