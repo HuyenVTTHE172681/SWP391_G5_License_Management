@@ -85,6 +85,5 @@ public class PaymentController {
         model.put("vnpParams", params);
 
         return "public/payment-result"; // Trả về kết quả thanh toán
-        return "public/payment-result";
     }
 }
