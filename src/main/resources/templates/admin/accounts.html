@@ -59,7 +59,7 @@
             <div class="card-head">
                 <h3 class="card-title">Account List</h3>
 
-                <!-- Filters: GET /admin/accounts  (KHÔNG lồng form khác ở trong) -->
+                <!-- Filters: GET /admin/accounts -->
                 <form class="filters" th:action="@{/admin/accounts}" method="get">
                     <input type="text" name="q" placeholder="Search email or name…" th:value="${q}">
 
