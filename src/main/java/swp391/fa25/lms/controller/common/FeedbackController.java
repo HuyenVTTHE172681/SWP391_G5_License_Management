@@ -100,36 +100,4 @@ public class FeedbackController {
         ra.addFlashAttribute("ok", "Đã xoá đánh giá.");
         return "redirect:/tools/" + toolId + "#review";
     }
-
-    // ================== REPORT ==================
-    @PostMapping("/feedback/{fid}/report")
-    @ResponseBody
-    @Transactional
-    public ResponseEntity<?> reportFeedback(@PathVariable Long fid, Principal principal) {
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Bạn cần đăng nhập để báo cáo.");
-        }
-
-        Optional<Feedback> opt = feedbackRepo.findById(fid);
-        if (opt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy feedback.");
-        }
-
-        Feedback fb = opt.get();
-
-        // Không cho chính chủ feedback tự báo cáo
-//        Account acc = accountRepo.findByEmail(principal.getName());
-//        Account acc = accountRepo.findByEmail(principal.getName()).orElse("Null")
-//        if (fb.getAccount().getAccountId().equals(acc.getAccountId())) {
-//            return ResponseEntity.badRequest().body("Không thể tự báo cáo feedback của chính bạn.");
-//        }
-
-        fb.setStatus(Feedback.Status.SUSPECT);
-        feedbackRepo.save(fb);
-
-        Map<String, Object> resp = new HashMap<>();
-        resp.put("status", "SUSPECT");
-        resp.put("feedbackId", fb.getFeedbackId());
-        return ResponseEntity.ok(resp);
-    }
 }

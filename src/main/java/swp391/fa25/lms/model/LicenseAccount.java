@@ -45,9 +45,6 @@ public class LicenseAccount {
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private LocalDateTime lastLogin;
-    private String deviceInfo;
-    private Integer maxDevices;
 
     // ===== NEW FIELDS =====
     @Enumerated(EnumType.STRING)
@@ -63,12 +60,11 @@ public class LicenseAccount {
     private String token;
 
     private Boolean used = false;
-    private LocalDateTime activatedAt;
 
     public LicenseAccount() {
     }
 
-    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, Tool tool, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime lastLogin, String deviceInfo, Integer maxDevices) {
+    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, Tool tool, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate) {
         this.licenseAccountId = licenseAccountId;
         this.username = username;
         this.password = password;
@@ -79,9 +75,6 @@ public class LicenseAccount {
         this.status = status;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.lastLogin = lastLogin;
-        this.deviceInfo = deviceInfo;
-        this.maxDevices = maxDevices;
     }
 
     public Long getLicenseAccountId() {
@@ -164,30 +157,6 @@ public class LicenseAccount {
         this.endDate = endDate;
     }
 
-    public LocalDateTime getLastLogin() {
-        return lastLogin;
-    }
-
-    public void setLastLogin(LocalDateTime lastLogin) {
-        this.lastLogin = lastLogin;
-    }
-
-    public String getDeviceInfo() {
-        return deviceInfo;
-    }
-
-    public void setDeviceInfo(String deviceInfo) {
-        this.deviceInfo = deviceInfo;
-    }
-
-    public Integer getMaxDevices() {
-        return maxDevices;
-    }
-
-    public void setMaxDevices(Integer maxDevices) {
-        this.maxDevices = maxDevices;
-    }
-
     public LoginMethod getLoginMethod() {
         return loginMethod;
     }
@@ -212,12 +181,5 @@ public class LicenseAccount {
         this.used = used;
     }
 
-    public LocalDateTime getActivatedAt() {
-        return activatedAt;
-    }
-
-    public void setActivatedAt(LocalDateTime activatedAt) {
-        this.activatedAt = activatedAt;
-    }
 }
 

@@ -97,7 +97,6 @@ public class LicenseAccountService {
     public void markActivated(Long orderId, String currentEmail) {
         LicenseAccount acc = getOwnedAccountByOrder(orderId, currentEmail);
         acc.setUsed(true);
-        acc.setActivatedAt(LocalDateTime.now());
         if (acc.getStatus() == null) acc.setStatus(LicenseAccount.Status.ACTIVE);
         accRepo.save(acc);
     }
