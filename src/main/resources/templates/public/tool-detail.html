@@ -19,8 +19,17 @@
     <div class="row g-4">
         <div class="col-md-5">
             <div class="product-image">
-<!--                <img th:src="${tool.image}" alt="Tool image" class="img-fluid rounded"/>-->
-                <img th:src="${tool.image != null ? tool.image : '/placeholder.svg?height=250&width=350'}" alt="Product" class="img-fluid rounded">
+                <!-- Hiển thị ảnh thật nếu tool.image tồn tại -->
+                <img th:if="${tool.image != null}"
+                     th:src="@{'/' + ${tool.image}}"
+                     alt="Ảnh sản phẩm"
+                     class="img-fluid rounded">
+
+                <!-- Ảnh placeholder nếu không có ảnh -->
+                <img th:unless="${tool.image != null}"
+                     src="/placeholder.svg?height=250&width=350"
+                     alt="Ảnh mặc định"
+                     class="img-fluid rounded">
             </div>
         </div>
 
@@ -114,17 +123,21 @@
                                            th:text="${#temporals.format(fb.createdAt, 'dd/MM/yyyy HH:mm')}">10/10/2025 12:34</small>
                                 </div>
 
-                                <div th:if="${account != null and fb.account.accountId == account.accountId}">
-                                    <a class="btn btn-sm btn-outline-primary me-1"
-                                       th:href="@{/feedback/{fid}/edit(fid=${fb.feedbackId})}">
-                                        <i class="fa-regular fa-pen-to-square"></i> Sửa
-                                    </a>
-                                    <button class="btn btn-sm btn-outline-danger"
-                                            th:attr="data-fid=${fb.feedbackId}"
-                                            onclick="confirmDeleteFeedback(this)">
-                                        <i class="fa-regular fa-trash-can"></i> Xoá
-                                    </button>
-                                    <!-- feedback Report -->
+                                <!-- Fix buttons: Wrap all actions in one d-flex gap-1 div for side-by-side display -->
+                                <div th:if="${account != null}" class="d-flex gap-1 align-items-center">
+                                    <!-- Edit and Delete: Only if owner -->
+                                    <div th:if="${fb.account.accountId == account.accountId}" class="d-flex gap-1">
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           th:href="@{/feedback/{fid}/edit(fid=${fb.feedbackId})}">
+                                            <i class="fa-regular fa-pen-to-square"></i> Sửa
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                th:attr="data-fid=${fb.feedbackId}"
+                                                onclick="confirmDeleteFeedback(this)">
+                                            <i class="fa-regular fa-trash-can"></i> Xoá
+                                        </button>
+                                    </div>
+                                    <!-- Report: Always for logged-in users -->
                                     <button class="btn btn-sm btn-outline-warning"
                                             th:attr="data-fid=${fb.feedbackId}"
                                             onclick="reportFeedback(this)">
