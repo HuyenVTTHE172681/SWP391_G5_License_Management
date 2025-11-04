@@ -98,8 +98,8 @@ public class ToolService {
             }
 
             // Rating
-            Double avg = feedbackRepo.findAverageRatingByTool(tool.getToolId());
-            Long total = feedbackRepo.countByTool(tool);
+            Long avg = feedbackRepo.findAverageRatingByToolByStatus(tool.getToolId());
+            Long total = feedbackRepo.countByToolIdByStatus(tool.getToolId());
             tool.setAverageRating(avg != null ? avg : 0.0);
             tool.setTotalReviews(total != null ? total : 0L);
         });
@@ -162,15 +162,20 @@ public class ToolService {
     }
 
     /**
-     * Tính rating trung bình (null safe)
+     * Tính rating trung bình (chỉ PUBLISHED)
      */
     public double getAverageRatingForTool(Tool tool) {
-        Double avg = feedbackRepo.findAverageRatingByTool(tool.getToolId());
+        if (tool == null || tool.getToolId() == null) return 0.0;
+        Long avg = feedbackRepo.findAverageRatingByToolByStatus(tool.getToolId());  // Không pass status
         return avg != null ? avg : 0.0;
     }
 
+    /**
+     * Tổng số review (chỉ PUBLISHED)
+     */
     public long getTotalReviewsForTool(Tool tool) {
-        Long count = feedbackRepo.countByToolId(tool.getToolId());
+        if (tool == null || tool.getToolId() == null) return 0L;
+        Long count = feedbackRepo.countByToolIdByStatus(tool.getToolId());  // Không pass status
         return count != null ? count : 0L;
     }
 

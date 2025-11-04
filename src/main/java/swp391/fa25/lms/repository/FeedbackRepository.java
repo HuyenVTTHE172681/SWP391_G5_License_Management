@@ -1,5 +1,6 @@
 package swp391.fa25.lms.repository;
 
+import jakarta.transaction.Status;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -87,4 +88,10 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
             @Param("sellerId") Long sellerId,
             @Param("toolId") Long toolId
     );
+
+    @Query("SELECT AVG(f.rating) FROM Feedback f WHERE f.tool.toolId = :toolId AND f.status = 'PUBLISHED'")
+    Long findAverageRatingByToolByStatus(@Param("toolId") Long toolId);
+
+    @Query("SELECT COUNT(f) FROM Feedback f WHERE f.tool.toolId = :toolId AND f.status = 'PUBLISHED'")
+    Long countByToolIdByStatus(@Param("toolId") Long toolId);
 }
