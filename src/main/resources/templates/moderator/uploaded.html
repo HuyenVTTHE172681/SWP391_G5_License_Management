@@ -12,17 +12,20 @@
     <aside class="sidebar">
         <h2>Moderator Panel</h2>
         <nav class="menu">
-            <a th:href="@{/moderator/}">🏠 Dashboard</a>
-            <a th:href="@{/moderator/uploadRequest}">📤 Upload Requests</a>
-            <a th:href="@{/moderator/feedback}">💬 Feedback Reports</a>
-            <a th:href="@{/moderator/tool/report}">📊 Tool Reports</a>
-            <a th:href="@{/moderator/history}" class="active">📁 Uploaded Tools</a>
+            <a th:href="@{/moderator/}">Dashboard</a>
+            <a th:href="@{/moderator/uploadRequest}">Upload Requests</a>
+            <a th:href="@{/moderator/feedback}">Feedback Reports</a>
+            <a th:href="@{/moderator/tool/report}">Tool Reports</a>
+            <a th:href="@{/moderator/history}" class="active">Uploaded Tools</a>
+            <a th:href="@{/profile}">Profile</a>
+            <a th:href="@{/profile/reset-password}">Change Password</a>
+            <a th:href="@{/logout}" class="text-danger">Logout</a>
         </nav>
     </aside>
 
     <!-- 📄 Nội dung chính -->
     <main class="main-content">
-        <h1>📁 Uploaded Tools</h1>
+        <h1>Reviewed Tools</h1>
 
         <!-- Bộ lọc -->
         <form class="filter-form" th:action="@{/moderator/history}" method="get" onsubmit="return validateDateRanges()">
@@ -81,7 +84,7 @@
                 </div>
             </div>
 
-            <button type="submit">🔍 Lọc kết quả</button>
+            <button type="submit">Lọc kết quả</button>
         </form>
 
         <!-- Bảng dữ liệu -->

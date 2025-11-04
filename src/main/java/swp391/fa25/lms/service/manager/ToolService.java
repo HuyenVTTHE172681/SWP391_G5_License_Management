@@ -10,6 +10,8 @@ import swp391.fa25.lms.repository.ToolRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service("manageToolService")
 public class ToolService {
@@ -121,5 +123,22 @@ public class ToolService {
         };
 
         return toolRepository.findAll(spec);
+    }
+    /** 📈 Biểu đồ tăng trưởng tool theo tháng */
+    public Map<Integer, Long> getToolGrowthByMonth() {
+        return toolRepository.getToolGrowthByMonth().stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row[0]).intValue(),
+                        row -> ((Number) row[1]).longValue()
+                ));
+    }
+
+    /** 🧩 Tỷ lệ tool theo status */
+    public Map<String, Long> getToolStatusDistribution() {
+        return toolRepository.getToolCountByStatus().stream()
+                .collect(Collectors.toMap(
+                        row -> row[0].toString(),
+                        row -> ((Number) row[1]).longValue()
+                ));
     }
 }

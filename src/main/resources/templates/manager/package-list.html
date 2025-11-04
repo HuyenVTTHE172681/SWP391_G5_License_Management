@@ -49,7 +49,7 @@
             <a th:href="@{/manager/}" class="nav-link" th:classappend="${active == 'dashboard'} ? 'active' : ''">Dashboard</a>
             <a th:href="@{/manager/tool/list}" class="nav-link" th:classappend="${active == 'tools'} ? 'active' : ''">Tools</a>
             <a th:href="@{/manager/category/list}" class="nav-link" th:classappend="${active == 'categories'} ? 'active' : ''">Categories</a>
-            <a th:href="@{/manager/package/list}" class="nav-link" th:classappend="${active == 'packages'} ? 'active' : ''">Packages</a>
+            <a th:href="@{/manager/package/list}" class="nav-link" th:classappend="'active'">Packages</a>
             <a th:href="@{/manager/upload-tool}" class="nav-link" th:classappend="${active == 'upload'} ? 'active' : ''">Upload Tools</a>
             <a th:href="@{/logout}" class="nav-link logout">Logout</a>
         </nav>
@@ -73,7 +73,7 @@
                     <option value="DEACTIVATED" th:selected="${selectedStatus?.name() == 'DEACTIVATED'}">DEACTIVATED</option>
                 </select>
                 <button type="submit" class="btn btn-filter">Filter</button>
-                <a th:href="@{/manager/package/create}" class="btn btn-create">➕ Create</a>
+                <a th:href="@{/manager/package/create}" class="btn btn-create">Create</a>
             </form>
 
             <!-- 📋 List -->
