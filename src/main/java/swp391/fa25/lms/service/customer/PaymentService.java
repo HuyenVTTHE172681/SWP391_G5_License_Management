@@ -58,7 +58,7 @@ public class PaymentService {
         Tool tool = toolRepository.findById(toolId).orElseThrow();
         License license = licenseToolRepository.findById(licenseId).orElseThrow();
 
-        // Auto tạo wallet cho buyer nếu chưa có
+        // Tạo wallet cho buyer nếu chưa có
         if (buyer.getWallet() == null) {
             Wallet buyerWallet = new Wallet();
             buyerWallet.setAccount(buyer);
@@ -71,7 +71,7 @@ public class PaymentService {
             System.out.println("Created default wallet for buyer: " + buyer.getEmail());
         }
 
-        // Tạo order PENDING trước thanh toán (lưu DB ngay để xử lý thoát)
+        // Tạo order PENDING trước thanh toán
         CustomerOrder order = new CustomerOrder();
         order.setAccount(buyer);
         order.setTool(tool);
@@ -80,9 +80,11 @@ public class PaymentService {
         order.setPaymentMethod(CustomerOrder.PaymentMethod.BANK);
         order.setOrderStatus(CustomerOrder.OrderStatus.PENDING);
         order.setCreatedAt(LocalDateTime.now());
-        orderRepository.save(order);  // Lưu order với ID
+        orderRepository.save(order); // Lưu order với ID
 
-        // Tạo transaction PENDING
+        System.out.println("Created PENDING order ID: " + order.getOrderId() + " for tool: " + tool.getToolName());
+
+        // Tạo wallet transaction PENDING
         WalletTransaction tx = new WalletTransaction();
         tx.setWallet(buyer.getWallet());
         tx.setTransactionType(WalletTransaction.TransactionType.BUY);
@@ -127,6 +129,7 @@ public class PaymentService {
         order.setLastTxnRef(txnRef);
         orderRepository.save(order);
 
+        System.out.println("Payment URL: " + order.getOrderId() + ": " + paymentUrl);
         return paymentUrl;
     }
 
@@ -160,18 +163,17 @@ public class PaymentService {
             tx.setCreatedAt(LocalDateTime.now());
             transactionRepository.save(tx);
             order.setTransaction(tx);
-            orderRepository.save(order);
         } else {
             tx.setStatus(WalletTransaction.TransactionStatus.PENDING);
             tx.setAmount(BigDecimal.valueOf(order.getPrice()));
             tx.setCreatedAt(LocalDateTime.now());
             transactionRepository.save(tx);
         }
+        orderRepository.save(order);
 
         // Tạo unique txnRef mới cho retry
         String uniqueTxnRef = String.valueOf(System.currentTimeMillis());
         String orderInfo = String.valueOf(orderId);
-
         long amountInt = Math.round(order.getPrice() * 100);
 
         Map<String, String> vnpParams = new HashMap<>();
@@ -188,10 +190,8 @@ public class PaymentService {
         vnpParams.put("vnp_IpAddr", request.getRemoteAddr());
         vnpParams.put("vnp_CreateDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 
-        // Build hash/query
         String hashDataStr = buildVnpHashData(vnpParams);
         String queryStr = buildVnpQuery(vnpParams);
-
         String secureHash = hmacSHA512(hashSecret.trim(), hashDataStr).toUpperCase(Locale.ROOT);
         String paymentUrl = baseUrl + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
 
@@ -200,7 +200,6 @@ public class PaymentService {
         orderRepository.save(order);
 
         System.out.println("Retry txnRef generated: " + uniqueTxnRef + " for orderId: " + orderId);
-
         return paymentUrl;
     }
 
@@ -258,26 +257,47 @@ public class PaymentService {
     }
 
     /**
-     * Xử lý kết quả thanh toán từ VNPay (match txnRef với lastTxnRef)
+     * Xử lý kết quả thanh toán từ VNPay
      */
     @Transactional
     public boolean handlePaymentCallback(Map<String, String> params) {
         try {
             String responseCode = params.get("vnp_ResponseCode");
             String txnRef = params.get("vnp_TxnRef");
-            String orderInfo = params.get("vnp_OrderInfo");
-            double amount = Double.parseDouble(params.get("vnp_Amount")) / 100.0;
+            String orderInfoStr = params.get("vnp_OrderInfo");
+            String vnpAmount = params.get("vnp_Amount");
+            double amount = vnpAmount != null ? Double.parseDouble(vnpAmount) / 100.0 : 0.0;
 
             boolean success = "00".equals(responseCode);
+//            System.out.println("VNPay ResponseCode: " + responseCode + ", Success: " + success + ", Amount: " + amount);
 
-            // Tìm order bằng lastTxnRef
-            Optional<CustomerOrder> optionalOrder = orderRepository.findByLastTxnRef(txnRef);
-            CustomerOrder order = optionalOrder.orElseThrow(() -> new RuntimeException("Order không tồn tại với txnRef: " + txnRef));
+            if (orderInfoStr == null) {
+                System.err.println("No vnp_OrderInfo in params!");
+                return false;
+            }
 
-            System.out.println("Callback matched orderId: " + order.getOrderId() + " with txnRef: " + txnRef);
+            Long orderId;
+            try {
+                orderId = Long.parseLong(orderInfoStr);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid orderId from vnp_OrderInfo: " + orderInfoStr);
+                return false;
+            }
+
+            Optional<CustomerOrder> optionalOrder = orderRepository.findById(orderId);
+            if (optionalOrder.isEmpty()) {
+                System.err.println("Order not found: " + orderId);
+                return false;
+            }
+
+            CustomerOrder order = optionalOrder.get();
+            System.out.println("Matched orderId: " + order.getOrderId() + " (status: " + order.getOrderStatus() + ")");
 
             WalletTransaction tx = order.getTransaction();
-            if (tx == null) throw new RuntimeException("Transaction không liên kết với order!");
+            if (tx == null) {
+                System.err.println("No transaction linked to order " + orderId);
+                return false;
+            }
 
             // Update transaction
             tx.setStatus(success ? WalletTransaction.TransactionStatus.SUCCESS : WalletTransaction.TransactionStatus.FAILED);
@@ -287,40 +307,49 @@ public class PaymentService {
             // Update order
             if (success) {
                 order.setOrderStatus(CustomerOrder.OrderStatus.SUCCESS);
-                // Cập nhật wallet seller (nhận tiền)
+
                 Account seller = order.getTool().getSeller();
-                Wallet sellerWallet = walletRepository.findByAccount(seller).orElseThrow();
-                if (sellerWallet.getBalance() == null) sellerWallet.setBalance(BigDecimal.ZERO);
-                sellerWallet.setBalance(sellerWallet.getBalance().add(BigDecimal.valueOf(amount)));
-                sellerWallet.setUpdatedAt(LocalDateTime.now());
-                walletRepository.save(sellerWallet);
+                Optional<Wallet> sellerWalletOpt = walletRepository.findByAccount(seller);
+                if (sellerWalletOpt.isPresent()) {
+                    Wallet sellerWallet = sellerWalletOpt.get();
+                    if (sellerWallet.getBalance() == null) sellerWallet.setBalance(BigDecimal.ZERO);
+                    sellerWallet.setBalance(sellerWallet.getBalance().add(BigDecimal.valueOf(amount)));
+                    sellerWallet.setUpdatedAt(LocalDateTime.now());
+                    walletRepository.save(sellerWallet);
+                    System.out.println("Updated seller wallet balance: " + sellerWallet.getBalance());
+                } else {
+                    System.err.println("No wallet for seller: " + seller.getEmail());
+                }
 
                 // Giảm quantity tool
                 Tool tool = order.getTool();
                 if (tool.getQuantity() > 0) {
                     tool.setQuantity(tool.getQuantity() - 1);
                     toolRepository.save(tool);
+                    System.out.println("Decreased quantity for tool " + tool.getToolId() + " to " + tool.getQuantity());
                 }
 
                 // Tạo license account + gửi email
                 createAndAssignLicense(order);
             } else {
-                // Sửa: Fail → FAILED (không giữ PENDING)
                 order.setOrderStatus(CustomerOrder.OrderStatus.FAILED);
                 String message = params.get("vnp_Message") != null ? params.get("vnp_Message") : "Unknown error";
                 System.err.println("Payment failed for order " + order.getOrderId() + ": " + message + " (Code: " + responseCode + ")");
             }
+
             order.setUpdatedAt(LocalDateTime.now());
             orderRepository.save(order);
 
+            System.out.println("Updated order " + order.getOrderId() + " to status: " + order.getOrderStatus());
             return success;
-
         } catch (Exception e) {
+            System.err.println("Callback error: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
-    // REFACTOR: Tách tạo license account (giống code cũ)
+
+    // REFACTOR: Tách tạo license account
     private void createAndAssignLicense(CustomerOrder order) {
         Tool tool = order.getTool();
         License license = order.getLicense();
@@ -354,6 +383,8 @@ public class PaymentService {
                 tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
                 licenseAccountRepository.save(tokenAcc);
                 sendTokenEmail(order, tokenAcc);
+            } else {
+                System.err.println("No unused token for tool " + tool.getToolId());
             }
         }
     }
