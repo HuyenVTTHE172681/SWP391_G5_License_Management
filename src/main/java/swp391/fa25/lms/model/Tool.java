@@ -42,8 +42,8 @@ public class Tool {
 
     private String reviewedBy;
 
-    @Column(nullable = false)
-    private String image;
+     @Column(nullable = false)
+     private String image;
 
     @NotBlank(message = "Description cannot be blank")
     @Column(columnDefinition = "NVARCHAR(100)", nullable = false)
