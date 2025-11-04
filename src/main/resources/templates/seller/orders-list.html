@@ -2,92 +2,24 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Seller Orders</title>
+    <title>Orders Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .dashboard-header {
-            background: linear-gradient(to right, #0d6efd, #6610f2);
-            color: white;
-            padding: 40px 0 30px;
-            margin-bottom: 30px;
-        }
-        .dashboard-header h1 {
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        .revenue-box {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .filter-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        .table thead {
-            background-color: #212529;
-            color: white;
-        }
-        .badge {
-            font-size: 0.9rem;
-        }
-        .btn-primary {
-            background-color: #0d6efd;
-        }
-        .no-orders {
-            text-align: center;
-            color: #888;
-            padding: 40px 0;
-            font-size: 1.1rem;
-        }
-
-        .text-danger-strong {
-            color: #dc3545 !important;
-            font-weight: 600;
-        }
-
-        .text-danger-strong:hover {
-            color: #bb2d3b !important;
-        }
-
-        tr.success-row {
-            background-color: #ffe6e6 !important;
-        }
-        .badge.bg-danger {
-            --bs-badge-bg: #dc3545 !important;
-            --bs-badge-color: #ffffff !important;
-            background-color: var(--bs-badge-bg) !important;
-            color: var(--bs-badge-color) !important;
-            border: none !important;
-            font-weight: 600 !important;
-        }
-    </style>
+    <link th:href="@{/css/orders-list.css}" rel="stylesheet">
 </head>
 <body>
 
 <!-- 🔹 HEADER -->
-<div class="dashboard-header">
+<header class="dashboard-header shadow-sm">
     <div class="container d-flex justify-content-between align-items-center">
         <div>
             <h1>📦 Orders Management</h1>
-            <p class="mb-0">View and filter all orders for your tools</p>
+            <p>View and filter all orders for your tools</p>
         </div>
-        <a th:href="@{/seller/tools}" class="btn btn-outline-light">
-            ← Back to Dashboard
-        </a>
+        <a th:href="@{/seller/tools}" class="btn btn-outline-light fw-semibold px-4">← Back to Dashboard</a>
     </div>
-</div>
+</header>
 
-<div class="container">
+<div class="container mt-4">
 
     <!-- 🔹 Tổng doanh thu -->
     <div class="revenue-box">
@@ -96,13 +28,12 @@
             th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</h2>
     </div>
 
-    <!-- 🔹 Bộ lọc tìm kiếm -->
+    <!-- 🔹 Bộ lọc -->
     <form id="filterForm" class="filter-card" method="get" th:action="@{/seller/orders}">
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Keyword</label>
-                <input type="text" name="keyword" class="form-control"
-                       placeholder="Tool or buyer name..." th:value="${keyword}">
+                <input type="text" name="keyword" class="form-control" placeholder="Tool or buyer name..." th:value="${keyword}">
             </div>
 
             <div class="col-md-2">
@@ -142,9 +73,9 @@
         </div>
     </form>
 
-    <!-- 🔹 Bảng danh sách đơn hàng -->
-    <div class="table-responsive shadow-sm">
-        <table class="table table-bordered table-hover align-middle bg-white">
+    <!-- 🔹 Bảng đơn hàng -->
+    <div class="table-responsive shadow-sm bg-white rounded-3">
+        <table class="table table-bordered table-hover align-middle mb-0">
             <thead>
             <tr>
                 <th>#</th>
@@ -158,8 +89,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="order, i : ${orders}"
-                th:classappend="${order.status == 'SUCCESS'} ? 'success-row'">
+            <tr th:each="order, i : ${orders}">
                 <td th:text="${i.index + 1}"></td>
                 <td th:text="${order.tool.toolName}"></td>
                 <td th:text="${order.account.fullName}"></td>
@@ -167,15 +97,15 @@
                 <td th:text="${#numbers.formatDecimal(order.price, 0, 'COMMA', 0, 'POINT')}"></td>
                 <td th:text="${order.paymentMethod}"></td>
                 <td>
-                <span th:class="${#strings.equalsIgnoreCase(#strings.trim(order.status), 'SUCCESS') ? 'badge bg-danger text-white' :
-                    (#strings.equalsIgnoreCase(#strings.trim(order.status), 'PENDING') ? 'badge bg-warning text-dark' :
-                    (#strings.equalsIgnoreCase(#strings.trim(order.status), 'FAILED') ? 'badge bg-secondary text-white' : 'badge bg-light text-dark'))}"
-                    th:text="${order.status}">
-                </span>
-                </td>
+                    <span th:class="${order.orderStatus.name() == 'SUCCESS' ? 'badge bg-success text-white' :
+                        (order.orderStatus.name() == 'PENDING' ? 'badge bg-warning text-dark' :
+                        (order.orderStatus.name() == 'FAILED' ? 'badge bg-danger text-white' : 'badge bg-light text-dark'))}"
+                          th:text="${order.orderStatus.name()}">
+                    </span>
                 </td>
                 <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
             </tr>
+
             <tr th:if="${orders.isEmpty()}">
                 <td colspan="8" class="no-orders">No orders found.</td>
             </tr>
@@ -183,6 +113,7 @@
         </table>
     </div>
 
+    <!-- 🔹 Pagination -->
     <div class="d-flex justify-content-center mt-4" th:if="${totalPages > 1}">
         <ul class="pagination">
             <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
@@ -208,13 +139,14 @@
             </li>
         </ul>
     </div>
-<!-- 🔹 JS Clear Filter -->
+</div>
+
 <script>
     function clearFilters() {
         document.querySelectorAll('#filterForm input, #filterForm select').forEach(e => e.value = '');
         document.getElementById('filterForm').submit();
     }
 </script>
-</div>
+
 </body>
 </html>

@@ -38,11 +38,12 @@ public class RenewSellerController {
         Account account = (Account) session.getAttribute("loggedInAccount");
         if (account != null) {
             if (account.getSellerExpiryDate() == null) {
-                model.addAttribute("warning", "Bạn chưa kích hoạt gói Seller. Vui lòng chọn gói phù hợp!");
+                model.addAttribute("warning", "You have not activated the Seller package. Please choose the appropriate package!");
             } else if (account.getSellerExpiryDate().isBefore(LocalDateTime.now())) {
-                model.addAttribute("warning", "⚠️ Gói Seller của bạn đã hết hạn! Vui lòng gia hạn để tiếp tục.");
+                model.addAttribute("warning", "⚠️ Your seller package has expired! Please renew to continue.");
             } else {
-                model.addAttribute("info", "⏳ Gói hiện tại còn hạn đến: " + account.getSellerExpiryDate().toLocalDate());
+                model.addAttribute("info", "\n" +
+                        "Current package is valid until: " + account.getSellerExpiryDate().toLocalDate());
             }
         }
         model.addAttribute("packages", sellerService.getAllPackage());
@@ -56,7 +57,7 @@ public class RenewSellerController {
                               HttpServletRequest request) {
         String email = authentication.getName();
         Account account = accountRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
+                .orElseThrow(() -> new RuntimeException("Account not found"));
 
         // Dùng PaymentPackageService (service dành riêng cho Seller)
         String paymentUrl = paymentPackageService.createPaymentUrlForSeller(packageId, account, request);

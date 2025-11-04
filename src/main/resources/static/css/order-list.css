@@ -1,0 +1,91 @@
+body {
+    background-color: #f4f6f8;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Header */
+.dashboard-header {
+    background: linear-gradient(90deg, #0062ff, #6610f2);
+    color: #fff;
+    padding: 35px 0 25px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-header h1 {
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.dashboard-header p {
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+/* Nút Back luôn rõ */
+.dashboard-header .btn-outline-light {
+    background-color: #0d6efd !important; /* Xanh dương đậm */
+    color: #fff !important;              /* Chữ trắng */
+    border: none !important;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 20px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    transition: all 0.2s ease-in-out;
+}
+
+.dashboard-header .btn-outline-light:hover {
+    background-color: #0b5ed7;  /* xanh đậm hơn */
+    color: #fff;
+    transform: translateY(-1px);
+}
+/* 🔹 Revenue Box */
+.revenue-box {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+/* 🔹 Filter */
+.filter-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+/* 🔹 Table */
+.table thead {
+    background-color: #212529;
+    color: white;
+}
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* 🔹 Badge status */
+.badge {
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+.badge.bg-success { background-color: #28a745 !important; }
+.badge.bg-warning { background-color: #ffc107 !important; }
+.badge.bg-danger { background-color: #dc3545 !important; }
+
+/* 🔹 Empty message */
+.no-orders {
+    text-align: center;
+    color: #888;
+    padding: 40px 0;
+    font-size: 1.1rem;
+}
+
+/* 🔹 Pagination */
+.pagination .page-link {
+    border-radius: 6px;
+}

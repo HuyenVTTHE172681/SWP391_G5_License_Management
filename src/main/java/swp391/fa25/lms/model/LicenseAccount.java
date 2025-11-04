@@ -15,12 +15,12 @@ public class LicenseAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long licenseAccountId;
 
-    @NotBlank(message = "User name can not blank")
-    @Column(nullable = false)
+
+    @Column(nullable = true)
     private String username;
 
-    @NotBlank(message = "Password name cannot be blank")
-    @Column(nullable = false)
+
+    @Column(nullable = true)
     private String password;
 
     @ManyToOne
@@ -51,7 +51,7 @@ public class LicenseAccount {
     @Column(nullable = false)
     private LoginMethod loginMethod = LoginMethod.USER_PASSWORD;
     public enum LoginMethod { USER_PASSWORD, TOKEN }
-
+    private LocalDateTime createdAt;
     @Column(unique = true)
     @Pattern(
             regexp = "^[A-Za-z0-9_-]+$",
@@ -63,8 +63,9 @@ public class LicenseAccount {
 
     public LicenseAccount() {
     }
+//    private LocalDateTime createdAt;
 
-    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, Tool tool, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate) {
+    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, Tool tool, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime lastLogin, String deviceInfo, Integer maxDevices) {
         this.licenseAccountId = licenseAccountId;
         this.username = username;
         this.password = password;
@@ -97,7 +98,7 @@ public class LicenseAccount {
         return password;
     }
 
-    public void setPassword(@NotBlank(message = "Password name cannot be blank") String password) {
+    public void setPassword(String password) {
         this.password = password;
     }
 
@@ -181,5 +182,12 @@ public class LicenseAccount {
         this.used = used;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }
 
