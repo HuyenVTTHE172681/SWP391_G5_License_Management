@@ -147,7 +147,10 @@ public class ManagerDashboardController {
         List<Tool> tools = toolService.filterNonPendingTools(
                 sellerId, categoryId, uploadFrom, uploadTo, approvedFrom, approvedTo, reviewedBy, status
         );
+        List<Category> categories = categoryService.getAllCategories();
 
+        model.addAttribute("categories", categories);
+        model.addAttribute("categoryId", categoryId);
         model.addAttribute("tools", tools);
         model.addAttribute("selectedSellerId", sellerId);
         model.addAttribute("selectedCategoryId", categoryId);
@@ -160,5 +163,6 @@ public class ManagerDashboardController {
 
         return "manager/tool-list";
     }
+
 
 }
