@@ -87,12 +87,12 @@ public class ModeratorToolController {
     //View request upload tool  pending
     @GetMapping("/uploadRequest")
     public String displayUploadRequest(@RequestParam(required = false) Long sellerId,
-                                     @RequestParam(required = false) Long categoryId,
-                                     @RequestParam(required = false)
-                                     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
-                                     @RequestParam(required = false)
-                                     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
-                                     Model model) {
+                                       @RequestParam(required = false) Long categoryId,
+                                       @RequestParam(required = false)
+                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
+                                       @RequestParam(required = false)
+                                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
+                                       Model model) {
         List<Tool> toolList = toolService.filterPendingTools(sellerId, categoryId, uploadFrom, uploadTo);
         List<Category> categories = categoryService.getAllCategories();
         model.addAttribute("toolList", toolList);

@@ -1,0 +1,44 @@
+/* Page head */
+.page-header h3 {
+    font-weight: 700;
+}
+
+/* Table widths (override inline styles by class) */
+.feedback-table .w-date { width: 120px; }
+.feedback-table .w-tool { width: 220px; }
+.feedback-table .w-customer { width: 200px; }
+.feedback-table .w-reply { width: 360px; }
+
+@media (max-width: 992px) {
+    .feedback-table .w-tool,
+    .feedback-table .w-customer,
+    .feedback-table .w-reply {
+        width: auto;
+    }
+}
+
+/* Stars */
+.star { color: #ffc107; }
+.star.gray { color: #ddd; }
+
+/* Reply */
+.reply-card {
+    background: #f8f9fa;
+    border: 1px dashed #ced4da;
+}
+
+.reply-title {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.pointer { cursor: pointer; }
+
+/* Minor tweaks */
+.tool-line a {
+    text-decoration: none;
+}
+.tool-line a:hover {
+    text-decoration: underline;
+}

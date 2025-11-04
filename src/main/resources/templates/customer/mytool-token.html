@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tài khoản dịch vụ (TOKEN)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-4" th:object="${acc}">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">🧰 Tool: <span th:text="${tool.toolName}">Tool</span></h4>
+            <small class="text-muted">
+                Phương thức: <span th:text="*{loginMethod}">TOKEN</span> ·
+                Mã đơn: <span th:text="${order.orderId}">0</span>
+            </small>
+        </div>
+    </div>
+
+    <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
+    <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+
+    <!-- Thông tin tài khoản -->
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <tbody>
+            <tr>
+                <th style="width:260px">License Account ID</th>
+                <td th:text="*{licenseAccountId}">-</td>
+            </tr>
+            <tr>
+                <th>Login method</th>
+                <td th:text="*{loginMethod}">TOKEN</td>
+            </tr>
+            <tr>
+                <th>Token</th>
+                <td class="d-flex align-items-center gap-2">
+                    <code id="tVal" th:text="*{token != null ? token : '—'}">TOKEN_VALUE</code>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleToken()">Hiện/Ẩn</button>
+                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="copyText('tVal')">Copy</button>
+                </td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td th:switch="${acc.status != null ? acc.status.name() : null}">
+                    <span class="badge text-bg-success"  th:case="'ACTIVE'">ACTIVE</span>
+                    <span class="badge text-bg-secondary" th:case="'EXPIRED'">EXPIRED</span>
+                    <span class="badge text-bg-danger"   th:case="'REVOKED'">REVOKED</span>
+                    <span class="badge text-bg-secondary" th:case="*">N/A</span>
+                </td>
+            </tr>
+            <tr>
+                <th>Hiệu lực</th>
+                <td>
+                    <span th:text="${acc.startDate != null ? #temporals.format(acc.startDate,'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                    →
+                    <span th:text="${acc.endDate != null ? #temporals.format(acc.endDate,'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                </td>
+            </tr>
+            <tr>
+                <th>License gói (lần mua gần nhất)</th>
+                <td th:text="${order.license != null ? order.license.name : '-'}">-</td>
+            </tr>
+
+            <!-- ✅ Tệp cài đặt / file đính kèm  -->
+            <tr>
+                <th>Tệp cài đặt / file đính kèm</th>
+                <td>
+                    <div th:if="${#lists.isEmpty(files)}" class="text-muted">Chưa có file</div>
+
+                    <div class="d-flex flex-wrap gap-2" th:if="${!#lists.isEmpty(files)}">
+                        <!-- Chỉ hiển thị nút Download cho WRAPPED -->
+                        <a class="btn btn-sm btn-outline-primary"
+                           th:each="f : ${files}"
+                           th:if="${f.fileType != null and f.fileType.name() == 'WRAPPED'}"
+                           th:href="@{|/my-tools/${order.orderId}/files/${f.fileId}|}">
+                            Download
+                        </a>
+                        <!-- Nếu không có file WRAPPED, không hiển thị nút (tuân theo yêu cầu không cho tải ORIGINAL) -->
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Đường dẫn quay lại -->
+    <a href="/orders" class="btn btn-link mt-1">« Quay lại đơn hàng</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Ẩn/Hiện token
+    document.addEventListener('DOMContentLoaded', function(){
+        const el = document.getElementById('tVal');
+        if (el && !el.dataset.orig) el.dataset.orig = el.textContent;
+        if (el) el.dataset.real = '1';
+    });
+    function toggleToken(){
+        const el = document.getElementById('tVal');
+        if (!el) return;
+        if (el.dataset.real === '1') { el.textContent = '••••••••'; el.dataset.real = '0'; }
+        else { el.textContent = el.dataset.orig || ''; el.dataset.real = '1'; }
+    }
+    function copyText(id){
+        const t = document.getElementById(id)?.innerText || '';
+        navigator.clipboard.writeText(t).then(()=>alert('Đã copy'));
+    }
+</script>
+</body>
+</html>

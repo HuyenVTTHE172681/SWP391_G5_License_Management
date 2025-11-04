@@ -1,0 +1,190 @@
+/* ====== Base ====== */
+:root{
+    --kkm-primary:#0d6efd;      /* Bootstrap primary */
+    --kkm-primary-600:#0b5ed7;
+    --kkm-muted:#6c757d;
+    --kkm-bg:#f7f9fc;
+    --kkm-card:#ffffff;
+    --kkm-border:#e9edf3;
+    --kkm-star:#f4c150;
+    --kkm-star-muted:#cfd4da;
+}
+
+html,body{
+    background: var(--kkm-bg);
+}
+
+/* ====== Breadcrumb ====== */
+.breadcrumb{
+    background: transparent;
+    margin-bottom: 1.25rem;
+}
+.breadcrumb .breadcrumb-item a{
+    text-decoration: none;
+    color: var(--kkm-primary);
+}
+.breadcrumb .breadcrumb-item + .breadcrumb-item::before{
+    color: var(--kkm-muted);
+}
+
+/* ====== Card ====== */
+.card{
+    border: 1px solid var(--kkm-border);
+    border-radius: 1rem;
+    overflow: hidden;
+    background: var(--kkm-card);
+    box-shadow: 0 6px 18px rgba(13, 110, 253, 0.06), 0 2px 6px rgba(16, 24, 40, .04);
+}
+.card-header{
+    border-bottom: 1px solid var(--kkm-border);
+    background:
+            radial-gradient(1200px 1200px at -10% -50%, rgba(13,110,253,.08), transparent 60%) ,
+            linear-gradient(180deg, #ffffff, #fbfcff);
+}
+
+/* ====== Buttons ====== */
+.btn-primary{
+    background: var(--kkm-primary);
+    border-color: var(--kkm-primary);
+    box-shadow: 0 6px 14px rgba(13,110,253,.2);
+    transition: transform .08s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.btn-primary:hover{
+    background: var(--kkm-primary-600);
+    border-color: var(--kkm-primary-600);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(13,110,253,.25);
+}
+.btn-outline-secondary{
+    border-color: var(--kkm-border);
+}
+.btn-outline-danger{
+    border-color: rgba(220,53,69,.25);
+}
+
+/* ====== Form fields ====== */
+.form-label{
+    font-weight: 600;
+}
+.form-control{
+    border-radius: .75rem;
+    border-color: var(--kkm-border);
+    transition: box-shadow .2s ease, border-color .2s ease;
+}
+.form-control:focus{
+    border-color: var(--kkm-primary);
+    box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+}
+.form-text{
+    color: var(--kkm-muted);
+}
+
+/* ====== Comment counter row ====== */
+#comment{
+    min-height: 110px;
+    resize: vertical;
+}
+#cc{
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--kkm-muted);
+}
+
+/* ====== Star rating (giữ logic HTML của bạn) ====== */
+.star-group{
+    display: inline-block;
+    padding: .25rem .5rem;
+    border-radius: .75rem;
+    background: #fff;
+    border: 1px dashed var(--kkm-border);
+}
+.star-row{
+    direction: rtl;
+    display: inline-flex;
+    gap: .15rem;
+}
+.star-row > input[type="radio"]{ display:none; }
+
+/* Trạng thái sao mặc định */
+.star-row > label{
+    direction: ltr;
+    cursor: pointer;
+    font-size: 1.9rem;
+    line-height: 1;
+    color: var(--kkm-star-muted);
+    transition: transform .06s ease, color .15s ease;
+}
+
+/* Hover: từ sao được hover kéo về bên trái (do RTL) */
+.star-row > label:hover,
+.star-row > label:hover ~ label{
+    color: var(--kkm-star);
+    transform: scale(1.02);
+}
+
+/* Checked: tô từ sao đã chọn về trái (do RTL + sibling selectors) */
+.star-row > input[type="radio"]:checked + label,
+.star-row > input[type="radio"]:checked + label ~ label{
+    color: var(--kkm-star);
+}
+
+/* ====== Divider ====== */
+hr{
+    opacity: .12;
+}
+
+/* ====== “Back” button in header ====== */
+.card-header .btn{
+    --bs-btn-padding-y: .25rem;
+    --bs-btn-padding-x: .6rem;
+    --bs-btn-border-radius: .65rem;
+}
+
+/* ====== Small screens ====== */
+@media (max-width: 576px){
+    .card{
+        border-radius: .75rem;
+    }
+    .star-row > label{
+        font-size: 1.7rem;
+    }
+}
+
+/* ====== Subtle animations ====== */
+.card,
+.breadcrumb,
+.btn{
+    will-change: transform, box-shadow;
+}
+
+/* ====== Utility helpers ====== */
+.kkm-muted{ color: var(--kkm-muted) !important; }
+
+/* ====== Optional: Dark mode (tự động theo hệ thống) ====== */
+@media (prefers-color-scheme: dark){
+    :root{
+        --kkm-bg:#0b0f14;
+        --kkm-card:#0f151d;
+        --kkm-border:#1c2430;
+        --kkm-muted:#9fb0c5;
+        --kkm-star-muted:#6c7785;
+    }
+    body{ color: #e7edf6; }
+    .card-header{
+        background:
+                radial-gradient(1200px 1200px at -10% -50%, rgba(13,110,253,.15), transparent 60%),
+                linear-gradient(180deg, #111722, #0f151d);
+    }
+    .form-control{
+        background-color:#0c121a;
+        color:#e7edf6;
+    }
+    .form-control::placeholder{ color:#71839a; }
+    .btn-outline-secondary{
+        color:#cbd7e6;
+        border-color: var(--kkm-border);
+    }
+    .btn-outline-danger{
+        color:#ffb3bd;
+    }
+}

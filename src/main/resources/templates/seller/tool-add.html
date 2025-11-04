@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Add New Tool</title>
 
+    <!-- ✅ Giao diện & Validate Style -->
     <style>
         body {
             background-color: #f9fafb;
@@ -56,7 +57,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        .form-group { margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1.5rem; position: relative; }
 
         .form-label {
             display: block;
@@ -81,6 +82,43 @@
             box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
         }
 
+        .error-message {
+            color: #dc2626;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .error-border {
+            border: 2px solid #dc2626 !important;
+            background-color: #fff5f5;
+        }
+
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .image-gallery img {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            object-fit: cover;
+        }
+
+        .image-gallery img:hover {
+            transform: scale(1.05);
+            border-color: #16a34a;
+        }
+
+        .image-gallery img.selected {
+            border-color: #16a34a;
+            box-shadow: 0 0 4px rgba(22,163,74,0.5);
+        }
+
         .form-actions {
             display: flex;
             justify-content: flex-end;
@@ -97,7 +135,29 @@
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
+        .license-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
+        .remove-btn {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #dc2626;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            transition: 0.2s;
+            flex-shrink: 0; /* để nút không co lại */
+        }
+        .remove-btn:hover {
+            background-color: #dc2626;
+            color: white;
+        }
         .submit-btn:hover { background-color: #15803d; }
     </style>
 </head>
@@ -111,82 +171,116 @@
 </header>
 
 <section class="form-section">
-    <form th:action="@{/seller/tools/add}"
-          th:object="${tool}"
-          method="post"
-          enctype="multipart/form-data">
+    <form id="toolForm" th:action="@{/seller/tools/add}" th:object="${tool}" method="post" enctype="multipart/form-data">
 
         <!-- 🧾 Tool Name -->
         <div class="form-group">
             <label class="form-label">Tool Name</label>
-            <input type="text" name="toolName" required class="form-input">
+            <input type="text" th:field="*{toolName}" id="toolName" class="form-input" placeholder="Enter tool name">
+            <small class="error-message text-danger"
+                   th:if="${#fields.hasErrors('toolName')}"
+                   th:errors="*{toolName}"></small>
         </div>
 
-        <!-- 🖼 Image -->
+        <!-- 🖼 Upload Image -->
         <div class="form-group">
-            <label class="form-label">Select Image</label>
-            <select name="selectedImage" class="form-select" required>
-                <option value="">-- Select an image --</option>
-                <option th:each="img : ${imageFiles}"
-                        th:value="@{'/images/' + ${img}}"
-                        th:text="${img}">
-                </option>
-            </select>
+            <label class="form-label">Upload Image</label>
+            <input type="file" name="imageFile" id="imageFile" class="form-input" accept="image/*">
+
+            <!-- Preview -->
+            <div id="previewContainer" style="margin-top:10px;">
+                <img id="previewImage" src="#" alt="Preview"
+                     style="max-width:150px; display:none; border-radius:8px; border:1px solid #ccc;">
+            </div>
+
+            <small class="error-message text-danger"
+                   th:if="${errorImage != null}"
+                   th:text="${errorImage}"></small>
         </div>
 
+        <!-- 💾 Upload Tool File -->
         <div class="form-group">
-            <label class="form-label">File Upload (Optional)</label>
-            <input type="file" name="file" class="form-input">
+            <label class="form-label">Upload Tool File (.exe, .zip, .rar)</label>
+            <input type="file" name="toolFile" id="toolFile" accept=".exe,.zip,.rar" class="form-input">
+            <small class="form-text text-muted">Only .exe, .zip, .rar,  — Max 100MB.</small>
+            <small id="fileError" class="error-message text-danger"></small>
         </div>
 
+        <!-- 🗂 Category -->
         <div class="form-group">
             <label class="form-label">Category</label>
-            <select th:field="*{category.categoryId}" class="form-select" required>
+            <select th:field="*{category.categoryId}" id="category" class="form-select">
                 <option value="">-- Select category --</option>
                 <option th:each="c : ${categories}"
                         th:value="${c.categoryId}"
-                        th:text="${c.categoryName}">
-                </option>
+                        th:text="${c.categoryName}"></option>
             </select>
+            <small class="error-message text-danger"
+                   th:if="${#fields.hasErrors('category')}"
+                   th:errors="*{category}"></small>
         </div>
 
         <!-- 📝 Description -->
         <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea name="description" rows="4" class="form-textarea"></textarea>
+            <textarea th:field="*{description}" id="description"
+                      rows="4" class="form-textarea"
+                      placeholder="Enter description"></textarea>
+            <small class="error-message text-danger"
+                   th:if="${#fields.hasErrors('description')}"
+                   th:errors="*{description}"></small>
         </div>
 
-        <!-- 🔐 Login Methods -->
-        <label class="form-label fw-semibold">Tool Login Method</label>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="loginMethods" value="USER_PASSWORD"
-                   th:checked="${tool.loginMethods != null and tool.loginMethods.contains('USER_PASSWORD')}">
-            <label class="form-check-label">User & Password</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="loginMethods" value="TOKEN"
-                   th:checked="${tool.loginMethods != null and tool.loginMethods.contains('TOKEN')}">
-            <label class="form-check-label">Token (Key-based)</label>
+        <!-- 🔐 Tool Login Method -->
+        <div class="mb-3">
+            <label for="loginMethod" class="form-label">Login Method</label>
+            <select name="loginMethod" id="loginMethod" class="form-select">
+                <option value="USER_PASSWORD"
+                        th:selected="${tool.loginMethod?.name() == 'USER_PASSWORD'}">
+                    User & Password
+                </option>
+                <option value="TOKEN"
+                        th:selected="${tool.loginMethod?.name() == 'TOKEN'}">
+                    Token (Key-based)
+                </option>
+            </select>
+            <small class="text-danger" th:if="${errorLoginMethod}" th:text="${errorLoginMethod}"></small>
         </div>
 
         <!-- 🔢 Quantity -->
         <div class="form-group">
             <label class="form-label">Tool Quantity</label>
-            <input type="number" name="quantity" class="form-input" min="0" value="0"
-                   placeholder="Enter available tool quantity" required>
+            <input type="number" th:field="*{quantity}" id="quantity"
+                   class="form-input" min="1" placeholder="Enter quantity">
+            <small class="error-message text-danger"
+                   th:if="${#fields.hasErrors('quantity')}"
+                   th:errors="*{quantity}"></small>
         </div>
 
         <!-- 💰 License Pricing -->
         <div class="form-group">
-            <label class="form-label fw-semibold">Pricing Options</label>
+            <label class="form-label">Pricing Options</label>
+
             <div id="licenseContainer">
-                <div class="d-flex gap-2 mb-2">
-                    <input type="number" name="licenseDays" min="1" placeholder="Số ngày" required>
-                    <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" required>
+                <!-- 🔹 Dòng đầu tiên PHẢI có class license-row -->
+                <div class="license-row d-flex align-items-center mb-2" style="gap:10px;">
+                    <input type="number" name="licenseDays" min="1"
+                           placeholder="Days" class="form-input flex-fill" style="max-width:45%;">
+                    <input type="number" name="licensePrices" min="0"
+                           placeholder="Price (VNĐ)" class="form-input flex-fill" style="max-width:45%;">
+                    <button type="button" class="remove-btn" onclick="removeLicenseRow(this)">×</button>
                 </div>
             </div>
-            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addLicenseRow()">+ Add another</button>
+
+            <button type="button" class="submit-btn"
+                    style="background:#e5e7eb; color:#374151; margin-top:0.5rem;"
+                    onclick="addLicenseRow()">+ Add another</button>
+
+            <small id="error-license" class="text-danger error-message" style="display:none;">
+                Please complete all pricing rows correctly.
+            </small>
         </div>
+
 
         <!-- ✅ Submit -->
         <div class="form-actions">
@@ -196,15 +290,169 @@
 </section>
 
 <script>
-    function addLicenseRow() {
-        const c = document.getElementById('licenseContainer');
-        c.insertAdjacentHTML('beforeend', `
-            <div class="d-flex gap-2 mb-2">
-                <input type="number" name="licenseDays" min="1" placeholder="Số ngày" required>
-                <input type="number" name="licensePrices" min="0" placeholder="Giá (VNĐ)" required>
-            </div>
-        `);
+    function selectImage(img) {
+        document.querySelectorAll('.image-gallery img').forEach(i => i.classList.remove('selected'));
+        img.classList.add('selected');
+
+        // chỉ lưu tên file (không lưu cả /images/...):
+        const filename = img.getAttribute('data-filename') || img.alt || img.src.split('/').pop();
+        document.getElementById('selectedImage').value = filename;
+
+        console.log('Selected image file:', filename);
+
     }
+    // ✅ Thêm dòng mới
+    function addLicenseRow() {
+        const container = document.getElementById('licenseContainer');
+        const row = document.createElement('div');
+        row.className = 'd-flex gap-2 mb-2 license-row';
+        row.style.display = 'flex';
+        row.style.gap = '10px';
+        row.innerHTML = `
+        <input type="number" name="licenseDays" min="1" placeholder="Days" class="form-input" style="width:45%;">
+        <input type="number" name="licensePrices" min="0" placeholder="Price (VNĐ)" class="form-input" style="width:45%;">
+        <button type="button" class="btn btn-outline-danger remove-btn" onclick="removeLicenseRow(this)">×</button>
+    `;
+        container.appendChild(row);
+    }
+
+    function removeLicenseRow(btn) {
+        const container = document.getElementById('licenseContainer');
+        const rows = container.querySelectorAll('.license-row');
+
+        // luôn để lại ít nhất 1 dòng
+        if (rows.length > 1) {
+            const row = btn.closest('.license-row');
+            if (row) row.remove(); // tránh lỗi null
+        }
+    }
+
+    // ✅ Validate toàn form trước submit
+    document.getElementById('toolForm').addEventListener('submit', function (e) {
+        let valid = true;
+
+        // kiểm tra từng hàng trong pricing
+        const rows = document.querySelectorAll('#licenseContainer .license-row');
+        const errorEl = document.getElementById('error-license');
+        errorEl.style.display = 'none';
+
+        for (const row of rows) {
+            const day = row.querySelector('input[name="licenseDays"]').value.trim();
+            const price = row.querySelector('input[name="licensePrices"]').value.trim();
+
+            if ((day && !price) || (!day && price)) {
+                valid = false;
+                errorEl.style.display = 'block';
+                row.querySelectorAll('input').forEach(i => i.classList.add('error-border'));
+            } else {
+                row.querySelectorAll('input').forEach(i => i.classList.remove('error-border'));
+            }
+        }
+
+        if (!valid) {
+            e.preventDefault();
+            window.scrollTo({ top: 100, behavior: 'smooth' });
+        }
+    });
+
+    document.getElementById('imageFile').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('previewImage');
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = ev => {
+                preview.src = ev.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "#";
+            preview.style.display = 'none';
+        }
+    });
+    // ⚠️ Kiểm tra định dạng và dung lượng trước khi submit
+    document.getElementById('toolForm').addEventListener('submit', function (e) {
+        const fileInput = document.getElementById('imageFile');
+        const file = fileInput.files[0];
+        const errorMsg = document.querySelector('.error-message.text-danger');
+
+        if (!file) return; // để server validate nếu trống
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            e.preventDefault();
+            errorMsg.textContent = 'Only JPG, JPEG, or PNG files are allowed.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            e.preventDefault();
+            errorMsg.textContent = 'Image must be smaller than 2MB.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
+    });
+
+
+    // ✅ Validate trước khi submit
+    document.getElementById('toolForm').addEventListener('submit', function(e) {
+        let valid = true;
+        const fields = [
+            { id: 'toolName', msg: 'Tool name is required' },
+            { id: 'description', msg: 'Description is required' },
+            { id: 'loginMethod', msg: 'Please select a login method' },
+            { id: 'category', msg: 'Please select a category' },
+            { id: 'quantity', msg: 'Quantity must be at least 1' }
+        ];
+
+        fields.forEach(f => {
+            const field = document.getElementById(f.id);
+            const error = document.getElementById('error-' + f.id);
+            if (!field.value || (f.id === 'quantity' && field.value < 1)) {
+                field.classList.add('error-border');
+                error.style.display = 'block';
+                valid = false;
+            } else {
+                field.classList.remove('error-border');
+                error.style.display = 'none';
+            }
+        });
+
+        const img = document.getElementById('selectedImage').value;
+        const imgErr = document.getElementById('error-selectedImage');
+        if (!img) {
+            imgErr.style.display = 'block';
+            valid = false;
+        } else imgErr.style.display = 'none';
+
+        if (!valid) {
+            e.preventDefault();
+            window.scrollTo({ top: 100, behavior: 'smooth' });
+        }
+    });
+    document.getElementById("toolFile").addEventListener("change", function () {
+        const file = this.files[0];
+        const errorEl = document.getElementById("fileError");
+        errorEl.textContent = "";
+
+        if (!file) return;
+
+        const allowed = [".exe", ".zip", ".rar", ];
+        const lower = file.name.toLowerCase();
+        if (!allowed.some(ext => lower.endsWith(ext))) {
+            errorEl.textContent = "❌ Invalid file type. Only .exe, .zip, .rar, allowed.";
+            this.value = "";
+            return;
+        }
+
+        if (file.size > 100 * 1024 * 1024) {
+            errorEl.textContent = "❌ File too large (max 100MB).";
+            this.value = "";
+        }
+    });
 </script>
 </body>
 </html>

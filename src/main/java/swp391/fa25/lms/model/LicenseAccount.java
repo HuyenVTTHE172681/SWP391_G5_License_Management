@@ -2,6 +2,7 @@ package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,7 +28,7 @@ public class LicenseAccount {
     private License license;
 
     @OneToOne
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    @JoinColumn(name = "order_id", nullable = true, unique = true)
     private CustomerOrder order; // mỗi order sinh ra 1 license account
 
     @ManyToOne
@@ -35,6 +36,7 @@ public class LicenseAccount {
     private Tool tool;
 
     @OneToMany(mappedBy = "licenseAccount")
+    @OrderBy("renewDate DESC")
     private List<LicenseRenewLog> renewAcc;
 
     @Enumerated(EnumType.STRING)
@@ -54,6 +56,10 @@ public class LicenseAccount {
     public enum LoginMethod { USER_PASSWORD, TOKEN }
 
     @Column(unique = true)
+    @Pattern(
+            regexp = "^[A-Za-z0-9_-]+$",
+            message = "Token key chỉ được chứa chữ, số, dấu '-' hoặc '_' và không được để trống hoặc có dấu cách"
+    )
     private String token;
 
     private Boolean used = false;
@@ -86,15 +92,15 @@ public class LicenseAccount {
         this.licenseAccountId = licenseAccountId;
     }
 
-    public @NotBlank(message = "User name can not blank") String getUsername() {
+    public String getUsername() {
         return username;
     }
 
-    public void setUsername(@NotBlank(message = "User name can not blank") String username) {
+    public void setUsername(String username) {
         this.username = username;
     }
 
-    public @NotBlank(message = "Password name cannot be blank") String getPassword() {
+    public String getPassword() {
         return password;
     }
 

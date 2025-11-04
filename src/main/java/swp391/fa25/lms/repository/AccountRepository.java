@@ -2,11 +2,13 @@ package swp391.fa25.lms.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Account.AccountStatus;
 import swp391.fa25.lms.model.Role.RoleName;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
@@ -15,18 +17,39 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByEmail(String email);
     boolean existsByEmail(String email);
 
-    // Tìm kiếm theo keyword (email hoặc fullName)
     Page<Account> findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
             String email, String fullName, Pageable pageable);
     boolean existsByEmailAndVerifiedTrue(String email);
     Optional<Account> findByVerificationCode(String code);
 
-    // --- Dùng cho Tab Home (thống kê + danh sách) ---
     long countByRole_RoleName(RoleName roleName);
 
-    // Đăng ký mới nhất (sắp xếp theo createdAt giảm dần)
     Page<Account> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    // Danh sách DEACTIVATED mới cập nhật gần đây
     Page<Account> findByStatusOrderByUpdatedAtDesc(AccountStatus status, Pageable pageable);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Account a SET a.status = :status, a.updatedAt = CURRENT_TIMESTAMP WHERE a.accountId = :id")
+    int updateStatus(@Param("id") long id, @Param("status") AccountStatus status);
+
+    // Search có filter status
+    @Query("""
+           SELECT a FROM Account a
+           WHERE (:q IS NULL OR :q = '' 
+                 OR LOWER(a.email) LIKE LOWER(CONCAT('%', :q, '%'))
+                 OR LOWER(a.fullName) LIKE LOWER(CONCAT('%', :q, '%')))
+             AND (:status IS NULL OR a.status = :status)
+           """)
+    Page<Account> search(@Param("q") String q,
+                         @Param("status") AccountStatus status,
+                         Pageable pageable);
+
+    List<Account> findTop8ByStatusOrderByUpdatedAtDesc(AccountStatus status);
+    @Query("""
+           select a.accountId
+           from Account a
+           where lower(a.email) = lower(:email)
+           """)
+    Optional<Long> findIdByEmail(@Param("email") String email);
+    Optional<Account> findByEmailIgnoreCase(String email);
 }
+

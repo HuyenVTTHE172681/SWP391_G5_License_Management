@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.service.customer.CategoryService;
+import swp391.fa25.lms.service.customer.FavoriteService;
 import swp391.fa25.lms.service.customer.ToolService;
+
+import java.util.List;
 
 @Controller
 public class HomePageController {
@@ -21,6 +25,8 @@ public class HomePageController {
     private CategoryService categoryService;
     @Autowired
     private ToolService toolService;
+    @Autowired
+    private FavoriteService favoriteService;
 
     @GetMapping("/")
     public String defaultRedirect() {
@@ -50,11 +56,19 @@ public class HomePageController {
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "dateFilter", required = false) String dateFilter,
+            @RequestParam(value = "priceFilter", required = false) String priceFilter,
+            @RequestParam(value = "ratingFilter", required = false) Integer ratingFilter,
             @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "9") int size,
+            HttpServletRequest request,
             Model model) {
 
-        int size = 9;
-        Page<Tool> toolPage = toolService.searchAndFilterTools(keyword, categoryId, dateFilter, page, size);
+        // Lấy account từ session
+        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
+
+        Page<Tool> toolPage = toolService.searchAndFilterTools(
+                keyword, categoryId, dateFilter, priceFilter, ratingFilter, account, page, size
+        );
 
         model.addAttribute("tools", toolPage.getContent());
         model.addAttribute("currentPage", page);
@@ -62,20 +76,22 @@ public class HomePageController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("selectedCategory", categoryId);
         model.addAttribute("dateFilter", dateFilter);
+        model.addAttribute("priceFilter", priceFilter);
+        model.addAttribute("ratingFilter", ratingFilter);
+        model.addAttribute("pageSize", size);
 
-        // Trả về fragment Thymeleaf
-        return "public/tool-list :: toolList";
+        // Render fragment trong home.html
+        return "public/home :: toolList";
     }
+
 
     @GetMapping("/logout")
     public String logout(HttpServletRequest request) {
-        request.getSession().invalidate();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            new SecurityContextLogoutHandler().logout(request, null, auth);  // Clear SecurityContext
+        }
+        request.getSession().invalidate();  // Invalidate session (giữ nguyên)
         return "redirect:/login";
     }
-
-//    @GetMapping("/logout-success")
-//    public String logoutSuccess(Model model) {
-//        model.addAttribute("message", "Bạn đã đăng xuất thành công");
-//        return "public/login";
-//    }
 }

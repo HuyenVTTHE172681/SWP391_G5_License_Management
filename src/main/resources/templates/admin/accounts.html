@@ -3,269 +3,208 @@
 <head>
     <meta charset="UTF-8"/>
     <title>Admin • Accounts</title>
-    <style>
-        :root{
-            --bg:#f5f7fb; --card:#ffffff; --muted:#64748b; --text:#0f172a; --border:#e2e8f0;
-            --accent:#2563eb; --accent-2:#16a34a; --warn:#dc2626; --hover:#f1f5f9;
-        }
-        *{ box-sizing:border-box } html,body{ height:100% }
-        body{
-            margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-            background:
-                    radial-gradient(1200px 600px at 20% -10%, #c7d2fe33, transparent 60%),
-                    radial-gradient(1000px 500px at 110% 10%, #bbf7d033, transparent 60%),
-                    var(--bg);
-            color:var(--text); padding:28px;
-        }
-        .wrap{ max-width:1100px; margin:0 auto }
-        .page-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px }
-        .title{ margin:0; font-weight:800; letter-spacing:.2px; line-height:1.1; font-size: clamp(26px, 3vw, 32px); color: var(--text); text-shadow: 0 1px 2px rgba(15,23,42,.06); }
-        .subtitle{ margin:6px 0 0; color:var(--muted); font-size:13px }
 
-        /* Tabs (đồng bộ với adminhome.html) */
-        .tabs{ display:flex; gap:8px; margin:16px 0 22px; }
-        .tab{
-            display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border);
-            background:#fff; border-radius:10px; text-decoration:none; color:#0f172a; font-weight:600; font-size:14px;
-        }
-        .tab.active{ background:#eef2ff; border-color:#bfdbfe; color:#1e40af }
-
-        /* Userbar + logout button */
-        .userbar{ display:flex; align-items:center; gap:10px }
-        .hello{ color:var(--muted); font-size:13px }
-        .btn{
-            appearance:none; border:1px solid var(--border); background:#f8fafc; color:#var(--text);
-            padding:8px 12px; border-radius:10px; cursor:pointer; text-decoration:none; font-size:13px;
-            transition: transform .05s ease, background .2s ease, border-color .2s ease; margin-right:6px;
-        }
-        .btn:hover{ background:#eef2ff; transform:translateY(-1px) }
-        .btn[disabled]{ opacity:.5; cursor:not-allowed; transform:none; }
-        .btn.view{ border-color:#bfdbfe; background:#eff6ff; color:#1e40af }
-        .btn.view:hover{ background:#dbeafe }
-        .btn.update{ border-color:#86efac; background:#ecfdf5; color:#166534 }
-        .btn.update:hover{ background:#dcfce7 }
-        .btn.delete{ border-color:#fecaca; background:#fff1f2; color:#9f1239 }
-        .btn.delete:hover{ background:#ffe4e6 }
-        .btn.logout{ border-color:#fecaca; background:#fff1f2; color:#9f1239 }
-        .btn.logout:hover{ background:#ffe4e6 }
-
-        .card{ background: linear-gradient(180deg, #ffffff, #fbfdff); border:1px solid var(--border); border-radius:14px; box-shadow: 0 10px 24px rgba(2,6,23,.08); overflow:hidden; }
-        .card-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border) }
-        .card-title{ font-weight:600; margin:0; font-size:15px }
-
-        .filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
-        .filters input[type="text"]{ padding:8px 10px; border:1px solid var(--border); border-radius:8px; min-width:220px; background:#fff }
-        .filters select{ padding:7px 10px; border:1px solid var(--border); border-radius:8px; background:#fff }
-        .filters .btn{ margin-right:0 }
-
-        .flash{ padding:10px 12px; margin:10px 0; border:1px solid #86efac; background:#ecfdf5; color:#166534; border-radius:10px; font-size:13px }
-        .empty{ padding:22px; border:1px dashed var(--border); border-radius:12px; color:var(--muted); text-align:center; background:#ffffff80 }
-
-        .table-wrap{ overflow:auto }
-        table{ border-collapse:collapse; width:100%; min-width:880px }
-        thead th{
-            position:sticky; top:0; background:#ffffff; border-bottom:1px solid var(--border);
-            color:#334155; font-weight:700; text-align:left; font-size:12px; letter-spacing:.3px; text-transform:uppercase
-        }
-        th,td{ padding:12px 14px; border-bottom:1px solid var(--border) }
-        tbody tr:hover{ background:var(--hover) }
-        td.small{ color:var(--muted); font-size:13px }
-
-        .badge{ display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid #c7d2fe; background:#eef2ff; color:#1e3a8a; }
-        .badge.role{ background:#e0e7ff }
-        .badge.status-active{ background:#ecfdf5; color:#166534; border-color:#86efac }
-        .badge.status-deactivated{ background:#fee2e2; color:#991b1b; border-color:#fecaca }
-
-        select, button{ font:inherit }
-        select{
-            background:#ffffff; color:var(--text); border:1px solid var(--border); border-radius:8px; padding:7px 10px; min-width:130px;
-        }
-        select:focus-visible, .btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
-        .actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
-        .note{ color:var(--muted); font-size:12px; margin:8px 0 0 }
-
-        .pager{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; border-top:1px solid var(--border); background:#fff }
-        .pagination{ display:flex; gap:6px; flex-wrap:wrap; list-style:none; padding:0; margin:0 }
-        .pagination a, .pagination span{
-            display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:8px; text-decoration:none; color:#var(--text); background:#f8fafc;
-        }
-        .pagination .active{ background:#eef2ff; border-color:#bfdbfe; font-weight:600 }
-        .pagination .disabled{ opacity:.5; pointer-events:none }
-    </style>
+    <!-- CSS header cần -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/home.css}" rel="stylesheet">
+    <link th:href="@{/css/admin-accounts.css}" rel="stylesheet">
 </head>
 <body>
-<div class="wrap" th:with="fixedEmail=${fixedAdminEmail != null ? fixedAdminEmail : 'admin@gmail.com'}">
 
-    <div class="page-head">
-        <div>
-            <h1 class="title">Accounts</h1>
-            <p class="subtitle">Quản lý tài khoản</p>
-        </div>
+<!-- Header mini riêng cho Admin -->
+<div class="sticky-top bg-white border-bottom">
+    <div class="container-fluid py-2 d-flex justify-content-between align-items-center">
+        <!-- Brand -->
+        <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" th:href="@{/admin/adminhome}">
+            <i class="bi bi-speedometer2"></i>
+            <span>Admin</span>
+        </a>
 
-        <!-- User area + Logout -->
-        <div class="userbar">
-            <span class="hello"
-                  th:text="'Xin chào, ' + (${session.loggedInAccount != null ? session.loggedInAccount.fullName : (#httpServletRequest.remoteUser ?: 'Admin')})">
-                Xin chào, Admin
-            </span>
-            <form th:action="@{/logout}" method="post">
-                <div th:if="${_csrf != null}">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                </div>
-                <button class="btn logout" type="submit" title="Đăng xuất">Đăng xuất</button>
-            </form>
-        </div>
-        <!-- /User area -->
-    </div>
+        <!-- Actions -->
+        <div class="d-flex align-items-center gap-2">
+            <a class="btn btn-outline-dark btn-sm" th:href="@{/profile}">
+                <i class="bi bi-person-circle me-1"></i> View Profile
+            </a>
 
-
-    <div class="tabs">
-        <a class="tab" th:classappend="${page}=='home' ? 'active'" th:href="@{/admin/adminhome}">Home</a>
-        <a class="tab" th:classappend="${page}=='accounts' ? 'active'" th:href="@{/admin/accounts}">Accounts</a>
-    </div>
-
-    <p th:if="${msg}" class="flash" th:text="${msg}">Message</p>
-
-    <!-- Empty -->
-    <div th:if="${accPage == null or accPage.totalElements == 0}" class="empty">No accounts.</div>
-
-    <!-- List -->
-    <div th:if="${accPage != null and accPage.totalElements > 0}" class="card">
-        <div class="card-head">
-            <h3 class="card-title">
-                Account List
-                <span class="subtitle">• Page [[${accPage.number + 1}]] / [[${accPage.totalPages}]] • Total [[${accPage.totalElements}]]</span>
-            </h3>
-
-            <!-- Filters: GET /admin/accounts -->
-            <form class="filters" th:action="@{/admin/accounts}" method="get">
-                <input type="text" name="q" placeholder="Search email or name…" th:value="${q}">
-                <select name="sort" th:value="${sort}">
-                    <option value="accountId,asc">ID ↑</option>
-                    <option value="accountId,desc">ID ↓</option>
-                    <option value="email,asc">Email A–Z</option>
-                    <option value="email,desc">Email Z–A</option>
-                    <option value="fullName,asc">Name A–Z</option>
-                    <option value="fullName,desc">Name Z–A</option>
-                    <option value="createdAt,desc">Newest</option>
-                    <option value="createdAt,asc">Oldest</option>
-                </select>
-                <select name="size" th:value="${accPage.size}">
-                    <option value="5">5 / page</option>
-                    <option value="10">10 / page</option>
-                    <option value="20">20 / page</option>
-                    <option value="50">50 / page</option>
-                </select>
-                <button class="btn update" type="submit">Apply</button>
-                <a class="btn" th:href="@{/admin/accounts}">Reset</a>
-            </form>
-        </div>
-
-        <div class="table-wrap">
-            <table>
-                <thead>
-                <tr>
-                    <th style="width:90px">ID</th>
-                    <th>Email</th>
-                    <th>Full name</th>
-                    <th style="width:140px">Role</th>
-                    <th style="width:260px">Change role</th>
-                    <th style="width:230px">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="a : ${accPage.content}">
-                    <td class="small" th:text="${a.accountId}">1</td>
-
-                    <td th:text="${a.email}">email@example.com</td>
-
-                    <td th:text="${a.fullName}">Name</td>
-
-                    <td>
-                        <span th:if="${a.role != null}" class="badge role" th:text="${a.role.roleName}">ROLE</span>
-                        <span th:if="${a.role == null}" class="badge">N/A</span>
-                    </td>
-
-                    <!-- Đổi role -->
-                    <td>
-                        <form class="inline" th:action="@{|/admin/accounts/${a.accountId}/role|}" method="post">
-                            <div th:if="${_csrf != null}">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            </div>
-
-                            <select name="role" required
-                                    th:disabled="${#strings.equalsIgnoreCase(a.email, fixedEmail)}">
-                                <option th:each="r : ${roles}"
-                                        th:value="${r}"
-                                        th:text="${r}"
-                                        th:selected="${a.role != null and a.role.roleName == r}"
-                                </option>
-                            </select>
-
-                            <button class="btn update" type="submit"
-                                    th:disabled="${#strings.equalsIgnoreCase(a.email, fixedEmail)}">
-                                Update
-                            </button>
-
-                            <div class="note" th:if="${#strings.equalsIgnoreCase(a.email, fixedEmail)}">
-                                Đây là tài khoản ADMIN cố định. Không thể đổi vai trò.
-                            </div>
-                        </form>
-                    </td>
-
-                    <!-- Actions -->
-                    <td class="actions">
-                        <a class="btn view" th:href="@{|/admin/accounts/${a.accountId}|}">View</a>
-
-                        <form class="inline"
-                              th:action="@{|/admin/accounts/${a.accountId}/delete|}"
-                              method="post"
-                              onsubmit="return confirm('Delete this account?');">
-                            <div th:if="${_csrf != null}">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            </div>
-                            <button class="btn delete" type="submit"
-                                    th:disabled="${#strings.equalsIgnoreCase(a.email, fixedEmail)}">
-                                Delete
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination footer -->
-        <div class="pager">
-            <div class="subtitle">Showing page [[${accPage.number + 1}]] of [[${accPage.totalPages}]]</div>
-
-            <ul class="pagination">
-                <!-- Prev -->
-                <li th:classappend="${accPage.first} ? 'disabled'">
-                    <a th:if="${!accPage.first}"
-                       th:href="@{/admin/accounts(q=${q}, page=${accPage.number - 1}, size=${accPage.size}, sort=${sort})}">&laquo; Prev</a>
-                    <span th:if="${accPage.first}">&laquo; Prev</span>
-                </li>
-
-                <!-- Pages -->
-                <li th:each="p : ${#numbers.sequence(0, accPage.totalPages - 1)}"
-                    th:classappend="${p == accPage.number} ? 'active'">
-                    <span th:if="${p == accPage.number}" th:text="${p + 1}">1</span>
-                    <a th:if="${p != accPage.number}"
-                       th:text="${p + 1}"
-                       th:href="@{/admin/accounts(q=${q}, page=${p}, size=${accPage.size}, sort=${sort})}">1</a>
-                </li>
-
-                <!-- Next -->
-                <li th:classappend="${accPage.last} ? 'disabled'">
-                    <a th:if="${!accPage.last}"
-                       th:href="@{/admin/accounts(q=${q}, page=${accPage.number + 1}, size=${accPage.size}, sort=${sort})}">Next &raquo;</a>
-                    <span th:if="${accPage.last}">Next &raquo;</span>
-                </li>
-            </ul>
+            <!-- Logout (POST + CSRF) -->
+            <a href="/logout" class="nav-link text-danger">Logout</a>
         </div>
     </div>
-
 </div>
+
+<main class="admin-content">
+    <div class="wrap" th:with="fixedEmail=${fixedAdminEmail != null ? fixedAdminEmail : 'admin@gmail.com'}">
+
+        <div class="page-head">
+            <div>
+                <h1 class="title">Accounts</h1>
+                <p class="subtitle">Quản lý tài khoản</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <a class="tab" th:classappend="${page}=='home' ? 'active'" th:href="@{/admin/adminhome}">Home</a>
+            <a class="tab" th:classappend="${page}=='accounts' ? 'active'" th:href="@{/admin/accounts}">Accounts</a>
+        </div>
+
+        <p th:if="${msg != null and !#strings.isEmpty(#strings.trim(msg))}"
+           class="flash" th:text="${msg}" id="flash"></p>
+
+        <!-- Empty -->
+        <div th:if="${accPage == null or accPage.totalElements == 0}" class="empty">No accounts.</div>
+
+        <!-- List -->
+        <div th:if="${accPage != null and accPage.totalElements > 0}" class="card">
+            <div class="card-head">
+                <h3 class="card-title">Account List</h3>
+
+                <!-- Filters: GET /admin/accounts  (KHÔNG lồng form khác ở trong) -->
+                <form class="filters" th:action="@{/admin/accounts}" method="get">
+                    <input type="text" name="q" placeholder="Search email or name…" th:value="${q}">
+
+                    <select name="sort" th:value="${sort}">
+                        <option value="accountId,asc">ID ↑</option>
+                        <option value="accountId,desc">ID ↓</option>
+                        <option value="email,asc">Email A–Z</option>
+                        <option value="email,desc">Email Z–A</option>
+                        <option value="fullName,asc">Name A–Z</option>
+                        <option value="fullName,desc">Name Z–A</option>
+                        <option value="createdAt,desc">Newest</option>
+                        <option value="createdAt,asc">Oldest</option>
+                    </select>
+
+                    <select name="size" th:value="${accPage.size}">
+                        <option value="5">5 / page</option>
+                        <option value="10">10 / page</option>
+                        <option value="20">20 / page</option>
+                        <option value="50">50 / page</option>
+                    </select>
+
+                    <!-- lọc trạng thái -->
+                    <select name="status" th:value="${status}">
+                        <option value="">All</option>
+                        <option value="ACTIVE" th:selected="${status}=='ACTIVE'">Active</option>
+                        <option value="DEACTIVATED" th:selected="${status}=='DEACTIVATED'">Deactivated</option>
+                    </select>
+
+                    <button class="btn update" type="submit">Apply</button>
+                    <a class="btn" th:href="@{/admin/accounts}">Reset</a>
+                </form>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width:90px">ID</th>
+                        <th class="col-email">Email</th>
+                        <th class="col-fullname">Full name</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-role">Role</th>
+                        <th class="col-change">Change role</th>
+                        <th class="col-actions">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="a : ${accPage.content}"
+                        th:with="isActive=${a.status != null and a.status.name() == 'ACTIVE'},
+                   isFixed=${#strings.equalsIgnoreCase(a.email, fixedEmail)}">
+
+                        <td class="small" th:text="${a.accountId}">1</td>
+                        <td class="col-email" th:text="${a.email}">email@example.com</td>
+                        <td class="col-fullname" th:text="${a.fullName}">Name</td>
+
+                        <td>
+                            <span th:if="${isActive}" class="badge status-active">ACTIVE</span>
+                            <span th:if="${!isActive}" class="badge status-deactivated">DEACTIVATED</span>
+                        </td>
+
+                        <td>
+                            <span th:if="${a.role != null}" class="badge role" th:text="${a.role.roleName}">ROLE</span>
+                            <span th:if="${a.role == null}" class="badge">N/A</span>
+                        </td>
+
+                        <td>
+                            <form class="inline" th:action="@{|/admin/accounts/${a.accountId}/role|}" method="post">
+                                <div th:if="${_csrf != null}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                </div>
+                                <select name="role" required th:disabled="${isFixed}">
+                                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"
+                                            th:selected="${a.role != null and a.role.roleName == r}"></option>
+                                </select>
+                                <button class="btn update" type="submit" th:disabled="${isFixed}">Update</button>
+                            </form>
+                        </td>
+
+                        <td class="actions">
+                            <a class="btn view" th:href="@{|/admin/accounts/${a.accountId}|}">View</a>
+
+                            <!-- ACTIVE -> Deactivate -->
+                            <form class="inline" th:if="${isActive}"
+                                  th:action="@{|/admin/accounts/${a.accountId}/delete|}"
+                                  method="post"
+                                  onsubmit="return confirm('Deactivate this account?');">
+                                <div th:if="${_csrf != null}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                </div>
+                                <input type="hidden" name="q"     th:value="${q}"/>
+                                <input type="hidden" name="status" th:value="${status}"/>
+                                <input type="hidden" name="page"  th:value="${accPage.number}"/>
+                                <input type="hidden" name="size"  th:value="${accPage.size}"/>
+                                <input type="hidden" name="sort"  th:value="${sort}"/>
+                                <button class="btn delete" type="submit" th:disabled="${isFixed}">Deactivate</button>
+                            </form>
+
+                            <!-- DEACTIVATED -> Reactivate -->
+                            <form class="inline" th:if="${!isActive}"
+                                  th:action="@{|/admin/accounts/${a.accountId}/reactivate|}"
+                                  method="post"
+                                  onsubmit="return confirm('Reactivate this account?');">
+                                <div th:if="${_csrf != null}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                </div>
+                                <input type="hidden" name="q"     th:value="${q}"/>
+                                <input type="hidden" name="status" th:value="${status}"/>
+                                <input type="hidden" name="page"  th:value="${accPage.number}"/>
+                                <input type="hidden" name="size"  th:value="${accPage.size}"/>
+                                <input type="hidden" name="sort"  th:value="${sort}"/>
+                                <button class="btn update" type="submit" th:disabled="${isFixed}">ACTIVE</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination footer -->
+            <div class="pager">
+                <div class="subtitle">Showing page [[${accPage.number + 1}]] of [[${accPage.totalPages}]]</div>
+                <ul class="pagination">
+                    <li th:classappend="${accPage.first} ? 'disabled'">
+                        <a th:if="${!accPage.first}"
+                           th:href="@{/admin/accounts(q=${q}, status=${status}, page=${accPage.number - 1}, size=${accPage.size}, sort=${sort})}">&laquo; Prev</a>
+                        <span th:if="${accPage.first}">&laquo; Prev</span>
+                    </li>
+                    <li class="pageinfo">
+                        <span>Page [[${accPage.number + 1}]] / [[${accPage.totalPages}]] • Total [[${accPage.totalElements}]]</span>
+                    </li>
+                    <li th:classappend="${accPage.last} ? 'disabled'">
+                        <a th:if="${!accPage.last}"
+                           th:href="@{/admin/accounts(q=${q}, status=${status}, page=${accPage.number + 1}, size=${accPage.size}, sort=${sort})}">Next &raquo;</a>
+                        <span th:if="${accPage.last}">Next &raquo;</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        </div>
+
+    </div>
+</main>
+
+<!-- Bootstrap JS để dropdown trong header hoạt động -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
 </body>
 </html>

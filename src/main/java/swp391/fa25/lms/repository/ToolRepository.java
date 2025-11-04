@@ -2,6 +2,7 @@ package swp391.fa25.lms.repository;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -58,6 +59,7 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     Optional<Tool> findByToolIdAndStatus(Long toolId, Tool.Status status);
 
     Optional<Tool> findById(Long toolId);
+    Optional<Tool> findByToolName(String toolName);
 
     /**
      * 📈 Biểu đồ tăng trưởng tool theo tháng
@@ -79,4 +81,14 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
                 GROUP BY t.status
             """)
     List<Object[]> getToolCountByStatus();
+    @Query("""
+       SELECT t FROM Tool t
+       WHERE t.seller.accountId = :sellerId
+         AND (:keyword IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+         AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+       """)
+    Page<Tool> findBySellerAndFilter(@Param("sellerId") Long sellerId,
+                                     @Param("keyword") String keyword,
+                                     @Param("categoryId") Long categoryId,
+                                     Pageable pageable);
 }

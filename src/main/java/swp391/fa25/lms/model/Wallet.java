@@ -1,4 +1,5 @@
 package swp391.fa25.lms.model;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ public class Wallet {
 
     @OneToOne
     @JoinColumn(name = "account_id", unique = true, nullable = false)
+    @JsonBackReference(value = "wallet-account")
     private Account account;
 
     @Column(nullable = false, precision = 18, scale = 2)
@@ -23,10 +25,14 @@ public class Wallet {
     private String currency = "VND";
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "wallet")
+    @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "wallet-trans")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"wallet"})
     private List<WalletTransaction> transactions;
 
+
     @OneToMany(mappedBy = "wallet")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"wallet"})
     private List<WithdrawRequest> withdrawRequests;
 
     public Wallet() {

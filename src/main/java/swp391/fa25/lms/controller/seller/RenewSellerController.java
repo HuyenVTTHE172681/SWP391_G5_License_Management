@@ -1,5 +1,6 @@
 package swp391.fa25.lms.controller.seller;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -12,7 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.SellerSubscription;
 import swp391.fa25.lms.repository.AccountRepository;
-import swp391.fa25.lms.service.customer.PaymentService;
+import swp391.fa25.lms.service.seller.PaymentPackageService;
 import swp391.fa25.lms.service.seller.SellerService;
 
 import java.time.LocalDateTime;
@@ -30,28 +31,60 @@ public class RenewSellerController {
     private AccountRepository accountRepo;
 
     @Autowired
-    private PaymentService paymentService;
+    private PaymentPackageService paymentService;
 
     // 🧾 Hiển thị trang chọn gói
     @GetMapping("/renew")
-    public String showRenewPage(Authentication authentication, Model model) {
-        if (authentication != null) {
-            String email = authentication.getName();
-            Account account = accountRepo.findByEmail(email).orElse(null);
+    public String showRenewPage(HttpSession session, Model model) {
+        // Lấy account đúng key
+        Account account = (Account) session.getAttribute("loggedInAccount");
 
-            if (account != null) {
-                if (account.getSellerExpiryDate() == null) {
-                    model.addAttribute("warning", "Bạn chưa kích hoạt gói Seller. Vui lòng chọn gói phù hợp!");
-                } else if (account.getSellerExpiryDate().isBefore(LocalDateTime.now())) {
-                    model.addAttribute("warning", "⚠️ Gói Seller của bạn đã hết hạn! Vui lòng gia hạn để tiếp tục.");
-                } else {
-                    model.addAttribute("info", "⏳ Gói hiện tại còn hạn đến: " + account.getSellerExpiryDate().toLocalDate());
-                }
-            }
+        // Nếu chưa đăng nhập → chuyển hướng
+        if (account == null) {
+            return "redirect:/login";
         }
 
+        // Cập nhật thông tin mới nhất từ DB (nếu cần)
+        Account freshAcc = accountRepo.findByEmail(account.getEmail()).orElse(null);
+        if (freshAcc == null) {
+            session.invalidate();
+            return "redirect:/login";
+        }
+
+        // Kiểm tra hạn seller
+        LocalDateTime expiryDate = freshAcc.getSellerExpiryDate();
+        if (expiryDate == null) {
+            model.addAttribute("warning", "Bạn chưa kích hoạt gói Seller. Vui lòng chọn gói phù hợp!");
+        } else if (expiryDate.isBefore(LocalDateTime.now())) {
+            model.addAttribute("warning", "Gói Seller của bạn đã hết hạn! Vui lòng gia hạn để tiếp tục.");
+        } else {
+            model.addAttribute("info", "Gói hiện tại còn hạn đến: " + expiryDate.toLocalDate());
+        }
+
+        // Đưa danh sách gói ra view
         model.addAttribute("packages", sellerService.getAllPackage());
+
         return "seller/renewSeller";
+
+
+        // Cua em PHUCHUY
+//        if (account != null) {
+//            String email = account.getName();
+//            Account account = accountRepo.findByEmail(email).orElse(null);
+//
+//            if (account != null) {
+//                if (account.getSellerExpiryDate() == null) {
+//                    model.addAttribute("warning", "Bạn chưa kích hoạt gói Seller. Vui lòng chọn gói phù hợp!");
+//                } else if (account.getSellerExpiryDate().isBefore(LocalDateTime.now())) {
+//                    model.addAttribute("warning", "⚠️ Gói Seller của bạn đã hết hạn! Vui lòng gia hạn để tiếp tục.");
+//                } else {
+//                    model.addAttribute("info", "⏳ Gói hiện tại còn hạn đến: " + account.getSellerExpiryDate().toLocalDate());
+//                }
+//            }
+//        }
+//
+//        model.addAttribute("packages", sellerService.getAllPackage());
+//        return "seller/renewSeller";
     }
 
     // 💳 Gửi form chọn gói → redirect sang VNPay
@@ -62,9 +95,9 @@ public class RenewSellerController {
         String email = authentication.getName();
         Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
-        // ✅ Tạo URL thanh toán qua VNPay
+
         String paymentUrl = paymentService.createPaymentUrlForSeller(packageId, account, request);
-        return "redirect:" + paymentUrl; // Redirect user sang VNPay
+        return "redirect:" + paymentUrl;
     }
 
     // 🔄 VNPay callback trả về sau thanh toán
