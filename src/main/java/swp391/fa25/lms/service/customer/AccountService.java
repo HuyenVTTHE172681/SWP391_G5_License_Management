@@ -323,26 +323,26 @@ public class AccountService {
         Account existing = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản email: " + email));
 
-        // ✅ Kiểm tra họ tên
+
         if (updatedAccount.getFullName() == null || updatedAccount.getFullName().trim().isEmpty()) {
             throw new IllegalArgumentException("Tên đăng nhập không được để trống");
         }
 
-        // ✅ Kiểm tra số điện thoại
+
         if (updatedAccount.getPhone() != null && !updatedAccount.getPhone().isEmpty()) {
             if (!updatedAccount.getPhone().matches("^(0[0-9]{9})$")) {
                 throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải có 10 số, bắt đầu bằng 0)");
             }
         }
 
-        // ✅ Kiểm tra ký tự đặc biệt trong địa chỉ
+
         if (updatedAccount.getAddress() != null && !updatedAccount.getAddress().isEmpty()) {
             if (updatedAccount.getAddress().matches(".*[@#$%^&*()!].*")) {
                 throw new IllegalArgumentException("Địa chỉ không được chứa ký tự đặc biệt");
             }
         }
 
-        // ✅ Cập nhật dữ liệu hợp lệ
+
         existing.setFullName(updatedAccount.getFullName().trim());
         existing.setPhone(updatedAccount.getPhone());
         existing.setAddress(updatedAccount.getAddress());
