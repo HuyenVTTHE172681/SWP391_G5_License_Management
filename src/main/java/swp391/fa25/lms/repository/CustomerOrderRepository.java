@@ -83,5 +83,15 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
             "licenseAccount",
             "licenseAccount.renewAcc"   // <— load lịch sử gia hạn
     })
+    Optional<CustomerOrder> findByOrderId(Long orderId);
+
+    // THÊM MỚI: Load order by ID và account (secure, chỉ owner)
+    @Query("SELECT o FROM CustomerOrder o WHERE o.orderId = :orderId AND o.account.accountId = :accountId")
+    Optional<CustomerOrder> findByIdAndAccountId(@Param("orderId") Long orderId, @Param("accountId") Long accountId);
+
+
+    List<CustomerOrder> findByTool_SellerAndOrderStatus(Account seller, CustomerOrder.OrderStatus status);
+
+    List<CustomerOrder> findByTool_Seller(Account seller);
     Optional<CustomerOrder> findByOrderI
 }

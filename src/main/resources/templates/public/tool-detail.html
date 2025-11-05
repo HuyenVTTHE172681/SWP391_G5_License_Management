@@ -19,7 +19,8 @@
     <div class="row g-4">
         <div class="col-md-5">
             <div class="product-image">
-                <img th:src="${tool.image}" alt="Tool image" class="img-fluid rounded"/>
+<!--                <img th:src="${tool.image}" alt="Tool image" class="img-fluid rounded"/>-->
+                <img th:src="${tool.image != null ? tool.image : '/placeholder.svg?height=250&width=350'}" alt="Product" class="img-fluid rounded">
             </div>
         </div>
 
@@ -123,6 +124,12 @@
                                             onclick="confirmDeleteFeedback(this)">
                                         <i class="fa-regular fa-trash-can"></i> Xoá
                                     </button>
+                                    <!-- feedback Report -->
+                                    <button class="btn btn-sm btn-outline-warning"
+                                            th:attr="data-fid=${fb.feedbackId}"
+                                            onclick="reportFeedback(this)">
+                                        <i class="fa-regular fa-flag"></i> Báo cáo
+                                    </button>
                                 </div>
                             </div>
 
@@ -207,6 +214,45 @@
         </div>
     </div>
 </div>
+
+<!-- Modal báo cáo Feedback -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Báo cáo đánh giá</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <input type="hidden" id="report-feedback-id">
+                    <div class="mb-3">
+                        <label class="form-label">Lý do</label>
+                        <select class="form-select" id="reportReason" required>
+                            <option value="">-- Chọn lý do --</option>
+                            <option value="SPAM">Spam</option>
+                            <option value="OFFENSIVE_LANGUAGE">Ngôn ngữ xúc phạm</option>
+                            <option value="FALSE_INFORMATION">Thông tin sai lệch</option>
+                            <option value="IRRELEVANT">Không liên quan</option>
+                            <option value="HARASSMENT">Quấy rối</option>
+                            <option value="PRIVACY_VIOLATION">Xâm phạm quyền riêng tư</option>
+                            <option value="OTHER">Khác</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả chi tiết (tùy chọn)</label>
+                        <textarea id="reportDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button class="btn btn-warning" onclick="submitReport()">Gửi báo cáo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
@@ -384,6 +430,70 @@
         });
     }
     /*]]>*/
+
+    // Feedback report
+    let selectedFeedbackId = null;
+
+    function reportFeedback(btn){
+        selectedFeedbackId = btn.getAttribute('data-fid');
+        const modal = new bootstrap.Modal(document.getElementById('reportModal'));
+        modal.show();
+    }
+
+    async function submitReport(){
+        if (!selectedFeedbackId) return;
+        const reason = document.getElementById('reportReason').value;
+        const description = document.getElementById('reportDescription').value;
+
+        if (!reason) return alert("Vui lòng chọn lý do báo cáo.");
+
+        const csrfParam = document.querySelector('meta[name="_csrf_parameter"]')?.content;
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+
+        const body = new URLSearchParams();
+        body.set('reason', reason);
+        if (description) body.set('description', description);
+        if (csrfParam && csrfToken) body.set(csrfParam, csrfToken);
+
+        try {
+            const res = await fetch(`/feedback/${selectedFeedbackId}/report`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body: body.toString()
+            });
+            const message = await res.text();
+
+            if (res.ok) {
+                alert(message);
+            } else if (res.status === 401) {
+                alert(message);
+                window.location.href = "/login";
+            } else if (res.status === 403) {
+                alert(message);
+            } else if (res.status === 404) {
+                alert(message);
+            } else if (res.status === 409) {
+                alert(message);
+            } else if (res.status === 429) {
+                alert(message);
+            } else {
+                alert("Đã xảy ra lỗi không xác định: " + message);
+            }
+
+            // Đóng modal sau khi báo cáo thành công
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+            if (modal) modal.hide();
+
+            // Reset form sau khi gửi
+            document.getElementById('reportForm').reset();
+        } catch(err) {
+            alert(err.message);
+        }
+    }
 </script>
 
 </body>

@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.function.support.RouterFunctionMapping;
 import org.springframework.web.servlet.view.RedirectView;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.CustomerOrder;
@@ -28,9 +29,12 @@ public class PaymentController {
     private ToolService toolService;
     @Autowired
     private OrderRepository orderRepository;
+    @Autowired
+    private RouterFunctionMapping routerFunctionMapping;
 
     /**
      * Tạo thanh toán — khi click “Thanh toán” payment/create
+     * Tạo PENDING order → Redirect VNPay
      */
     @GetMapping("/create")
     public RedirectView createPayment(@RequestParam Long toolId,
@@ -61,9 +65,9 @@ public class PaymentController {
 
         // THÊM MỚI: Nếu có orderId (retry), check PENDING
         if (orderId != null) {
-            Optional<CustomerOrder> optionalOrder = orderRepository.findById(orderId);  // Inject OrderRepo nếu chưa
+            Optional<CustomerOrder> optionalOrder = orderRepository.findById(orderId);
             if (optionalOrder.isPresent() && optionalOrder.get().getOrderStatus() == CustomerOrder.OrderStatus.PENDING) {
-                // Reuse order PENDING
+                // Retry order PENDING
                 String paymentUrl = paymentService.createPaymentUrlForRetry(orderId, licenseId, account, request);
                 return new RedirectView(paymentUrl);
             } else {
@@ -72,7 +76,8 @@ public class PaymentController {
             }
         }
 
-        // Gọi service để tạo URL thanh toán VNPay (tạo order mới PENDING)
+        System.out.println("Creating payment for toolId: " + toolId + ", licenseId: " + licenseId);
+        // Gọi service để tạo URL thanh toán VNPay
         String paymentUrl = paymentService.createPaymentUrl(toolId, licenseId, account, request);
 
         // Redirect client to VNPay (sandbox)
@@ -87,21 +92,26 @@ public class PaymentController {
                                 Map<String, Object> model) {
         // Gọi service xử lý callback từ VNPay
         boolean success = paymentService.handlePaymentCallback(params);
-        String orderInfo = params.get("vnp_OrderInfo");
-
-        // ⚡ Phân biệt loại giao dịch
-        if (orderInfo != null && orderInfo.startsWith("SELLER_")) {
-            if (success) {
-                return "seller/paymentSuccess";
-            } else {
-                return "seller/paymentFailed";
+        System.out.println("iSuccess: " + success);
+        // Lấy orderId từ vnp_OrderInfo và query order để hiển thị chi tiết
+        CustomerOrder order = null;
+        try {
+            String orderInfoStr = params.get("vnp_OrderInfo");
+            if (orderInfoStr != null) {
+                Long orderId = Long.parseLong(orderInfoStr);
+                Optional<CustomerOrder> optionalOrder = orderRepository.findById(orderId);
+                if (optionalOrder.isPresent()) {
+                    order = optionalOrder.get();
+                }
             }
+        } catch (Exception e) {
+            System.err.println("Lỗi parse orderId: " + e.getMessage());
         }
 
-        // 🧾 Thanh toán tool
         // Kết quả ra view
         model.put("success", success);
         model.put("vnpParams", params);
+        model.put("order", order);
 
         return "public/payment-result"; // Trả về kết quả thanh toán
     }

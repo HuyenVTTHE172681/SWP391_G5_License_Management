@@ -170,9 +170,9 @@ public class FavoriteService {
                 tool.setMaxPrice(BigDecimal.ZERO);
             }
 
-            // Rating (inject ToolService nếu cần, hoặc duplicate logic)
-            Double avg = feedbackRepo.findAverageRatingByTool(tool.getToolId());
-            Long total = feedbackRepo.countByTool(tool);
+            // Rating
+            Long avg = feedbackRepo.findAverageRatingByToolByStatus(tool.getToolId());
+            Long total = feedbackRepo.countByToolIdByStatus(tool.getToolId());
             tool.setAverageRating(avg != null ? avg : 0.0);
             tool.setTotalReviews(total != null ? total : 0L);
 

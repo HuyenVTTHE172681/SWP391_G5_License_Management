@@ -1,0 +1,122 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9f9fb;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== Navbar ===== */
+nav.navbar {
+    background: rgba(0, 0, 0, 0.4);
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+}
+
+.navbar-brand,
+.nav-link {
+    color: #fff !important;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    color: #ffd700 !important;
+}
+
+/* ===== Hero Section ===== */
+.hero {
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url('https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+    height: 40vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+}
+
+/* ===== Tool Card ===== */
+.tool-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.tool-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.tool-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.tool-card .card-body {
+    padding: 20px;
+}
+
+.tool-card h5 {
+    max-width: 70%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ===== Buttons ===== */
+.btn-add {
+    background-color: #4a63ff;
+    color: white;
+    border-radius: 30px;
+    padding: 10px 22px;
+    font-weight: 500;
+}
+
+.btn-add:hover {
+    background-color: #3b54f3;
+}
+
+.btn-outline-primary,
+.btn-outline-secondary {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== Tag ===== */
+.quantity-tag {
+    background-color: #e0e7ff;
+    color: #1e3a8a;
+    border-radius: 10px;
+    font-size: 13px;
+    padding: 2px 8px;
+    font-weight: 600;
+}
+
+/* ===== Filter Card ===== */
+.filter-card {
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== Footer ===== */
+footer {
+    background: #f8f9fa;
+    padding: 25px 0;
+    text-align: center;
+    color: #777;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .hero h1 { font-size: 1.8rem; }
+    .btn-add { padding: 8px 16px; }
+}
