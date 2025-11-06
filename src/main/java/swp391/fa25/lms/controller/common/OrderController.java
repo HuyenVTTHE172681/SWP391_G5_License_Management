@@ -6,26 +6,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.CustomerOrder;
+import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.WalletTransaction;
 import swp391.fa25.lms.repository.CustomerOrderRepository;
+import swp391.fa25.lms.repository.FeedbackRepository;
 import swp391.fa25.lms.repository.WalletRepository;
 import swp391.fa25.lms.repository.WalletTransactionRepository;
 import org.springframework.ui.Model;
 import swp391.fa25.lms.service.customer.OrderService;
 
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class OrderController {
     @Autowired
     private WalletRepository walletRepository;
-
     @Autowired
     private WalletTransactionRepository transactionRepository;
-
+    @Autowired
+    private FeedbackRepository feedbackRepository;
     @Autowired
     private OrderService orderService;
 
@@ -138,5 +142,35 @@ public class OrderController {
         model.addAttribute("transactions", transactions);
         model.addAttribute("wallet", wallet);
         return "customer/payment-history"; // template payment-history.html
+    }
+
+    /**
+     * THÊM MỚI: Xem chi tiết order (fragment cho modal, secure)
+     * @param id: Order ID
+     * @param session: Lấy account
+     * @param model: Add order, basePrice, vat, total
+     * @return Fragment modal nếu OK, empty nếu không
+     */
+    @GetMapping("/orders/{id}")
+    public String viewOrderDetail(@PathVariable Long id, HttpSession session, Model model) {
+        Account account = (Account) session.getAttribute("loggedInAccount");
+        if (account == null) {
+            model.addAttribute("error", "Vui lòng đăng nhập.");
+            return "customer/orders :: orderDetailModal";
+        }
+
+        CustomerOrder order = orderService.getOrderDetail(account, id);
+        if (order == null) {
+            model.addAttribute("error", "Đơn hàng không tồn tại hoặc không thuộc tài khoản của bạn.");
+            return "customer/orders :: orderDetailModal";
+        }
+
+        model.addAttribute("order", order);
+        model.addAttribute("basePrice", order.getPrice());
+        model.addAttribute("sellerRating", order.getSellerRating());
+
+        System.out.println("Loaded order detail ID: " + id + " for account: " + account.getEmail() + order.getOrderStatus());
+
+        return "customer/orders :: orderDetailModal";
     }
 }

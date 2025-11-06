@@ -100,8 +100,17 @@
                 <div class="col-md-4" th:each="tool : ${favorites}">
                     <div class="card h-100 shadow-sm">
                         <div class="position-relative product-image">
-                            <img th:src="${tool.image != null ? tool.image : '/placeholder.svg?height=250&width=350'}"
-                                 class="card-img-top" alt="Tool Image" style="height: 200px; object-fit: cover;">
+                            <!-- Hiển thị ảnh thật nếu tool.image tồn tại -->
+                            <img th:if="${tool.image != null}"
+                                 th:src="@{'/' + ${tool.image}}"
+                                 alt="Ảnh sản phẩm"
+                                 class="img-fluid rounded">
+
+                            <!-- Ảnh placeholder nếu không có ảnh -->
+                            <img th:unless="${tool.image != null}"
+                                 src="/placeholder.svg?height=250&width=350"
+                                 alt="Ảnh mặc định"
+                                 class="img-fluid rounded">
                             <div class="favorite-icon position-absolute top-2 start-2" th:attr="data-tool-id=${tool.toolId}">
                                 <i class="fas fa-heart text-danger"></i>  <!-- Filled vì đã favorite -->
                             </div>

@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Customer_Order")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class CustomerOrder {
 
     @Id
@@ -14,17 +15,19 @@ public class CustomerOrder {
     @Column(name = "order_id")
     private Long orderId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"orders", "wallet"})
-    private Account account; // buyer
+    @JsonIgnoreProperties({
+            "orders", "wallet", "favorites", "feedbacks", "tools"
+    })
+    private Account account;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tool_id", nullable = false)
-    @JsonIgnoreProperties({"orders", "licenses", "files", "seller", "category"})
+    @JsonIgnoreProperties({"orders", "licenses", "files", "seller", "category","feedbacks"})
     private Tool tool;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "license_id", nullable = false)
     @JsonIgnoreProperties({"customerOrders", "tool"})
     private License license;
@@ -41,9 +44,9 @@ public class CustomerOrder {
     private PaymentMethod paymentMethod;
     public enum PaymentMethod { WALLET, BANK, PAYPAL }
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "transaction_id")
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"wallet", "customerOrders", "licenseRenewLogs"})
+    @JsonIgnoreProperties({"wallet", "customerOrders", "licenseRenewLogs"})
     private WalletTransaction transaction;
 
     @Column(name = "created_at")
@@ -198,6 +201,19 @@ public class CustomerOrder {
     public boolean isPending() {
         return OrderStatus.PENDING.equals(orderStatus);
     }
+
+    // Thêm tính trung bình rating của seller
+    @Transient
+    private double sellerRating;
+
+    public double getSellerRating() {
+        return sellerRating;
+    }
+
+    public void setSellerRating(double sellerRating) {
+        this.sellerRating = sellerRating;
+    }
+
 }
 
 

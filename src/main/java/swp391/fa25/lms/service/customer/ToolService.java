@@ -43,8 +43,9 @@ public class ToolService {
                                            String priceFilter, Integer ratingFilter,
                                            Account account, int page, int size) {
 
-        List<Tool> tools = toolRepo.findAll(); // Lấy tất cả, filter ở memory
+        List<Tool> tools = toolRepo.findAllPublishedAndSellerActive(); // Lấy tất cả, filter ở memory
 
+//        List<Tool> tools = toolRepo.findAll();
         // Search keyword (tool name hoặc seller name)
         if (keyword != null && !keyword.isEmpty()) {
             String kwLower = keyword.toLowerCase();
@@ -97,8 +98,8 @@ public class ToolService {
             }
 
             // Rating
-            Double avg = feedbackRepo.findAverageRatingByTool(tool.getToolId());
-            Long total = feedbackRepo.countByTool(tool);
+            Long avg = feedbackRepo.findAverageRatingByToolByStatus(tool.getToolId());
+            Long total = feedbackRepo.countByToolIdByStatus(tool.getToolId());
             tool.setAverageRating(avg != null ? avg : 0.0);
             tool.setTotalReviews(total != null ? total : 0L);
         });
@@ -154,19 +155,27 @@ public class ToolService {
      */
     public Page<Feedback> getFeedbackPageForTool(Tool tool, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return feedbackRepo.findByTool(tool, pageable);
+        return feedbackRepo.findByToolAndStatus(
+                tool,
+                Feedback.Status.PUBLISHED,
+                pageable);
     }
 
     /**
-     * Tính rating trung bình (null safe)
+     * Tính rating trung bình (chỉ PUBLISHED)
      */
     public double getAverageRatingForTool(Tool tool) {
-        Double avg = feedbackRepo.findAverageRatingByTool(tool.getToolId());
+        if (tool == null || tool.getToolId() == null) return 0.0;
+        Long avg = feedbackRepo.findAverageRatingByToolByStatus(tool.getToolId());  // Không pass status
         return avg != null ? avg : 0.0;
     }
 
+    /**
+     * Tổng số review (chỉ PUBLISHED)
+     */
     public long getTotalReviewsForTool(Tool tool) {
-        Long count = feedbackRepo.countByToolId(tool.getToolId());
+        if (tool == null || tool.getToolId() == null) return 0L;
+        Long count = feedbackRepo.countByToolIdByStatus(tool.getToolId());  // Không pass status
         return count != null ? count : 0L;
     }
 

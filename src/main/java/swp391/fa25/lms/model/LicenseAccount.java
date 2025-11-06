@@ -15,12 +15,12 @@ public class LicenseAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long licenseAccountId;
 
-    @NotBlank(message = "User name can not blank")
-    @Column(nullable = false)
+
+    @Column(nullable = true)
     private String username;
 
-    @NotBlank(message = "Password name cannot be blank")
-    @Column(nullable = false)
+
+    @Column(nullable = true)
     private String password;
 
     @ManyToOne
@@ -31,29 +31,18 @@ public class LicenseAccount {
     @JoinColumn(name = "order_id", nullable = true, unique = true)
     private CustomerOrder order; // mỗi order sinh ra 1 license account
 
-    @ManyToOne
-    @JoinColumn(name = "tool_id")
-    private Tool tool;
-
     @OneToMany(mappedBy = "licenseAccount")
     @OrderBy("renewDate DESC")
     private List<LicenseRenewLog> renewAcc;
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { ACTIVE, EXPIRED, REVOKED }
+
+    public enum Status {ACTIVE, EXPIRED, REVOKED}
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private LocalDateTime lastLogin;
-    private String deviceInfo;
-    private Integer maxDevices;
 
-    // ===== NEW FIELDS =====
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private LoginMethod loginMethod = LoginMethod.USER_PASSWORD;
-    public enum LoginMethod { USER_PASSWORD, TOKEN }
 
     @Column(unique = true)
     @Pattern(
@@ -63,25 +52,20 @@ public class LicenseAccount {
     private String token;
 
     private Boolean used = false;
-    private LocalDateTime activatedAt;
 
     public LicenseAccount() {
     }
 
-    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, Tool tool, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime lastLogin, String deviceInfo, Integer maxDevices) {
+    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime lastLogin, String deviceInfo, Integer maxDevices) {
         this.licenseAccountId = licenseAccountId;
         this.username = username;
         this.password = password;
         this.license = license;
         this.order = order;
-        this.tool = tool;
         this.renewAcc = renewAcc;
         this.status = status;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.lastLogin = lastLogin;
-        this.deviceInfo = deviceInfo;
-        this.maxDevices = maxDevices;
     }
 
     public Long getLicenseAccountId() {
@@ -104,7 +88,7 @@ public class LicenseAccount {
         return password;
     }
 
-    public void setPassword(@NotBlank(message = "Password name cannot be blank") String password) {
+    public void setPassword(String password) {
         this.password = password;
     }
 
@@ -122,14 +106,6 @@ public class LicenseAccount {
 
     public void setOrder(CustomerOrder order) {
         this.order = order;
-    }
-
-    public Tool getTool() {
-        return tool;
-    }
-
-    public void setTool(Tool tool) {
-        this.tool = tool;
     }
 
     public List<LicenseRenewLog> getRenewAcc() {
@@ -164,38 +140,6 @@ public class LicenseAccount {
         this.endDate = endDate;
     }
 
-    public LocalDateTime getLastLogin() {
-        return lastLogin;
-    }
-
-    public void setLastLogin(LocalDateTime lastLogin) {
-        this.lastLogin = lastLogin;
-    }
-
-    public String getDeviceInfo() {
-        return deviceInfo;
-    }
-
-    public void setDeviceInfo(String deviceInfo) {
-        this.deviceInfo = deviceInfo;
-    }
-
-    public Integer getMaxDevices() {
-        return maxDevices;
-    }
-
-    public void setMaxDevices(Integer maxDevices) {
-        this.maxDevices = maxDevices;
-    }
-
-    public LoginMethod getLoginMethod() {
-        return loginMethod;
-    }
-
-    public void setLoginMethod(LoginMethod loginMethod) {
-        this.loginMethod = loginMethod;
-    }
-
     public String getToken() {
         return token;
     }
@@ -210,14 +154,6 @@ public class LicenseAccount {
 
     public void setUsed(Boolean used) {
         this.used = used;
-    }
-
-    public LocalDateTime getActivatedAt() {
-        return activatedAt;
-    }
-
-    public void setActivatedAt(LocalDateTime activatedAt) {
-        this.activatedAt = activatedAt;
     }
 }
 

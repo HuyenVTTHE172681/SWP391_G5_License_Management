@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Tool Detail - Moderator</title>
-    <link rel="stylesheet" th:href="@{/css/toolDetailMod.css}">
+    <link rel="stylesheet" th:href="@{/css/manager-tool-detail.css}">
 </head>
 <body>
 
@@ -31,6 +31,10 @@
                     <span th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></span>
                 </p>
 
+                <p><strong>Login Method:</strong>
+                    <span th:text="${tool.loginMethod}"></span>
+                </p>
+
                 <p><strong>Upload Date:</strong>
                     <span th:text="${#temporals.format(tool.createdAt, 'dd-MM-yyyy HH:mm')}"></span>
                 </p>
@@ -55,6 +59,15 @@
                             <span th:text="${file.filePath}"></span>
                         </a>
                         <span class="file-type" th:text="'(' + ${file.fileType} + ')'"></span>
+                    </li>
+
+                    <!-- ✅ Chỉ hiển thị token khi loginMethod = TOKEN -->
+                    <li th:if="${tool.loginMethod?.name() == 'TOKEN' and licenseAccounts != null and !#lists.isEmpty(licenseAccounts)}">
+                        <ul>
+                            <li th:each="l : ${licenseAccounts}">
+                                <span th:text="${l.token != null ? '*****' + #strings.substring(l.token, l.token.length() - 4) : 'No token'}"></span>
+                            </li>
+                        </ul>
                     </li>
                 </ul>
 
@@ -93,7 +106,6 @@
            th:href="@{/moderator/history}"
            class="back-link">← Back</a>
     </div>
-</div>
 </div>
 
 <script>

@@ -46,6 +46,7 @@ public class ToolCommonController {
         }
 
         Tool tool = maybeTool.get();
+        System.out.println("Detail Tool ID: " + tool.getToolId() + ", Image path: '" + tool.getImage() + "'");
 
         // Lấy danh sách feedback
         Page<Feedback> feedbackPage = toolService.getFeedbackPageForTool(tool, reviewPage, 5);
@@ -61,6 +62,7 @@ public class ToolCommonController {
 
         // Tính rating trung bình
         double avgRating = toolService.getAverageRatingForTool(tool);
+        System.out.println("");
         // Tổng số review
         long totalReviews = toolService.getTotalReviewsForTool(tool);
 
@@ -70,6 +72,9 @@ public class ToolCommonController {
         model.addAttribute("avgRating", avgRating);
         model.addAttribute("totalReviews", totalReviews);
         model.addAttribute("categories", categoryService.getAllCategories());
+
+        // Tham số để view biết đang lọc theo status nào (nếu cần hiển thị)
+        model.addAttribute("feedbackStatus", Feedback.Status.PUBLISHED.name());
 
         return "public/tool-detail";
     }

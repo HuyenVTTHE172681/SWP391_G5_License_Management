@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface LicenseToolRepository extends JpaRepository<License, Long>{
-    List<License> findByToolToolId(Long toolId);
+    List<License> findByTool_ToolId(Long toolId);
 }
