@@ -51,6 +51,8 @@ public class LicenseAccount {
     )
     private String token;
 
+
+
     private Boolean used = false;
 
     public LicenseAccount() {
@@ -156,4 +158,5 @@ public class LicenseAccount {
         this.used = used;
     }
 }
+
 

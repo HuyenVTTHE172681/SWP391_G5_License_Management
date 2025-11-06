@@ -69,7 +69,8 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status {PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED,  VIOLATED}
+
+    public enum Status {PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED, VIOLATED}
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference(value = "tool-files")
@@ -136,8 +137,13 @@ public class Tool {
         this.toolName = toolName;
     }
 
-    public String getImage() { return image; }
-    public void setImage(String image) { this.image = image; }
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
 
     public @NotBlank(message = "Description cannot be blank") String getDescription() {
         return description;
@@ -263,8 +269,13 @@ public class Tool {
     @Transient
     private boolean isFavorite;
 
-    public boolean isIsFavorite() { return isFavorite; }
-    public void setIsFavorite(boolean isFavorite) { this.isFavorite = isFavorite; }
+    public boolean isIsFavorite() {
+        return isFavorite;
+    }
+
+    public void setIsFavorite(boolean isFavorite) {
+        this.isFavorite = isFavorite;
+    }
 
     @Override
     public boolean equals(Object o) {

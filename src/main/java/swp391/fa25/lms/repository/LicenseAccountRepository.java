@@ -46,3 +46,4 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
     LicenseAccount findByToken(String token);
 
 }
+
