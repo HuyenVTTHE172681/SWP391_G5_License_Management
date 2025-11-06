@@ -1,6 +1,7 @@
 package swp391.fa25.lms.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -9,6 +10,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "Account")
+@JsonIgnoreProperties({
+        "hibernateLazyInitializer", "handler",
+        "orders", "favorites", "feedbacks", "tools", "uploadedFiles", "wallet"
+})
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

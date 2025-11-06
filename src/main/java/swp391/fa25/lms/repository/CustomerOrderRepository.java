@@ -49,6 +49,7 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     Optional<CustomerOrder> findByIdAndAccountId(@Param("orderId") Long orderId, @Param("accountId") Long accountId);
 
 
+    List<CustomerOrder> findByTool_SellerAndOrderStatus(Account seller, CustomerOrder.OrderStatus status);
 
-
+    List<CustomerOrder> findByTool_Seller(Account seller);
 }

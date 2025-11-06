@@ -26,7 +26,6 @@ async function loadTools(page = 0) {
     params.append('page', page);
     params.append('size', pageSize);
 
-
     container.innerHTML = `
     <div class="text-center py-5">
       <div class="spinner-border text-success" role="status"></div>
@@ -89,7 +88,6 @@ function renderTools(tools) {
             } else if (tool.image.startsWith('/')) {
                 imagePath = `${ctx}${tool.image}`;
             } else {
-                // ✅ Nếu path trong DB đã có "uploads/" thì không thêm nữa
                 if (tool.image.includes("uploads/")) {
                     imagePath = `${ctx}/${tool.image.startsWith('/') ? tool.image.substring(1) : tool.image}`;
                 } else {
@@ -113,6 +111,19 @@ function renderTools(tools) {
 
         const badgeClass = getStatusBadgeClass(tool.status);
 
+        // ✅ Thêm logic hiện nút Deactivate nếu status = PUBLISHED
+        let actionSection = '';
+        if (tool.status === 'PUBLISHED') {
+            actionSection = `
+                <button class="btn btn-outline-danger btn-sm px-3 rounded-pill shadow-sm"
+                        onclick="deactivateTool(${tool.toolId})">
+                    <i class="bi bi-x-circle"></i> Deactivate
+                </button>
+            `;
+        } else {
+            actionSection = `<span class="badge rounded-pill ${badgeClass} px-3 py-2">${tool.status ?? '—'}</span>`;
+        }
+
         container.insertAdjacentHTML('beforeend', `
       <div class="col-md-4 mb-4">
         <div class="tool-card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100 d-flex flex-column">
@@ -135,7 +146,7 @@ function renderTools(tools) {
               <a href="/seller/tools/edit/${tool.toolId}" class="btn btn-outline-primary btn-sm px-3 rounded-pill shadow-sm">
                 <i class="bi bi-pencil"></i> Edit
               </a>
-              <span class="badge rounded-pill ${badgeClass} px-3 py-2">${tool.status ?? '—'}</span>
+              ${actionSection}
             </div>
           </div>
         </div>
@@ -151,7 +162,7 @@ function getStatusBadgeClass(status) {
         case 'APPROVED':  return 'bg-success';
         case 'REJECTED':  return 'bg-danger';
         case 'PUBLISHED': return 'bg-primary';
-        case 'DEACTIVE':  return 'bg-secondary';
+        case 'DEACTIVATED':  return 'bg-secondary';
         default:          return 'bg-light text-dark';
     }
 }
@@ -202,3 +213,31 @@ if (form) {
         applyFilters();
     });
 }
+
+/// === ✅ Hàm deactivate tool (fix redirect + thông báo rõ ràng) ===
+async function deactivateTool(toolId) {
+    if (!confirm("Are you sure you want to deactivate this tool?")) return;
+
+    try {
+        const res = await fetch(`/seller/tools/${toolId}/deactivate`, {
+            method: "POST",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest" // 🔥 Ngăn Spring redirect toàn trang
+            }
+        });
+
+        // Nếu backend trả JSON hoặc text
+        const text = await res.text();
+
+        if (res.ok) {
+            alert("✅ Tool has been deactivated successfully!");
+            loadTools(currentPage); // reload danh sách hiện tại
+        } else {
+            alert("❌ Failed to deactivate tool: " + text);
+        }
+    } catch (err) {
+        console.error("Deactivate error:", err);
+        alert("⚠️ Error while deactivating tool: " + err.message);
+    }
+}
+

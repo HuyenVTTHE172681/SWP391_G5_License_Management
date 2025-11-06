@@ -156,20 +156,20 @@ public class OrderController {
         Account account = (Account) session.getAttribute("loggedInAccount");
         if (account == null) {
             model.addAttribute("error", "Vui lòng đăng nhập.");
-            return "fragments :: errorModal";
+            return "customer/orders :: orderDetailModal";
         }
 
         CustomerOrder order = orderService.getOrderDetail(account, id);
         if (order == null) {
             model.addAttribute("error", "Đơn hàng không tồn tại hoặc không thuộc tài khoản của bạn.");
-            return "fragments :: errorModal";
+            return "customer/orders :: orderDetailModal";
         }
 
         model.addAttribute("order", order);
         model.addAttribute("basePrice", order.getPrice());
         model.addAttribute("sellerRating", order.getSellerRating());
 
-        System.out.println("Loaded order detail ID: " + id + " for account: " + account.getEmail());
+        System.out.println("Loaded order detail ID: " + id + " for account: " + account.getEmail() + order.getOrderStatus());
 
         return "customer/orders :: orderDetailModal";
     }

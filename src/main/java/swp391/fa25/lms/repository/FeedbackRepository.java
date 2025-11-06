@@ -1,5 +1,6 @@
 package swp391.fa25.lms.repository;
 
+import jakarta.transaction.Status;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.FeedbackReply;
 import swp391.fa25.lms.model.Tool;
@@ -97,5 +99,39 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     long countByToolAndStatus(Tool tool, Feedback.Status status);
 
-}
 
+    // Lấy feedback theo tool + status
+    Page<Feedback> findByToolAndStatus(Tool tool, Feedback.Status status, Pageable pageable);
+
+    long countByTool_Seller(Account seller);
+
+    List<Feedback> findByTool_Seller(Account seller);
+
+    List<Feedback> findByTool_ToolIdAndTool_Seller(Long toolId, Account seller);
+
+    long countByTool_ToolIdAndTool_Seller(Long toolId, Account seller);
+
+    long countByTool_ToolId(Long toolId);
+
+    @Query("""
+    SELECT f FROM Feedback f 
+    WHERE f.tool.seller.accountId = :sellerId
+""")
+    List<Feedback> findAllBySellerId(@Param("sellerId") Long sellerId);
+
+    @Query("""
+    SELECT f FROM Feedback f 
+    WHERE f.tool.seller.accountId = :sellerId 
+      AND f.tool.toolId = :toolId
+""")
+    List<Feedback> findAllBySellerIdAndToolId(
+            @Param("sellerId") Long sellerId,
+            @Param("toolId") Long toolId
+    );
+
+    @Query("SELECT AVG(f.rating) FROM Feedback f WHERE f.tool.toolId = :toolId AND f.status = 'PUBLISHED'")
+    Long findAverageRatingByToolByStatus(@Param("toolId") Long toolId);
+
+    @Query("SELECT COUNT(f) FROM Feedback f WHERE f.tool.toolId = :toolId AND f.status = 'PUBLISHED'")
+    Long countByToolIdByStatus(@Param("toolId") Long toolId);
+}

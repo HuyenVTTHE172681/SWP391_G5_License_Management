@@ -14,8 +14,10 @@ import swp391.fa25.lms.service.customer.FeedbackReadService;
 import swp391.fa25.lms.service.customer.ToolService;
 
 import java.util.Optional;
+
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Controller
 public class ToolCommonController {
@@ -62,7 +64,13 @@ public class ToolCommonController {
                 .collect(Collectors.toList());
         var repliesMap = feedbackReadService.mapRepliesByFeedbackIds(fbIds);
         model.addAttribute("repliesMap", repliesMap);
+        // ==============================================================================
 
+        // Tính rating trung bình
+        double avgRating = toolService.getAverageRatingForTool(tool);
+        System.out.println("");
+        // Tổng số review
+        long totalReviews = toolService.getTotalReviewsForTool(tool);
         // Tính rating trung bình & tổng review (chỉ PUBLISHED)
         double avgRating = toolService.getAverageRatingForTool(tool, Feedback.Status.PUBLISHED);
         long totalReviews = toolService.getTotalReviewsForTool(tool, Feedback.Status.PUBLISHED);

@@ -1,7 +1,5 @@
 package swp391.fa25.lms.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -9,21 +7,19 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.*;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Objects;
-import java.util.Set;
+
 
 @Entity
 @Table(name = "Tool")
-@JsonIgnoreProperties({"toolFiles"})
+@JsonIgnoreProperties({
+        "hibernateLazyInitializer", "handler",
+        "feedbacks", "orders", "files", "toolFiles"
+})
 public class Tool {
 
     @Id
@@ -46,13 +42,14 @@ public class Tool {
     private String image;
 
     @NotBlank(message = "Description cannot be blank")
+    @Size(max = 500, message = "Description must be under 500 characters")
     @Column(columnDefinition = "NVARCHAR(100)", nullable = false)
     private String description;
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
     @com.fasterxml.jackson.annotation.JsonBackReference(value = "tool-seller")
-    @JsonManagedReference(value = "tool-seller")
+//    @JsonManagedReference(value = "tool-seller")
     private Account seller;
 
     @Enumerated(EnumType.STRING)
@@ -67,7 +64,7 @@ public class Tool {
     @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
-    @JsonBackReference(value = "tool-category")
+    @JsonIgnoreProperties("tools")
     private Category category;
 
     @Enumerated(EnumType.STRING)
@@ -79,16 +76,18 @@ public class Tool {
     private List<ToolFile> files;
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties({"tool", "customerOrders"})
+    @JsonIgnoreProperties({"tool", "customerOrders", "licenseAccounts"})
     private List<License> licenses;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "feedback-tool")
+    private List<Feedback> feedbacks;
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
     @JsonIgnoreProperties({"tool", "license"})
     private List<CustomerOrder> orders;
-
 
     @Column(columnDefinition = "NVARCHAR(255)")
     private String note;
@@ -103,6 +102,7 @@ public class Tool {
     public void setNote(String note) {
         this.note = note;
     }
+
     public Tool() {
     }
 
@@ -295,6 +295,14 @@ public class Tool {
         this.quantity = quantity;
     }
 
+    public List<Feedback> getFeedbacks() {
+        return feedbacks;
+    }
+
+    public void setFeedbacks(List<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
+    }
+
     public List<CustomerOrder> getOrders() {
         return orders;
     }
@@ -303,4 +311,13 @@ public class Tool {
         this.orders = orders;
     }
 
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
+    }
 }
+
+

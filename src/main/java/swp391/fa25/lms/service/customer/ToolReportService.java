@@ -35,6 +35,7 @@ public class ToolReportService {
         tool.setStatus(Tool.Status.SUSPECT);
 
         toolReportRepository.save(report);
+        toolRepository.save(tool);
         return "Báo cáo của bạn đã được gửi thành công. Hệ thống sẽ xem xét!";
     }
 }

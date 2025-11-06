@@ -26,8 +26,7 @@ public class ToolReportController {
             @PathVariable Long toolId,
             @RequestParam("reason") ToolReport.Reason reason,
             @RequestParam(value = "description", required = false) String description,
-            HttpSession session,
-            RedirectAttributes redirectAttributes) {
+            HttpSession session) {
 
         Account reporter = (Account) session.getAttribute("loggedInAccount");
         if (reporter == null) {
