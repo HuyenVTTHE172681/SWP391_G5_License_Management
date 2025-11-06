@@ -144,59 +144,33 @@ public class ToolController {
      * ✅ Hiển thị form Add Tool
      */
     @GetMapping("/add")
-    public String showToolList(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String loginMethod,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(defaultValue = "newest") String sort,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size,
-            HttpSession session,
-            Model model,
-            RedirectAttributes redirectAttrs
-    ) {
+    public String showAddToolForm(Model model, HttpSession session,RedirectAttributes redirectAttrs) {
+
         Account seller = (Account) session.getAttribute("loggedInAccount");
         if (seller == null) {
             redirectAttrs.addFlashAttribute("error", "Please login again.");
             return "redirect:/login";
         }
 
-        Pageable pageable = switch (sort) {
-            case "oldest" -> PageRequest.of(page, size, Sort.by("createdAt").ascending());
-            case "priceAsc" -> PageRequest.of(page, size, Sort.by("licenses.price").ascending());
-            case "priceDesc" -> PageRequest.of(page, size, Sort.by("licenses.price").descending());
-            default -> PageRequest.of(page, size, Sort.by("createdAt").descending());
-        };
+        if (!accountService.isSellerActive(seller)) {
+            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
+            return "redirect:/seller/renew";
+        }
+        ToolFlowService.ToolSessionData pending =
+                (ToolFlowService.ToolSessionData) session.getAttribute("pendingTool");
 
-        Page<Tool> tools = toolService.searchToolsForSeller(
-                seller.getAccountId(),
-                keyword,
-                categoryId,
-                status,
-                loginMethod,
-                minPrice,
-                maxPrice,
-                pageable
-        );
+        if (pending != null) {
+            model.addAttribute("tool", pending.getTool());
+            model.addAttribute("licenses", pending.getLicenses());
+            model.addAttribute("categoryId", pending.getCategory().getCategoryId());
+            model.addAttribute("restoreFromSession", true);
+        } else {
+            model.addAttribute("tool", new Tool());
+        }
 
-        model.addAttribute("tools", tools);
         model.addAttribute("categories", toolService.getAllCategories());
-
-        // giữ lại filter values
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("categoryId", categoryId);
-        model.addAttribute("status", status);
-        model.addAttribute("loginMethod", loginMethod);
-        model.addAttribute("minPrice", minPrice);
-        model.addAttribute("maxPrice", maxPrice);
-        model.addAttribute("sort", sort);
-
-        return "seller/tool-list";
+        return "seller/tool-add";
     }
-
     /**
      * ✅ Xử lý khi seller submit form "Add New Tool"
      */
