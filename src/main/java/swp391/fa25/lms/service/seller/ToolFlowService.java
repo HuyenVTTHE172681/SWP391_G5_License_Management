@@ -224,8 +224,16 @@ public class ToolFlowService {
             }
 
             LicenseAccount existing = licenseAccountRepository.findByToken(token);
-            if (existing != null && !existing.getLicense().getTool().getToolId().equals(currentToolId)) {
-                throw new IllegalArgumentException("Token '" + token + "' đã tồn tại trong tool khác!");
+            if (existing != null) {
+                if (existing.getLicense() == null) {
+                    throw new IllegalStateException("Token '" + token + "' tồn tại nhưng không gắn license (dữ liệu lỗi). Hãy xoá token này trong DB.");
+                }
+                Long existingToolId = existing.getLicense().getTool() != null
+                        ? existing.getLicense().getTool().getToolId()
+                        : null;
+                if (existingToolId != null && !existingToolId.equals(currentToolId)) {
+                    throw new IllegalArgumentException("Token '" + token + "' đã tồn tại trong tool khác!");
+                }
             }
         }
 

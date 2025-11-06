@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+
 
 @Repository
 public interface ToolRepository extends JpaRepository<Tool, Long> {
@@ -60,6 +59,7 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     Optional<Tool> findById(Long toolId);
     Optional<Tool> findByToolName(String toolName);
 
+    @EntityGraph(attributePaths = {"category", "licenses", "seller"})
     @Query("""
     SELECT t FROM Tool t
     WHERE t.seller.accountId = :sellerId
@@ -82,21 +82,10 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
             @Param("maxPrice") Double maxPrice,
             Pageable pageable
     );
-
+    @EntityGraph(attributePaths = {"category", "licenses"})
     List<Tool> findBySellerAndStatusNot(Account seller, Tool.Status status);
     boolean existsByToolName(String toolName);
 
-//    @Query("""
-//       SELECT t FROM Tool t
-//       WHERE t.seller.accountId = :sellerId
-//         AND (:keyword IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :keyword, '%')))
-//         AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
-//       """)
-//    Page<Tool> findBySellerAndFilter(@Param("sellerId") Long sellerId,
-//                                     @Param("keyword") String keyword,
-//                                     @Param("categoryId") Long categoryId,
-//                                     Pageable pageable);
-//
     @Query("""
     SELECT t FROM Tool t
     WHERE t.status = 'PUBLISHED'
