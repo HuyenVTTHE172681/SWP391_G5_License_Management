@@ -373,55 +373,55 @@ public class RoleDataInitializer implements CommandLineRunner {
         System.out.println("Tool files initialized.");
 
         // ============ FEEDBACK ============
-        if (feedbackRepo.count() == 0) {
-            Account customer = accountRepo.findByEmail("customer1@example.com")
-                    .orElseThrow(() -> new RuntimeException("Customer 1 not found"));
-            List<Tool> tools = toolRepo.findAll();
-
-            Feedback f1 = new Feedback();
-            f1.setAccount(customer);
-            f1.setTool(tools.get(0));
-            f1.setRating(5);
-            f1.setComment("Rất hữu ích, dễ sử dụng!");
-            f1.setCreatedAt(LocalDateTime.now().minusDays(2));
-            f1.setStatus(Feedback.Status.PUBLISHED);
-
-            Feedback f2 = new Feedback();
-            f2.setAccount(customer);
-            f2.setTool(tools.get(1));
-            f2.setRating(4);
-            f2.setComment("Tốt, nhưng cần thêm tính năng lọc.");
-            f2.setCreatedAt(LocalDateTime.now().minusDays(1));
-            f2.setStatus(Feedback.Status.PUBLISHED);
-
-            Feedback f3 = new Feedback();
-            f3.setAccount(customer);
-            f3.setTool(tools.get(2));
-            f3.setRating(5);
-            f3.setComment("Phân tích rất chi tiết, đáng tiền!");
-            f3.setCreatedAt(LocalDateTime.now());
-            f3.setStatus(Feedback.Status.PUBLISHED);
-
-            Feedback f4 = new Feedback();
-            f4.setAccount(customer);
-            f4.setTool(tools.get(1));
-            f4.setRating(4);
-            f4.setComment("Tốt, nhưng cần thêm tính năng lọc.");
-            f4.setCreatedAt(LocalDateTime.now().minusDays(1));
-            f4.setStatus(Feedback.Status.PUBLISHED);
-
-            Feedback f5 = new Feedback();
-            f5.setAccount(customer);
-            f5.setTool(tools.get(1));
-            f5.setRating(4);
-            f5.setComment("Tốt, nhưng cần thêm tính năng lọc.");
-            f5.setCreatedAt(LocalDateTime.now().minusDays(1));
-            f5.setStatus(Feedback.Status.PUBLISHED);
-
-            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3, f4, f5));
-        } else {
-            System.out.println("Feedback already exist, skipping initialization.");
-        }
+//        if (feedbackRepo.count() == 0) {
+//            Account customer = accountRepo.findByEmail("customer1@example.com")
+//                    .orElseThrow(() -> new RuntimeException("Customer 1 not found"));
+//            List<Tool> tools = toolRepo.findAll();
+//
+//            Feedback f1 = new Feedback();
+//            f1.setAccount(customer);
+//            f1.setTool(tools.get(0));
+//            f1.setRating(5);
+//            f1.setComment("Rất hữu ích, dễ sử dụng!");
+//            f1.setCreatedAt(LocalDateTime.now().minusDays(2));
+//            f1.setStatus(Feedback.Status.PUBLISHED);
+//
+//            Feedback f2 = new Feedback();
+//            f2.setAccount(customer);
+//            f2.setTool(tools.get(1));
+//            f2.setRating(4);
+//            f2.setComment("Tốt, nhưng cần thêm tính năng lọc.");
+//            f2.setCreatedAt(LocalDateTime.now().minusDays(1));
+//            f2.setStatus(Feedback.Status.PUBLISHED);
+//
+//            Feedback f3 = new Feedback();
+//            f3.setAccount(customer);
+//            f3.setTool(tools.get(2));
+//            f3.setRating(5);
+//            f3.setComment("Phân tích rất chi tiết, đáng tiền!");
+//            f3.setCreatedAt(LocalDateTime.now());
+//            f3.setStatus(Feedback.Status.PUBLISHED);
+//
+//            Feedback f4 = new Feedback();
+//            f4.setAccount(customer);
+//            f4.setTool(tools.get(1));
+//            f4.setRating(4);
+//            f4.setComment("Tốt, nhưng cần thêm tính năng lọc.");
+//            f4.setCreatedAt(LocalDateTime.now().minusDays(1));
+//            f4.setStatus(Feedback.Status.PUBLISHED);
+//
+//            Feedback f5 = new Feedback();
+//            f5.setAccount(customer);
+//            f5.setTool(tools.get(1));
+//            f5.setRating(4);
+//            f5.setComment("Tốt, nhưng cần thêm tính năng lọc.");
+//            f5.setCreatedAt(LocalDateTime.now().minusDays(1));
+//            f5.setStatus(Feedback.Status.PUBLISHED);
+//
+//            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3, f4, f5));
+//        } else {
+//            System.out.println("Feedback already exist, skipping initialization.");
+//        }
 
         // ============ FAVORITE ============
         if (favoriteRepository.count() == 0) {

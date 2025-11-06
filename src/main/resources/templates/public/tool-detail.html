@@ -114,17 +114,16 @@
                                            th:text="${#temporals.format(fb.createdAt, 'dd/MM/yyyy HH:mm')}">10/10/2025 12:34</small>
                                 </div>
 
+                                <!-- Nếu là chủ feedback: chỉ cho sửa (trong window thời gian) -->
                                 <div th:if="${account != null and fb.account.accountId == account.accountId}">
                                     <a class="btn btn-sm btn-outline-primary me-1"
                                        th:href="@{/feedback/{fid}/edit(fid=${fb.feedbackId})}">
                                         <i class="fa-regular fa-pen-to-square"></i> Sửa
                                     </a>
-                                    <button class="btn btn-sm btn-outline-danger"
-                                            th:attr="data-fid=${fb.feedbackId}"
-                                            onclick="confirmDeleteFeedback(this)">
-                                        <i class="fa-regular fa-trash-can"></i> Xoá
-                                    </button>
-                                    <!-- feedback Report -->
+                                </div>
+
+                                <!-- Nếu là user khác (đã đăng nhập): cho báo cáo -->
+                                <div th:if="${account != null and fb.account.accountId != account.accountId}">
                                     <button class="btn btn-sm btn-outline-warning"
                                             th:attr="data-fid=${fb.feedbackId}"
                                             onclick="reportFeedback(this)">

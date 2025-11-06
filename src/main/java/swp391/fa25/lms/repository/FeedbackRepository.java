@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import swp391.fa25.lms.model.Account;
+import swp391.fa25.lms.model.CustomerOrder;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.Tool;
 
@@ -147,4 +148,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     @Query("SELECT COUNT(f) FROM Feedback f WHERE f.tool.toolId = :toolId AND f.status = 'PUBLISHED'")
     Long countByToolIdByStatus(@Param("toolId") Long toolId);
+
+    boolean existsByOrder(CustomerOrder order);
 }

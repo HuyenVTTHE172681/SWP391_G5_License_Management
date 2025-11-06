@@ -15,6 +15,7 @@ import swp391.fa25.lms.repository.FeedBackReplyRepository;
 import swp391.fa25.lms.repository.FeedbackRepository;
 
 import java.security.Principal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Service("customerFeedBack")
@@ -48,16 +49,33 @@ public class FeedbackRepositoryImpl {
                         HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
     }
 
-    /** Tạo feedback mới => PUBLISHED (soft-state) */
+    /** Tạo feedback mới */
     public Long submitFeedback(Long orderId, Integer rating, String comment) {
         var order = getOrderForFeedback(orderId);
 
+        // (Khuyến nghị) chỉ cho feedback nếu order SUCCESS
+        if (order.getOrderStatus() != CustomerOrder.OrderStatus.SUCCESS) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Chỉ đơn hàng thanh toán thành công mới được đánh giá."
+            );
+        }
+
+        // RÀNG BUỘC: 1 order chỉ có 1 feedback
+        if (feedbackRepo.existsByOrder(order)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Bạn đã gửi đánh giá cho đơn hàng này rồi."
+            );
+        }
+
         Feedback fb = new Feedback();
+        fb.setOrder(order);
         fb.setAccount(order.getAccount());
         fb.setTool(order.getTool());
         fb.setRating(rating);
         fb.setComment((comment == null || comment.isBlank()) ? null : comment.trim());
-        fb.setStatus(Feedback.Status.PUBLISHED);   // <== quan trọng
+        fb.setStatus(Feedback.Status.PUBLISHED);
         fb.setCreatedAt(LocalDateTime.now());
 
         feedbackRepo.save(fb);
@@ -70,6 +88,9 @@ public class FeedbackRepositoryImpl {
         var fb = feedbackRepo.findByFeedbackIdAndAccount_Email(feedbackId, principal.getName())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.FORBIDDEN, "Không có quyền"));
+
+        // Giới hạn thời gian sửa
+        assertEditableWindow(fb);
 
         String normalized = (fb.getComment() == null) ? "" : fb.getComment().trim();
         return new FeedbackEditView(fb, normalized);
@@ -86,19 +107,19 @@ public class FeedbackRepositoryImpl {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.FORBIDDEN, "Không có quyền"));
 
+        // Giới hạn thời gian sửa
+        assertEditableWindow(fb);
         fb.setRating(rating);
         fb.setComment((comment == null || comment.isBlank()) ? null : comment.trim());
 
         if (status != null) {
-            // Rule nghiệp vụ: không cho user set SUSPECT bằng form
             if (status == Feedback.Status.SUSPECT) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Không thể đặt trạng thái SUSPECT trong form sửa. Vui lòng dùng chức năng Xoá."
+                        "Không thể đặt trạng thái SUSPECT trong form sửa. Vui lòng dùng chức năng báo cáo."
                 );
             }
-            // Cho phép PUBLISHED hoặc HIDDEN
-            fb.setStatus(status);
+            fb.setStatus(status); // PUBLISHED hoặc HIDDEN
         } else if (fb.getStatus() == null) {
             fb.setStatus(Feedback.Status.PUBLISHED);
         }
@@ -117,6 +138,20 @@ public class FeedbackRepositoryImpl {
         feedbackRepo.save(fb);
         return fb.getTool().getToolId();
     }
+    private static final Duration EDIT_WINDOW = Duration.ofHours(24); // hoặc ofDays(3)...
+
+    private void assertEditableWindow(Feedback fb) {
+        if (fb.getCreatedAt() == null) return; // data cũ thì bỏ qua
+
+        LocalDateTime limit = fb.getCreatedAt().plus(EDIT_WINDOW);
+        if (LocalDateTime.now().isAfter(limit)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Đã hết thời gian cho phép chỉnh sửa đánh giá."
+            );
+        }
+    }
+
 
     // ====================== Helpers (nếu cần dùng sau) ======================
 }
