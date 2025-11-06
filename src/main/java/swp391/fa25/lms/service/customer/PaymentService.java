@@ -350,30 +350,40 @@ public class PaymentService {
     }
 
     // REFACTOR: Tách tạo license account
+    // REFACTOR: Tách tạo license account
     private void createAndAssignLicense(CustomerOrder order) {
         Tool tool = order.getTool();
         License license = order.getLicense();
         Account buyer = order.getAccount();
 
-        LicenseAccount acc = new LicenseAccount();
-        acc.setLicense(license);
-        acc.setOrder(order);
-        acc.setTool(tool);
-        acc.setUsed(true);
-        acc.setStatus(LicenseAccount.Status.ACTIVE);
-        acc.setStartDate(LocalDateTime.now());
-        acc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
+        Tool.LoginMethod loginMethod = tool.getLoginMethod(); // loginMethod lấy từ Tool
 
-        String loginMethod = tool.getLoginMethod().toString();
-        acc.setLoginMethod(LicenseAccount.LoginMethod.valueOf(loginMethod));
+        // Nếu là USER_PASSWORD → tạo account mới
+        if (loginMethod == Tool.LoginMethod.USER_PASSWORD) {
+            LicenseAccount acc = new LicenseAccount();
+            acc.setLicense(license);
+            acc.setOrder(order);
+            acc.setUsed(true);
+            acc.setStatus(LicenseAccount.Status.ACTIVE);
+            acc.setStartDate(LocalDateTime.now());
+            acc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
 
-        if ("USER_PASSWORD".equals(loginMethod)) {
-            acc.setUsername("user_" + buyer.getAccountId() + "_" + System.currentTimeMillis());
-            acc.setPassword(UUID.randomUUID().toString().substring(0, 8));
+            // Tạo username/password
+            String username = "user_" + buyer.getAccountId() + "_" + System.currentTimeMillis();
+            String password = UUID.randomUUID().toString().substring(0, 8);
+            acc.setUsername(username);
+            acc.setPassword(password);
+
             licenseAccountRepository.save(acc);
+
+            // Gửi mail chứa username/password cho người mua
             sendUserPasswordEmail(order, acc);
-        } else if ("TOKEN".equals(loginMethod)) {
-            Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByToolAndUsedFalse(tool);
+        }
+
+        // Nếu là TOKEN → lấy 1 token chưa dùng
+        else if (loginMethod == Tool.LoginMethod.TOKEN) {
+            Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByLicense_ToolAndUsedFalse(tool);
+
             if (unusedToken.isPresent()) {
                 LicenseAccount tokenAcc = unusedToken.get();
                 tokenAcc.setUsed(true);
@@ -381,14 +391,16 @@ public class PaymentService {
                 tokenAcc.setStatus(LicenseAccount.Status.ACTIVE);
                 tokenAcc.setStartDate(LocalDateTime.now());
                 tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
+
                 licenseAccountRepository.save(tokenAcc);
+
+                // Gửi mail chứa token cho người mua
                 sendTokenEmail(order, tokenAcc);
             } else {
                 System.err.println("No unused token for tool " + tool.getToolId());
             }
         }
     }
-
     /**
      * Gửi mail cho tool dạng USER_PASSWORD
      */

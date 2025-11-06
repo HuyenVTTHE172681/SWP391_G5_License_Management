@@ -54,22 +54,22 @@ public class MyToolService {
     /** Dữ liệu trang chi tiết tool theo order */
     @Transactional(readOnly = true)
     public ViewData viewTool(Long orderId) {
-        var order = loadOrderOr404(orderId);
+        CustomerOrder order = loadOrderOr404(orderId);
         ensureOrderSuccess(order);
 
         var acc = order.getLicenseAccount();
         if (acc == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa được cấp license.");
 
         List<ToolFile> files = fileRepo.findByTool_ToolIdOrderByCreatedAtDesc(order.getTool().getToolId());
-        List<License> licenses = licenseRepo.findByToolToolId(order.getTool().getToolId());
+        List<License> licenses = licenseRepo.findByTool_ToolId(order.getTool().getToolId());
 
-        var method = acc.getLoginMethod() != null
-                ? acc.getLoginMethod()
+        var method = acc.getLicense().getTool().getLoginMethod() != null
+                ? acc.getLicense().getTool().getLoginMethod()
                 : (order.getTool().getLoginMethod() == Tool.LoginMethod.TOKEN
-                ? LicenseAccount.LoginMethod.TOKEN
-                : LicenseAccount.LoginMethod.USER_PASSWORD);
+                ? Tool.LoginMethod.TOKEN
+                : Tool.LoginMethod.USER_PASSWORD);
 
-        String template = (method == LicenseAccount.LoginMethod.TOKEN)
+        String template = (method == Tool.LoginMethod.TOKEN)
                 ? "customer/mytool-token"
                 : "customer/mytool-userpass";
 
@@ -172,7 +172,7 @@ public class MyToolService {
 
         var acc = order.getLicenseAccount();
         if (acc == null) return new UpdateResult(false, "Đơn chưa được cấp license.");
-        if (acc.getLoginMethod() == LicenseAccount.LoginMethod.TOKEN) {
+        if (acc.getLicense().getTool().getLoginMethod() == Tool.LoginMethod.TOKEN) {
             return new UpdateResult(false, "Tài khoản dùng TOKEN: không thể đổi username/password.");
         }
 

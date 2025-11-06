@@ -69,7 +69,7 @@ public class LicenseAccountService {
     @Transactional
     public String rotatePassword(Long orderId, String currentEmail) {
         LicenseAccount acc = getOwnedAccountByOrder(orderId, currentEmail);
-        if (acc.getLoginMethod() != LicenseAccount.LoginMethod.USER_PASSWORD)
+        if (acc.getLicense().getTool().getLoginMethod() != Tool.LoginMethod.USER_PASSWORD)
             throw new IllegalArgumentException("This license uses TOKEN login; cannot rotate password.");
 
         String newPwd = randomPassword();
@@ -82,7 +82,7 @@ public class LicenseAccountService {
     @Transactional
     public String regenerateToken(Long orderId, String currentEmail) {
         LicenseAccount acc = getOwnedAccountByOrder(orderId, currentEmail);
-        if (acc.getLoginMethod() != LicenseAccount.LoginMethod.TOKEN)
+        if (acc.getLicense().getTool().getLoginMethod() !=Tool.LoginMethod.TOKEN)
             throw new IllegalArgumentException("This license uses USER_PASSWORD; cannot regenerate token.");
 
         String newToken = randomToken();
@@ -118,7 +118,7 @@ public class LicenseAccountService {
 
         LicenseAccount acc = new LicenseAccount();
         acc.setOrder(order);
-        acc.setTool(tool);
+        acc.getLicense().setTool(tool);
         acc.setLicense(order.getLicense());
         acc.setStatus(LicenseAccount.Status.ACTIVE);
         acc.setStartDate(LocalDateTime.now());
@@ -128,18 +128,17 @@ public class LicenseAccountService {
             acc.setEndDate(LocalDateTime.now().plusDays(duration));
         }
 
-        // chọn theo login method của Tool
-        LicenseAccount.LoginMethod lm = tool.getLoginMethod() == Tool.LoginMethod.TOKEN
-                ? LicenseAccount.LoginMethod.TOKEN
-                : LicenseAccount.LoginMethod.USER_PASSWORD;
-        acc.setLoginMethod(lm);
+        // lấy loginMethod từ Tool
+        Tool.LoginMethod lm = tool.getLoginMethod();
 
-        if (lm == LicenseAccount.LoginMethod.USER_PASSWORD) {
-            // username gợi ý: email buyer hoặc "user-{orderId}"
+        // nếu là USER_PASSWORD → tạo username/password
+        if (lm == Tool.LoginMethod.USER_PASSWORD) {
             String suggestedUser = safeDefaultUsername(order);
             acc.setUsername(suggestedUser);
             acc.setPassword(randomPassword());
-        } else {
+        }
+        // nếu là TOKEN → tạo token ngẫu nhiên
+        else if (lm == Tool.LoginMethod.TOKEN) {
             acc.setToken(randomToken());
             acc.setUsed(false);
         }
