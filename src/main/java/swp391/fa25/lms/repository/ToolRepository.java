@@ -34,18 +34,22 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     List<Tool> findByStatus(Tool.Status status);
 
     @Query("""
-        SELECT t FROM Tool t
-        WHERE (:toolName IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :toolName, '%')))
-          AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
-          AND (:status IS NULL OR t.status = :status)
-        ORDER BY t.updatedAt DESC
-    """)
+                SELECT t FROM Tool t
+                WHERE (:toolName IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :toolName, '%')))
+                  AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+                  AND (:status IS NULL OR t.status = :status)
+                ORDER BY t.updatedAt DESC
+            """)
     List<Tool> filterToolsForModerator(@Param("toolName") String toolName,
                                        @Param("categoryId") Long categoryId,
                                        @Param("status") Tool.Status status);
 
     List<Tool> findByToolNameContainingIgnoreCase(String keyword);
     List<Tool> findBySeller(Account seller);
+
+//    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
+
+
     List<Tool> findByStatusNot(Tool.Status status);
 
     // Lấy Tool theo id status PUBLISHED

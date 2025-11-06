@@ -8,10 +8,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.model.Category;
-import swp391.fa25.lms.model.Tool;
-import swp391.fa25.lms.model.ToolReport;
+import swp391.fa25.lms.model.*;
+import swp391.fa25.lms.service.moderator.LicenseAccountService;
 import swp391.fa25.lms.service.moderator.ToolFileService;
 import swp391.fa25.lms.service.moderator.ToolReportService;
 import swp391.fa25.lms.service.moderator.ToolService;
@@ -36,8 +34,10 @@ public class ModeratorToolController {
     private ToolFileService toolFileService;
     @Autowired
     private CategoryService categoryService;
-
-    @GetMapping({"", "/dashboard"})
+    @Autowired
+    @Qualifier("moderatorLicenseAccountService")
+    private LicenseAccountService licenseAccountService;
+    @GetMapping({"/", "/dashboard"})
     public String moderatorDashboard(Model model) {
         model.addAttribute("activePage", "dashboard");
         return "moderator/dashboard";
@@ -108,11 +108,21 @@ public class ModeratorToolController {
     @GetMapping("/tool/{id}")
     public String viewToolDetail(@PathVariable("id") Long id, Model model) {
         Tool tool = toolService.findById(id);
+
         if (tool == null) {
             model.addAttribute("errorMessage", "Tool not found");
             return "redirect:/moderator/uploadRequest";
         }
+
         model.addAttribute("tool", tool);
+
+        if (tool.getLoginMethod() == Tool.LoginMethod.TOKEN) {
+            List<LicenseAccount> licenseAccounts = licenseAccountService.findByToolId(tool.getToolId());
+            if (licenseAccounts != null && !licenseAccounts.isEmpty()) {
+                model.addAttribute("licenseAccounts", licenseAccounts);
+            }
+        }
+
         return "moderator/toolDetail";
     }
 
