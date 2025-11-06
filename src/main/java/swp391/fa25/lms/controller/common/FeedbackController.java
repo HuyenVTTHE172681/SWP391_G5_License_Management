@@ -5,11 +5,13 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.server.ResponseStatusException;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.repository.AccountRepository;
 import swp391.fa25.lms.repository.FeedbackRepository;
@@ -39,8 +41,19 @@ public class FeedbackController {
 
     /** Hiển thị form feedback cho 1 đơn */
     @GetMapping("/orders/{orderId}/feedback")
-    public String showFeedbackForm(@PathVariable Long orderId, Model model) {
+    public String showFeedbackForm(@PathVariable Long orderId,
+                                   Model model,
+                                   RedirectAttributes ra) {
+
         var order = feedbackService.getOrderForFeedback(orderId);
+
+        // Nếu order này đã có feedback rồi -> quay về trang orders + thông báo
+        if (feedbackRepo.existsByOrder(order)) {
+            ra.addFlashAttribute("error",
+                    "Với mỗi 1 đơn hàng bạn chỉ có thể add 1 feedback.");
+            return "redirect:/orders";
+        }
+
         model.addAttribute("order", order);
         model.addAttribute("tool", order.getTool());
         return "customer/feedback-form";
@@ -52,9 +65,21 @@ public class FeedbackController {
                                  @RequestParam @Min(1) @Max(5) Integer rating,
                                  @RequestParam(required = false) @Size(max = 100) String comment,
                                  RedirectAttributes ra) {
-        Long toolId = feedbackService.submitFeedback(orderId, rating, comment);
-        ra.addFlashAttribute("ok", "Cảm ơn bạn! Đánh giá đã được ghi nhận.");
-        return "redirect:/tools/" + toolId + "#review";
+        try {
+            Long toolId = feedbackService.submitFeedback(orderId, rating, comment);
+            ra.addFlashAttribute("ok", "Cảm ơn bạn! Đánh giá đã được ghi nhận.");
+            return "redirect:/tools/" + toolId + "#review";
+
+        } catch (ResponseStatusException ex) {
+            // Đúng lỗi "đã có feedback cho order này rồi" (409 CONFLICT)
+            if (ex.getStatusCode().value() == HttpStatus.CONFLICT.value()) {
+                ra.addFlashAttribute("error",
+                        "Với mỗi 1 đơn hàng bạn chỉ có thể add 1 feedback.");
+                return "redirect:/orders";
+            }
+            // Các lỗi khác giữ nguyên behavior cũ
+            throw ex;
+        }
     }
 
     // ================== EDIT ==================

@@ -29,10 +29,10 @@ public class FeedbackRepositoryImpl {
     private FeedbackRepository feedbackRepo;
 
     @Autowired
-    private FeedBackReplyRepository feedbackReplyRepo; // hiện chưa dùng, để lại nếu cần
+    private FeedBackReplyRepository feedbackReplyRepo;
 
     @Autowired
-    private AccountRepository accountRepo;            // hiện chưa dùng, để lại nếu cần
+    private AccountRepository accountRepo;
 
     @PersistenceContext
     private EntityManager em;

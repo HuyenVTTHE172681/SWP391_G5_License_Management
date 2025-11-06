@@ -16,7 +16,8 @@
             <h4 class="mb-0">🧰 Tool: <span th:text="${tool.toolName}">Tool</span></h4>
             <small class="text-muted">
                 Phương thức:
-                <span th:switch="${tool.loginMethod}">
+                <!-- ⚡ DÙNG name() CỦA ENUM (GIỐNG USER_PASSWORD) -->
+                <span th:switch="${tool.loginMethod != null ? tool.loginMethod.name() : null}">
                     <span th:case="'USER_PASSWORD'">Tài khoản / mật khẩu</span>
                     <span th:case="'TOKEN'">Token</span>
                     <span th:case="*">Không xác định</span>
@@ -26,8 +27,8 @@
         </div>
     </div>
 
+    <!-- Chỉ hiển thị thông báo thành công ngoài trang -->
     <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
-    <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
 
     <!-- Thông tin tài khoản -->
     <div class="table-responsive">
@@ -41,7 +42,8 @@
             <tr>
                 <th>Login method</th>
                 <td>
-                    <span th:switch="${tool.loginMethod}">
+                    <!-- ⚡ GIỐNG TRANG USER_PASSWORD -->
+                    <span th:switch="${tool.loginMethod != null ? tool.loginMethod.name() : null}">
                         <span th:case="'USER_PASSWORD'">Tài khoản / mật khẩu</span>
                         <span th:case="'TOKEN'">Token</span>
                         <span th:case="*">Không xác định</span>
@@ -89,7 +91,7 @@
                 <td th:text="${order.license != null ? order.license.name : '-'}">-</td>
             </tr>
 
-            <!-- ✅ Tệp cài đặt / file đính kèm  -->
+            <!-- ✅ Tệp cài đặt / file đính kèm -->
             <tr>
                 <th>Tệp cài đặt / file đính kèm</th>
                 <td>
@@ -97,7 +99,7 @@
                     <div class="d-flex flex-wrap gap-2" th:if="${!#lists.isEmpty(files)}">
                         <a class="btn btn-sm btn-outline-primary"
                            th:each="f : ${files}"
-                           th:if="${f.fileType != null and f.fileType.name() == 'WRAPPED'}"
+                           th:if="${f.fileType != null && f.fileType.name() == 'WRAPPED'}"
                            th:href="@{|/my-tools/${order.orderId}/files/${f.fileId}|}">
                             Download
                         </a>

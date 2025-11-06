@@ -64,13 +64,35 @@ public class MyToolService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa được cấp license.");
         }
 
-        List<ToolFile> files = fileRepo.findByTool_ToolIdOrderByCreatedAtDesc(order.getTool().getToolId());
-        List<License> licenses = licenseRepo.findByTool_ToolId(order.getTool().getToolId());
-
         Tool tool = order.getTool();
+
+        // Lấy loginMethod, nếu null thì default USER_PASSWORD
         Tool.LoginMethod method = tool.getLoginMethod() != null
                 ? tool.getLoginMethod()
                 : Tool.LoginMethod.USER_PASSWORD;
+        tool.setLoginMethod(method); // để view dùng
+
+        // 🔥 files:
+        // - Nếu TOOL dùng TOKEN: chỉ lấy 1 file WRAPPED mới nhất
+        // - Nếu USER_PASSWORD: giữ nguyên list cũ
+        List<ToolFile> files;
+        if (method == Tool.LoginMethod.TOKEN) {
+            ToolFile latestWrapped = fileRepo
+                    .findTopByTool_ToolIdAndFileTypeOrderByCreatedAtDesc(
+                            tool.getToolId(),
+                            ToolFile.FileType.WRAPPED
+                    )
+                    .orElse(null);
+
+            files = (latestWrapped != null)
+                    ? List.of(latestWrapped)
+                    : List.of();
+        } else {
+            // trang user/pass vẫn cần list đầy đủ, để view tự hiển thị
+            files = fileRepo.findByTool_ToolIdOrderByCreatedAtDesc(tool.getToolId());
+        }
+
+        List<License> licenses = licenseRepo.findByTool_ToolId(tool.getToolId());
 
         String template = (method == Tool.LoginMethod.TOKEN)
                 ? "customer/mytool-token"
