@@ -137,8 +137,13 @@ public class Tool {
         this.toolName = toolName;
     }
 
-    public String getImage() { return image; }
-    public void setImage(String image) { this.image = image; }
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
 
     public @NotBlank(message = "Description cannot be blank") String getDescription() {
         return description;
@@ -264,8 +269,13 @@ public class Tool {
     @Transient
     private boolean isFavorite;
 
-    public boolean isIsFavorite() { return isFavorite; }
-    public void setIsFavorite(boolean isFavorite) { this.isFavorite = isFavorite; }
+    public boolean isIsFavorite() {
+        return isFavorite;
+    }
+
+    public void setIsFavorite(boolean isFavorite) {
+        this.isFavorite = isFavorite;
+    }
 
     @Override
     public boolean equals(Object o) {

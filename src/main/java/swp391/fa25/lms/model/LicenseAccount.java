@@ -37,11 +37,11 @@ public class LicenseAccount {
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { ACTIVE, EXPIRED, REVOKED }
+
+    public enum Status {ACTIVE, EXPIRED, REVOKED}
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-
 
 
     @Column(unique = true)
@@ -55,9 +55,8 @@ public class LicenseAccount {
 
     public LicenseAccount() {
     }
-//    private LocalDateTime createdAt;
 
-    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, Tool tool, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime lastLogin, String deviceInfo, Integer maxDevices) {
+    public LicenseAccount(Long licenseAccountId, String username, String password, License license, CustomerOrder order, List<LicenseRenewLog> renewAcc, Status status, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime lastLogin, String deviceInfo, Integer maxDevices) {
         this.licenseAccountId = licenseAccountId;
         this.username = username;
         this.password = password;
@@ -140,6 +139,7 @@ public class LicenseAccount {
     public void setEndDate(LocalDateTime endDate) {
         this.endDate = endDate;
     }
+
     public String getToken() {
         return token;
     }

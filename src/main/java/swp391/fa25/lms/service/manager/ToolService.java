@@ -124,21 +124,4 @@ public class ToolService {
 
         return toolRepository.findAll(spec);
     }
-    /** 📈 Biểu đồ tăng trưởng tool theo tháng */
-    public Map<Integer, Long> getToolGrowthByMonth() {
-        return toolRepository.getToolGrowthByMonth().stream()
-                .collect(Collectors.toMap(
-                        row -> ((Number) row[0]).intValue(),
-                        row -> ((Number) row[1]).longValue()
-                ));
-    }
-
-    /** 🧩 Tỷ lệ tool theo status */
-    public Map<String, Long> getToolStatusDistribution() {
-        return toolRepository.getToolCountByStatus().stream()
-                .collect(Collectors.toMap(
-                        row -> row[0].toString(),
-                        row -> ((Number) row[1]).longValue()
-                ));
-    }
 }

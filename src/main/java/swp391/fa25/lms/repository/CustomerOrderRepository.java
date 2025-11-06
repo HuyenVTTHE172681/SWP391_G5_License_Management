@@ -93,5 +93,4 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     List<CustomerOrder> findByTool_SellerAndOrderStatus(Account seller, CustomerOrder.OrderStatus status);
 
     List<CustomerOrder> findByTool_Seller(Account seller);
-    Optional<CustomerOrder> findByOrderI
 }
