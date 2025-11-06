@@ -45,6 +45,7 @@ public class PaymentController {
         // Kiểm tra session (nếu chưa đăng nhập thì bắt đăng nhập lại)
         HttpSession session = request.getSession(false);
         if (session == null) {
+            // No session → force login
             return new RedirectView("/login");
         }
 

@@ -14,11 +14,18 @@ import java.util.Optional;
 @Repository
 public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, Long> {
     // Lấy danh sách token theo tool_id
+    List<LicenseAccount> findByLicense_Tool_ToolId(Long toolId);
+
+    // Lấy danh sách token theo tool_id
     List<LicenseAccount> findByTool_ToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
 
     // Kiểm tra token đã tồn tại trong 1 tool chưa (chống trùng trong DB mode)
     boolean existsByToolAndToken(Tool tool, String token);
     boolean existsByToken(String token);
+    @Transactional
+    void deleteByTool(Tool tool);
+    LicenseAccount findByToken(String token);
+    List<LicenseAccount> findAllByTool(Tool tool);
     long countByToolToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
 
     // Lấy tất cả license còn hoạt động nhưng đã hết hạn
@@ -31,9 +38,5 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
 
     boolean existsByOrder_OrderId(Long orderId);
     List<LicenseAccount> findByToolToolId(Long toolId);
-    @Transactional
-    void deleteByTool(Tool tool);
-    LicenseAccount findByToken(String token);
-    List<LicenseAccount> findAllByTool(Tool tool);
 }
 

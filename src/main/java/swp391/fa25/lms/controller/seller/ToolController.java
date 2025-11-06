@@ -114,8 +114,6 @@ public class ToolController {
         if (seller == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not logged in");
         }
-
-
         Pageable pageable = switch (sort) {
             case "oldest" -> PageRequest.of(page, size, Sort.by("createdAt").ascending());
             case "price,asc" -> PageRequest.of(page, size, Sort.by("licenses.price").ascending());

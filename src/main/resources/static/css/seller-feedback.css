@@ -1,44 +1,196 @@
-/* Page head */
-.page-header h3 {
-    font-weight: 700;
+/* ----------------------------------------------------------------
+   Seller Feedback – custom styles
+   Place this file at: src/main/resources/static/css/seller-feedback.css
+   It loads after Bootstrap. Safe, lightweight overrides only.
+------------------------------------------------------------------ */
+
+/* ========== Design tokens ========== */
+:root{
+    --sf-bg: #f8fafc;               /* page bg */
+    --sf-card: #ffffff;             /* card bg */
+    --sf-border: #e5e7eb;           /* subtle borders */
+    --sf-muted: #6b7280;            /* secondary text */
+    --sf-primary: #0d6efd;          /* bootstrap primary */
+    --sf-accent: #4f46e5;           /* indigo accent */
+    --sf-warning: #f59e0b;          /* rating stars */
+    --sf-danger: #dc3545;           /* danger */
+    --sf-success: #198754;          /* success */
+    --sf-shadow: 0 8px 24px rgba(2, 6, 23, .06);
+    --sf-radius: 16px;
 }
 
-/* Table widths (override inline styles by class) */
-.feedback-table .w-date { width: 120px; }
-.feedback-table .w-tool { width: 220px; }
-.feedback-table .w-customer { width: 200px; }
-.feedback-table .w-reply { width: 360px; }
-
-@media (max-width: 992px) {
-    .feedback-table .w-tool,
-    .feedback-table .w-customer,
-    .feedback-table .w-reply {
-        width: auto;
+@media (prefers-color-scheme: dark){
+    :root{
+        --sf-bg: #0b1220;
+        --sf-card: #0f172a;
+        --sf-border: #233044;
+        --sf-muted: #98a2b3;
+        --sf-primary: #61a6ff;
+        --sf-accent: #7c8cfb;
+        --sf-warning: #fbbf24;
+        --sf-danger: #ff6b81;
+        --sf-success: #39d98a;
+        --sf-shadow: 0 10px 28px rgba(0,0,0,.35);
     }
+    body.bg-light{ background-color: var(--sf-bg) !important; }
 }
 
-/* Stars */
-.star { color: #ffc107; }
-.star.gray { color: #ddd; }
+/* ========== Page chrome ========== */
+body.bg-light{ background-color: var(--sf-bg) !important; }
 
-/* Reply */
-.reply-card {
-    background: #f8f9fa;
-    border: 1px dashed #ced4da;
+.page-header h3{
+    font-weight: 700;
+    letter-spacing: .2px;
 }
 
-.reply-title {
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem;
+/* ========== Cards ========== */
+.filter-card,
+.reply-card,
+.card.shadow-sm{
+    background: var(--sf-card);
+    border: 1px solid var(--sf-border);
+    border-radius: var(--sf-radius);
+    box-shadow: var(--sf-shadow);
 }
 
-.pointer { cursor: pointer; }
-
-/* Minor tweaks */
-.tool-line a {
-    text-decoration: none;
+.filter-card .form-label{
+    font-weight: 600;
+    color: var(--sf-muted);
+    letter-spacing: .2px;
 }
-.tool-line a:hover {
-    text-decoration: underline;
+
+.filter-card .form-control,
+.filter-card .form-select{
+    border-radius: 12px;
+    border-color: var(--sf-border);
+    transition: box-shadow .2s ease, border-color .2s ease;
+}
+
+.filter-card .form-control:focus,
+.filter-card .form-select:focus{
+    border-color: var(--sf-accent);
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--sf-accent) 20%, transparent);
+}
+
+/* ========== Table ========== */
+.table.feedback-table{ margin: 0; }
+.feedback-table thead th{
+    font-size: .825rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--sf-muted);
+    border-bottom: 1px solid var(--sf-border) !important;
+}
+.feedback-table td{ vertical-align: top; }
+.feedback-table tbody tr{
+    transition: background-color .15s ease;
+}
+.feedback-table tbody tr:hover{
+    background-color: color-mix(in srgb, var(--sf-primary) 4%, transparent);
+}
+
+/* column widths to keep layout steady (can be tuned) */
+.feedback-table .w-date{width:160px}
+.feedback-table .w-tool{width:220px}
+.feedback-table .w-customer{width:220px}
+.feedback-table .w-reply{width:340px}
+
+/* Clamp long comments to keep rows compact (show more in modal/edit) */
+.feedback-table td:nth-child(4) > .mt-1{
+    display: -webkit-box;            /* Chrome/Safari */
+    -webkit-line-clamp: 3;           /* lines to show */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Tool + customer subtle row text */
+.feedback-table .text-muted.small{ color: var(--sf-muted) !important; }
+
+/* Sticky header inside responsive wrapper for long lists */
+.table-responsive{ position: relative; }
+.table-responsive thead th{ position: sticky; top: 0; background: var(--sf-card); z-index: 1; }
+
+/* Stars (use Bootstrap icons) */
+.star{ font-size: 1rem; color: var(--sf-warning); }
+.star.gray{ color: #d1d5db; }
+
+/* Rating badge */
+.badge.text-bg-light{
+    background: color-mix(in srgb, var(--sf-warning) 12%, #f8fafc);
+    border: 1px solid var(--sf-border);
+    color: #111827;
+}
+
+/* ========== Reply block ========== */
+.reply-card{
+    border-left: 4px solid var(--sf-accent);
+    background:
+            linear-gradient(0deg, color-mix(in srgb, var(--sf-accent) 6%, transparent), color-mix(in srgb, var(--sf-accent) 6%, transparent)),
+            var(--sf-card);
+}
+.reply-title{ font-weight: 700; }
+.reply-card .btn{
+    border-radius: 999px;
+    padding-inline: .9rem;
+}
+
+/* ========== Buttons & pagination ========== */
+.btn{ border-radius: 12px; }
+.btn-primary{
+    background: linear-gradient(180deg, var(--sf-primary), color-mix(in srgb, var(--sf-primary) 85%, black));
+    border-color: color-mix(in srgb, var(--sf-primary) 70%, black);
+}
+.btn-primary:hover{ filter: brightness(1.05); }
+.btn-outline-primary{ border-color: var(--sf-accent); color: var(--sf-accent); }
+.btn-outline-primary:hover{ background: color-mix(in srgb, var(--sf-accent) 10%, transparent); }
+
+.pagination .page-link{
+    border-radius: 10px !important;
+    border-color: var(--sf-border);
+}
+.pagination .page-item.active .page-link{
+    background: var(--sf-accent);
+    border-color: var(--sf-accent);
+}
+
+/* ========== Modal enhancements ========== */
+.modal-content{
+    border-radius: 18px;
+    border: 1px solid var(--sf-border);
+    box-shadow: var(--sf-shadow);
+}
+.modal-header{ border-bottom-color: var(--sf-border); }
+
+#replyForm textarea{
+    border-radius: 12px;
+    border-color: var(--sf-border);
+}
+#replyForm textarea:focus{
+    border-color: var(--sf-accent);
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--sf-accent) 20%, transparent);
+}
+
+/* Counter text next to textarea */
+#replyCc{ font-variant-numeric: tabular-nums; }
+
+/* ========== Utilities ========== */
+.rounded-2xl{ border-radius: 1rem; }
+.shadow-soft{ box-shadow: var(--sf-shadow); }
+
+/* ========== Responsive tweaks ========== */
+@media (max-width: 992px){
+    .feedback-table .w-reply{ width: 280px; }
+}
+@media (max-width: 768px){
+    .feedback-table .w-date{ width: 140px; }
+    .feedback-table .w-tool{ width: 180px; }
+    .feedback-table .w-customer{ width: 180px; }
+}
+@media (max-width: 576px){
+    .page-header h3{ font-size: 1.125rem; }
+    .feedback-table .w-date{ width: 128px; }
+    /* hide the small ID line to reduce clutter on phones */
+    .feedback-table td .text-muted.small{ display: none; }
+    /* allow reply column to wrap full width */
+    .feedback-table .w-reply{ width: 100%; }
 }
