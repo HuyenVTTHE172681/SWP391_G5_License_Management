@@ -42,9 +42,7 @@ public class RoleDataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // ============ ROLE ============
-        // Kiểm tra DB xem đã có role chưa
-        if(roleRepository.count() == 0) {
-            // Tạo các role mặc định
+        if (roleRepository.count() == 0) {
             Role guest = new Role();
             guest.setRoleId(1);
             guest.setRoleName(RoleName.GUEST);
@@ -75,9 +73,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             admin.setRoleName(RoleName.ADMIN);
             admin.setNote("Quản trị viên");
 
-            // Lưu tất cả vào DB
             roleRepository.saveAll(Arrays.asList(guest, customer, seller, mod, manager, admin));
-
             System.out.println("Default roles have been initialized.");
         } else {
             System.out.println("Roles already exist, skipping initialization.");
@@ -98,7 +94,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             Category interaction = new Category();
             interaction.setCategoryName("Tăng tương tác");
             interaction.setDescription("Tăng like, share, comment,... cho sản phẩm của bạn");
-            interaction.setIcon("as fa-layer-group");
+            interaction.setIcon("fas fa-layer-group");
 
             Category seo = new Category();
             seo.setCategoryName("SEO & Marketing");
@@ -106,14 +102,13 @@ public class RoleDataInitializer implements CommandLineRunner {
             seo.setIcon("fas fa-user");
 
             categoryRepo.saveAll(Arrays.asList(email, software, interaction, seo));
-
             System.out.println("Default categories have been initialized.");
         } else {
             System.out.println("Categories already exist, skipping initialization.");
         }
 
         // ============ ACCOUNT ============
-        if (accountRepo.count() == 0)  {
+        if (accountRepo.count() == 0) {
             Role sellerRole = roleRepository.findByRoleName(RoleName.SELLER).get();
             Role customerRole = roleRepository.findByRoleName(RoleName.CUSTOMER).get();
             Role adminRole = roleRepository.findByRoleName(RoleName.ADMIN).get();
@@ -178,7 +173,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             mod1.setCreatedAt(LocalDateTime.now().minusDays(10));
             mod1.setRole(modRole);
 
-            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin, mod1,customer4));
+            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin, mod1, customer4));
         } else {
             System.out.println("Account already exist, skipping initialization.");
         }
@@ -189,7 +184,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             Account seller1 = accountRepo.findByEmail("seller1@example.com")
                     .orElseThrow(() -> new RuntimeException("Seller 1 not found"));
             Account seller2 = accountRepo.findByEmail("seller2@example.com")
-                    .orElseThrow(() -> new RuntimeException("Seller 1 not found"));
+                    .orElseThrow(() -> new RuntimeException("Seller 2 not found"));
 
             Tool t1 = new Tool();
             t1.setToolName("Email Bulk Sender Pro");
@@ -301,7 +296,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             t10.setQuantity(0);
             t10.setCreatedAt(LocalDateTime.now().minusDays(2));
 
-            // === TOOL VỚI HAI KIỂU LOGIN METHOD ===
+            // === TOOL VỚI LOGIN METHOD = TOKEN ===
             Tool tokenTool = new Tool();
             tokenTool.setToolName("Facebook Token Generator");
             tokenTool.setDescription("Tool tạo token đăng nhập Facebook tự động, bảo mật cao.");
@@ -324,18 +319,22 @@ public class RoleDataInitializer implements CommandLineRunner {
             userPassTool.setQuantity(10);
             userPassTool.setCreatedAt(LocalDateTime.now().minusDays(1));
 
-            toolRepo.saveAll(Arrays.asList(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, tokenTool, userPassTool));
+            toolRepo.saveAll(Arrays.asList(
+                    t1, t2, t3, t4, t5, t6, t7, t8, t9, t10,
+                    tokenTool, userPassTool
+            ));
         } else {
             System.out.println("Tool already exist, skipping initialization.");
         }
 
+        // Lấy lại seller & tool để dùng cho phần dưới
         List<Category> categories = categoryRepo.findAll();
         Account seller1 = accountRepo.findByEmail("seller1@example.com")
                 .orElseThrow(() -> new RuntimeException("Seller 1 not found"));
         Account seller2 = accountRepo.findByEmail("seller2@example.com")
-                .orElseThrow(() -> new RuntimeException("Seller 1 not found"));
+                .orElseThrow(() -> new RuntimeException("Seller 2 not found"));
 
-        // ============ Tool File ============
+        // ============ TOOL FILE ============
         Tool tokenTool = toolRepo.findByToolName("Facebook Token Generator")
                 .orElseThrow(() -> new RuntimeException("Token Tool not found"));
         Tool userPassTool = toolRepo.findByToolName("Instagram Auto Poster")
@@ -371,57 +370,6 @@ public class RoleDataInitializer implements CommandLineRunner {
 
         toolFileRepository.saveAll(Arrays.asList(tokenOriginal, tokenWrapped, instaOriginal, instaWrapped));
         System.out.println("Tool files initialized.");
-
-        // ============ FEEDBACK ============
-//        if (feedbackRepo.count() == 0) {
-//            Account customer = accountRepo.findByEmail("customer1@example.com")
-//                    .orElseThrow(() -> new RuntimeException("Customer 1 not found"));
-//            List<Tool> tools = toolRepo.findAll();
-//
-//            Feedback f1 = new Feedback();
-//            f1.setAccount(customer);
-//            f1.setTool(tools.get(0));
-//            f1.setRating(5);
-//            f1.setComment("Rất hữu ích, dễ sử dụng!");
-//            f1.setCreatedAt(LocalDateTime.now().minusDays(2));
-//            f1.setStatus(Feedback.Status.PUBLISHED);
-//
-//            Feedback f2 = new Feedback();
-//            f2.setAccount(customer);
-//            f2.setTool(tools.get(1));
-//            f2.setRating(4);
-//            f2.setComment("Tốt, nhưng cần thêm tính năng lọc.");
-//            f2.setCreatedAt(LocalDateTime.now().minusDays(1));
-//            f2.setStatus(Feedback.Status.PUBLISHED);
-//
-//            Feedback f3 = new Feedback();
-//            f3.setAccount(customer);
-//            f3.setTool(tools.get(2));
-//            f3.setRating(5);
-//            f3.setComment("Phân tích rất chi tiết, đáng tiền!");
-//            f3.setCreatedAt(LocalDateTime.now());
-//            f3.setStatus(Feedback.Status.PUBLISHED);
-//
-//            Feedback f4 = new Feedback();
-//            f4.setAccount(customer);
-//            f4.setTool(tools.get(1));
-//            f4.setRating(4);
-//            f4.setComment("Tốt, nhưng cần thêm tính năng lọc.");
-//            f4.setCreatedAt(LocalDateTime.now().minusDays(1));
-//            f4.setStatus(Feedback.Status.PUBLISHED);
-//
-//            Feedback f5 = new Feedback();
-//            f5.setAccount(customer);
-//            f5.setTool(tools.get(1));
-//            f5.setRating(4);
-//            f5.setComment("Tốt, nhưng cần thêm tính năng lọc.");
-//            f5.setCreatedAt(LocalDateTime.now().minusDays(1));
-//            f5.setStatus(Feedback.Status.PUBLISHED);
-//
-//            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3, f4, f5));
-//        } else {
-//            System.out.println("Feedback already exist, skipping initialization.");
-//        }
 
         // ============ FAVORITE ============
         if (favoriteRepository.count() == 0) {
@@ -503,77 +451,62 @@ public class RoleDataInitializer implements CommandLineRunner {
             ));
 
             System.out.println("Default licenses have been initialized.");
+
+            // ============ LICENSE ACCOUNT (TOKEN STOCK) ============
+            if (licenseAccountRepository.count() == 0) {
+                LicenseAccount token1 = new LicenseAccount();
+                token1.setLicense(tokenLicense1);        // token 7 ngày
+                token1.setUsername("N/A");
+                token1.setPassword("N/A");
+                token1.setToken("ABC123XYZ");
+                token1.setStatus(LicenseAccount.Status.ACTIVE);
+                token1.setUsed(false);                   // chưa bán cho ai
+                // order = null, start/endDate = null (sẽ set khi khách mua)
+
+                LicenseAccount token2 = new LicenseAccount();
+                token2.setLicense(tokenLicense1);        // token 7 ngày
+                token2.setUsername("N/A");
+                token2.setPassword("N/A");
+                token2.setToken("XYZ789QWE");
+                token2.setStatus(LicenseAccount.Status.ACTIVE);
+                token2.setUsed(false);
+
+                LicenseAccount token3 = new LicenseAccount();
+                token3.setLicense(tokenLicense2);        // token 1 tháng
+                token3.setUsername("N/A");
+                token3.setPassword("N/A");
+                token3.setToken("TOKEN_MONTH_01");
+                token3.setStatus(LicenseAccount.Status.ACTIVE);
+                token3.setUsed(false);
+
+                licenseAccountRepository.saveAll(Arrays.asList(token1, token2, token3));
+                System.out.println("License accounts (pre-created TOKEN stock) have been initialized.");
+            } else {
+                System.out.println("License accounts already exist, skipping initialization.");
+            }
+
         } else {
             System.out.println("Licenses already exist, skipping initialization.");
         }
 
-
-//        // ============ LICENSE ACCOUNT ============
-//        if (licenseAccountRepository.count() == 0) {
-//            // Token-based accounts
-//            LicenseAccount token1 = new LicenseAccount();
-//            token1.setTool(tokenTool);
-//            token1.setUsername("N/A");
-//            token1.setPassword("N/A");
-//            token1.setToken("ABC123XYZ");
-//            token1.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
-//            token1.setUsed(false);
-//
-//            LicenseAccount token2 = new LicenseAccount();
-//            token2.setTool(tokenTool);
-//            token2.setUsername("N/A");
-//            token2.setPassword("N/A");
-//            token2.setToken("XYZ789QWE");
-//            token2.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
-//            token2.setUsed(false);
-//
-//            // User-password accounts
-//            LicenseAccount acc1 = new LicenseAccount();
-//            acc1.setTool(userPassTool);
-//            acc1.setUsername("insta_user_01");
-//            acc1.setPassword(passwordEncoder.encode("pass123"));
-//            acc1.setLoginMethod(LicenseAccount.LoginMethod.USER_PASSWORD);
-//            acc1.setUsed(false);
-//
-//            LicenseAccount acc2 = new LicenseAccount();
-//            acc2.setTool(userPassTool);
-//            acc2.setUsername("insta_user_02");
-//            acc2.setPassword(passwordEncoder.encode("pass456"));
-//            acc2.setLoginMethod(LicenseAccount.LoginMethod.USER_PASSWORD);
-//            acc2.setUsed(false);
-//
-//            licenseAccountRepository.saveAll(Arrays.asList(token1, token2, acc1, acc2));
-//            System.out.println("License accounts initialized.");
-//        }
-
-
         // ============ WALLET ============
-// Tạo ví mặc định cho TẤT CẢ Account (không chỉ seller)
-        List<Account> allAccounts = accountRepo.findAll();  // THAY: Không filter seller
-
+        List<Account> allAccounts = accountRepo.findAll();
         for (Account acc : allAccounts) {
-            // Kiểm tra xem account đã có ví chưa
             boolean hasWallet = walletRepository.findByAccount(acc).isPresent();
             if (!hasWallet) {
                 Wallet wallet = new Wallet();
                 wallet.setAccount(acc);
                 wallet.setBalance(java.math.BigDecimal.ZERO);
                 wallet.setCurrency("VND");
-//                wallet.setCreatedAt(LocalDateTime.now());
                 wallet.setUpdatedAt(LocalDateTime.now());
                 walletRepository.save(wallet);
-                acc.setWallet(wallet);  // Link back
-                accountRepo.save(acc);  // Update account
-                System.out.println("Created default wallet for account: " + acc.getEmail() + " (Role: " + acc.getRole().getRoleName() + ")");
+                acc.setWallet(wallet);
+                accountRepo.save(acc);
+                System.out.println("Created default wallet for account: " +
+                        acc.getEmail() + " (Role: " + acc.getRole().getRoleName() + ")");
             }
         }
 
         System.out.println("Wallet initialization completed successfully.");
-
-
     }
-
-    }
-
-
-
+}

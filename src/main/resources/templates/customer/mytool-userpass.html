@@ -15,8 +15,13 @@
         <div>
             <h4 class="mb-0">🧰 Tool: <span th:text="${tool.toolName}">Tool</span></h4>
             <small class="text-muted">
-                Phương thức: <span th:text="*{loginMethod}">USER_PASSWORD</span> ·
-                Mã đơn: <span th:text="${order.orderId}">0</span>
+                Phương thức:
+                <span th:switch="${tool.loginMethod}">
+                    <span th:case="'USER_PASSWORD'">Tài khoản / mật khẩu</span>
+                    <span th:case="'TOKEN'">Token</span>
+                    <span th:case="*">Không xác định</span>
+                </span>
+                · Mã đơn: <span th:text="${order.orderId}">0</span>
             </small>
         </div>
 
@@ -34,8 +39,21 @@
     <div class="table-responsive">
         <table class="table table-bordered align-middle">
             <tbody>
-            <tr><th style="width:260px">License Account ID</th><td th:text="*{licenseAccountId}">-</td></tr>
-            <tr><th>Login method</th><td th:text="*{loginMethod}">USER_PASSWORD</td></tr>
+            <tr>
+                <th style="width:260px">License Account ID</th>
+                <td th:text="*{licenseAccountId}">-</td>
+            </tr>
+
+            <tr>
+                <th>Login method</th>
+                <td>
+                    <span th:switch="${tool.loginMethod}">
+                        <span th:case="'USER_PASSWORD'">Tài khoản / mật khẩu</span>
+                        <span th:case="'TOKEN'">Token</span>
+                        <span th:case="*">Không xác định</span>
+                    </span>
+                </td>
+            </tr>
 
             <tr>
                 <th>Username</th>
@@ -77,13 +95,14 @@
                 <th>Đã kích hoạt</th>
                 <td>
                     <span th:text="*{used} ? 'Yes' : 'No'">No</span>
-                    <span th:if="*{activatedAt != null}">
-                        · <span th:text="${#temporals.format(acc.activatedAt,'dd/MM/yyyy HH:mm')}">-</span>
-                    </span>
+                    <!-- Nếu sau này có field activatedAt thì có thể thêm lại hiển thị ở đây -->
                 </td>
             </tr>
 
-            <tr><th>License gói (lần mua gần nhất)</th><td th:text="${order.license != null ? order.license.name : '-'}">-</td></tr>
+            <tr>
+                <th>License gói (lần mua gần nhất)</th>
+                <td th:text="${order.license != null ? order.license.name : '-'}">-</td>
+            </tr>
 
             <!-- ✅ Tệp cài đặt / file đính kèm (chỉ cho tải WRAPPED) -->
             <tr>
@@ -93,7 +112,7 @@
                     <div class="d-flex flex-wrap gap-2" th:if="${!#lists.isEmpty(files)}">
                         <a class="btn btn-sm btn-outline-primary"
                            th:each="f : ${files}"
-                           th:if="${f.fileType != null and f.fileType.name() == 'WRAPPED'}"
+                           th:if="${f.fileType != null && f.fileType.name() == 'WRAPPED'}"
                            th:href="@{|/my-tools/${order.orderId}/files/${f.fileId}|}">
                             Download
                         </a>
@@ -223,13 +242,20 @@
     function togglePwd(){
         const el = document.getElementById('pVal');
         if (!el) return;
-        if (el.dataset.real === '1') { el.textContent = '******'; el.dataset.real = '0'; }
-        else { el.textContent = el.dataset.orig || ''; el.dataset.real = '1'; }
+        if (el.dataset.real === '1') {
+            el.textContent = '******';
+            el.dataset.real = '0';
+        } else {
+            el.textContent = el.dataset.orig || '';
+            el.dataset.real = '1';
+        }
     }
+
     function togglePwdEdit(){
         const i = document.getElementById('pwdInput');
         i.type = (i.type === 'password') ? 'text' : 'password';
     }
+
     function copyText(id){
         const t = document.getElementById(id)?.innerText || '';
         navigator.clipboard.writeText(t).then(()=>alert('Đã copy'));
@@ -243,9 +269,17 @@
 
         form.querySelectorAll('input[required]').forEach(inp => {
             const refresh = () => {
-                if (!inp.value) { inp.classList.remove('is-invalid','is-valid'); return; }
-                if (inp.checkValidity()) { inp.classList.remove('is-invalid'); inp.classList.add('is-valid'); }
-                else { inp.classList.add('is-invalid'); inp.classList.remove('is-valid'); }
+                if (!inp.value) {
+                    inp.classList.remove('is-invalid','is-valid');
+                    return;
+                }
+                if (inp.checkValidity()) {
+                    inp.classList.remove('is-invalid');
+                    inp.classList.add('is-valid');
+                } else {
+                    inp.classList.add('is-invalid');
+                    inp.classList.remove('is-valid');
+                }
             };
             inp.addEventListener('blur', refresh);
             inp.addEventListener('input', refresh);
@@ -253,8 +287,11 @@
 
         form.addEventListener('submit', function (e) {
             if (!form.checkValidity()) {
-                e.preventDefault(); e.stopPropagation();
-                form.querySelectorAll('input').forEach(i => { if (!i.checkValidity()) i.classList.add('is-invalid'); });
+                e.preventDefault();
+                e.stopPropagation();
+                form.querySelectorAll('input').forEach(i => {
+                    if (!i.checkValidity()) i.classList.add('is-invalid');
+                });
             }
         }, false);
     })();

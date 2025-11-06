@@ -15,8 +15,13 @@
         <div>
             <h4 class="mb-0">🧰 Tool: <span th:text="${tool.toolName}">Tool</span></h4>
             <small class="text-muted">
-                Phương thức: <span th:text="*{loginMethod}">TOKEN</span> ·
-                Mã đơn: <span th:text="${order.orderId}">0</span>
+                Phương thức:
+                <span th:switch="${tool.loginMethod}">
+                    <span th:case="'USER_PASSWORD'">Tài khoản / mật khẩu</span>
+                    <span th:case="'TOKEN'">Token</span>
+                    <span th:case="*">Không xác định</span>
+                </span>
+                · Mã đơn: <span th:text="${order.orderId}">0</span>
             </small>
         </div>
     </div>
@@ -32,10 +37,18 @@
                 <th style="width:260px">License Account ID</th>
                 <td th:text="*{licenseAccountId}">-</td>
             </tr>
+
             <tr>
                 <th>Login method</th>
-                <td th:text="*{loginMethod}">TOKEN</td>
+                <td>
+                    <span th:switch="${tool.loginMethod}">
+                        <span th:case="'USER_PASSWORD'">Tài khoản / mật khẩu</span>
+                        <span th:case="'TOKEN'">Token</span>
+                        <span th:case="*">Không xác định</span>
+                    </span>
+                </td>
             </tr>
+
             <tr>
                 <th>Token</th>
                 <td class="d-flex align-items-center gap-2">
@@ -44,6 +57,7 @@
                     <button class="btn btn-sm btn-outline-primary" type="button" onclick="copyText('tVal')">Copy</button>
                 </td>
             </tr>
+
             <tr>
                 <th>Status</th>
                 <td th:switch="${acc.status != null ? acc.status.name() : null}">
@@ -53,6 +67,7 @@
                     <span class="badge text-bg-secondary" th:case="*">N/A</span>
                 </td>
             </tr>
+
             <tr>
                 <th>Hiệu lực</th>
                 <td>
@@ -61,6 +76,14 @@
                     <span th:text="${acc.endDate != null ? #temporals.format(acc.endDate,'dd/MM/yyyy HH:mm') : '-'}">-</span>
                 </td>
             </tr>
+
+            <tr>
+                <th>Đã kích hoạt</th>
+                <td>
+                    <span th:text="*{used} ? 'Yes' : 'No'">No</span>
+                </td>
+            </tr>
+
             <tr>
                 <th>License gói (lần mua gần nhất)</th>
                 <td th:text="${order.license != null ? order.license.name : '-'}">-</td>
@@ -97,12 +120,19 @@
         if (el && !el.dataset.orig) el.dataset.orig = el.textContent;
         if (el) el.dataset.real = '1';
     });
+
     function toggleToken(){
         const el = document.getElementById('tVal');
         if (!el) return;
-        if (el.dataset.real === '1') { el.textContent = '••••••••'; el.dataset.real = '0'; }
-        else { el.textContent = el.dataset.orig || ''; el.dataset.real = '1'; }
+        if (el.dataset.real === '1') {
+            el.textContent = '••••••••';
+            el.dataset.real = '0';
+        } else {
+            el.textContent = el.dataset.orig || '';
+            el.dataset.real = '1';
+        }
     }
+
     function copyText(id){
         const t = document.getElementById(id)?.innerText || '';
         navigator.clipboard.writeText(t).then(()=>alert('Đã copy'));
