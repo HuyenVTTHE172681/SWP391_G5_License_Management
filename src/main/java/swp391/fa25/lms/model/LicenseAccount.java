@@ -158,5 +158,3 @@ public class LicenseAccount {
         this.used = used;
     }
 }
-
-

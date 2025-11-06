@@ -1,41 +1,35 @@
-// src/main/java/swp391/fa25/lms/controller/common/FeedbackController.java
 package swp391.fa25.lms.controller.common;
 
-import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.repository.AccountRepository;
 import swp391.fa25.lms.repository.FeedbackRepository;
 import swp391.fa25.lms.service.customer.FeedbackRepositoryImpl;
 
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 @Controller
 @Validated
 public class FeedbackController {
-     @Autowired
-     @Qualifier("customerFeedBack")
+
+    @Autowired
+    @Qualifier("customerFeedBack")
     private FeedbackRepositoryImpl feedbackService;
 
-     @Autowired
-     private FeedbackRepository feedbackRepo;
-     @Autowired
-     private AccountRepository accountRepo;
+    @Autowired
+    private FeedbackRepository feedbackRepo;
+
+    @Autowired
+    private AccountRepository accountRepo;
 
     public FeedbackController(FeedbackRepositoryImpl feedbackService) {
         this.feedbackService = feedbackService;
@@ -82,8 +76,10 @@ public class FeedbackController {
     public String updateFeedback(@PathVariable Long feedbackId,
                                  @RequestParam @Min(1) @Max(5) Integer rating,
                                  @RequestParam(required = false) @Size(max = 100) String comment,
+                                 @RequestParam(required = false) Feedback.Status status,
                                  RedirectAttributes ra,
                                  Principal principal) {
+
         Long toolId = feedbackService.updateFeedback(feedbackId, rating, comment, status, principal);
         ra.addFlashAttribute("ok", "Đã cập nhật đánh giá.");
         return "redirect:/tools/" + toolId + "#review";

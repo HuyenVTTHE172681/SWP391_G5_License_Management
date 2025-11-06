@@ -21,12 +21,20 @@ import java.time.LocalDateTime;
 @Transactional
 public class FeedbackRepositoryImpl {
 
-    @Autowired private CustomerOrderRepository orderRepo;
-    @Autowired private FeedbackRepository feedbackRepo;
-    @Autowired private FeedBackReplyRepository feedbackReplyRepo; // hiện chưa dùng, để lại nếu cần
-    @Autowired private AccountRepository accountRepo;            // hiện chưa dùng, để lại nếu cần
+    @Autowired
+    private CustomerOrderRepository orderRepo;
 
-    @PersistenceContext private EntityManager em;
+    @Autowired
+    private FeedbackRepository feedbackRepo;
+
+    @Autowired
+    private FeedBackReplyRepository feedbackReplyRepo; // hiện chưa dùng, để lại nếu cần
+
+    @Autowired
+    private AccountRepository accountRepo;            // hiện chưa dùng, để lại nếu cần
+
+    @PersistenceContext
+    private EntityManager em;
 
     /** DTO gọn cho view edit */
     public record FeedbackEditView(Feedback feedback, String normalizedComment) {}
@@ -36,7 +44,8 @@ public class FeedbackRepositoryImpl {
     @Transactional(readOnly = true)
     public CustomerOrder getOrderForFeedback(Long orderId) {
         return orderRepo.findById(orderId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
     }
 
     /** Tạo feedback mới => PUBLISHED (soft-state) */
@@ -59,25 +68,37 @@ public class FeedbackRepositoryImpl {
     @Transactional(readOnly = true)
     public FeedbackEditView getFeedbackForEdit(Long feedbackId, Principal principal) {
         var fb = feedbackRepo.findByFeedbackIdAndAccount_Email(feedbackId, principal.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền"));
-        return new FeedbackEditView(fb, fb.getComment() == null ? "" : fb.getComment().trim());
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.FORBIDDEN, "Không có quyền"));
+
+        String normalized = (fb.getComment() == null) ? "" : fb.getComment().trim();
+        return new FeedbackEditView(fb, normalized);
     }
 
     /** Cập nhật feedback (giữ/chuẩn hoá trạng thái) */
-    public Long updateFeedback(Long feedbackId, Integer rating, String comment,
-                               Feedback.Status status, Principal principal) {
+    public Long updateFeedback(Long feedbackId,
+                               Integer rating,
+                               String comment,
+                               Feedback.Status status,
+                               Principal principal) {
+
         var fb = feedbackRepo.findByFeedbackIdAndAccount_Email(feedbackId, principal.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.FORBIDDEN, "Không có quyền"));
 
         fb.setRating(rating);
         fb.setComment((comment == null || comment.isBlank()) ? null : comment.trim());
 
         if (status != null) {
+            // Rule nghiệp vụ: không cho user set SUSPECT bằng form
             if (status == Feedback.Status.SUSPECT) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Không thể đặt trạng thái SUSPECT trong form sửa. Vui lòng dùng chức năng Xoá.");
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Không thể đặt trạng thái SUSPECT trong form sửa. Vui lòng dùng chức năng Xoá."
+                );
             }
-            fb.setStatus(status); // PUBLISHED hoặc HIDDEN
+            // Cho phép PUBLISHED hoặc HIDDEN
+            fb.setStatus(status);
         } else if (fb.getStatus() == null) {
             fb.setStatus(Feedback.Status.PUBLISHED);
         }
@@ -89,13 +110,13 @@ public class FeedbackRepositoryImpl {
     /** “Xoá” => chuyển sang SUSPECT (soft-delete), KHÔNG xoá DB */
     public Long deleteFeedback(Long feedbackId, Principal principal) {
         var fb = feedbackRepo.findByFeedbackIdAndAccount_Email(feedbackId, principal.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.FORBIDDEN, "Không có quyền"));
 
-        fb.setStatus(Feedback.Status.SUSPECT);     // <== quan trọng
+        fb.setStatus(Feedback.Status.SUSPECT);     // <== soft-delete
         feedbackRepo.save(fb);
         return fb.getTool().getToolId();
     }
 
     // ====================== Helpers (nếu cần dùng sau) ======================
-    // (để code gọn, bỏ các helper cũ không dùng tới)
 }

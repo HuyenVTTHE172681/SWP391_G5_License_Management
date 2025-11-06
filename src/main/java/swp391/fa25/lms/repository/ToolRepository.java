@@ -28,11 +28,8 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     List<Tool> findAllByToolNameContainingIgnoreCase(String toolName, Sort sort);
 
     List<Tool> findAll(Sort sort);
-
     List<Tool> findAll(Specification<Tool> spec);
-
     Tool findByToolId(long toolId);
-
     List<Tool> findByStatus(Tool.Status status);
 
     @Query("""
@@ -116,8 +113,10 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
       AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
       AND (:status IS NULL OR t.status = :status)
       AND (:loginMethod IS NULL OR t.loginMethod = :loginMethod)
-      AND (:minPrice IS NULL OR l.price >= :minPrice)
-      AND (:maxPrice IS NULL OR l.price <= :maxPrice)
+      AND (:minPrice IS NULL OR EXISTS (
+           SELECT 1 FROM License l WHERE l.tool = t AND l.price >= :minPrice))
+      AND (:maxPrice IS NULL OR EXISTS (
+SELECT 1 FROM License l WHERE l.tool = t AND l.price <= :maxPrice))
 """)
     Page<Tool> searchToolsForSeller(
             @Param("sellerId") Long sellerId,
@@ -129,5 +128,14 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
             @Param("maxPrice") Double maxPrice,
             Pageable pageable
     );
-
-    }
+    //    @Query("""
+//       SELECT t FROM Tool t
+//       WHERE t.seller.accountId = :sellerId
+//         AND (:keyword IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+//         AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+//       """)
+//    Page<Tool> findBySellerAndFilter(@Param("sellerId") Long sellerId,
+//                                     @Param("keyword") String keyword,
+//                                     @Param("categoryId") Long categoryId,
+//                                     Pageable pageable);
+}

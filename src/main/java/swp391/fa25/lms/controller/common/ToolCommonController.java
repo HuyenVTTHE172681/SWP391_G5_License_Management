@@ -72,8 +72,7 @@ public class ToolCommonController {
         // Tổng số review
         long totalReviews = toolService.getTotalReviewsForTool(tool);
         // Tính rating trung bình & tổng review (chỉ PUBLISHED)
-        double avgRating = toolService.getAverageRatingForTool(tool, Feedback.Status.PUBLISHED);
-        long totalReviews = toolService.getTotalReviewsForTool(tool, Feedback.Status.PUBLISHED);
+
 
         // Data cho view
         model.addAttribute("tool", tool);
