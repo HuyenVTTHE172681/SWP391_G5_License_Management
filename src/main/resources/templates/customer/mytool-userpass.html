@@ -15,7 +15,7 @@
         <div>
             <h4 class="mb-0">🧰 Tool: <span th:text="${tool.toolName}">Tool</span></h4>
             <small class="text-muted">
-                Phương thức: <span th:text="*{loginMethod}">USER_PASSWORD</span> ·
+<!--                Phương thức: <span th:text="*{loginMethod}">USER_PASSWORD</span> ·-->
                 Mã đơn: <span th:text="${order.orderId}">0</span>
             </small>
         </div>
@@ -35,7 +35,7 @@
         <table class="table table-bordered align-middle">
             <tbody>
             <tr><th style="width:260px">License Account ID</th><td th:text="*{licenseAccountId}">-</td></tr>
-            <tr><th>Login method</th><td th:text="*{loginMethod}">USER_PASSWORD</td></tr>
+<!--            <tr><th>Login method</th><td th:text="*{loginMethod}">USER_PASSWORD</td></tr>-->
 
             <tr>
                 <th>Username</th>
@@ -77,9 +77,9 @@
                 <th>Đã kích hoạt</th>
                 <td>
                     <span th:text="*{used} ? 'Yes' : 'No'">No</span>
-                    <span th:if="*{activatedAt != null}">
-                        · <span th:text="${#temporals.format(acc.activatedAt,'dd/MM/yyyy HH:mm')}">-</span>
-                    </span>
+<!--                    <span th:if="*{activatedAt != null}">-->
+<!--                        · <span th:text="${#temporals.format(acc.activatedAt,'dd/MM/yyyy HH:mm')}">-</span>-->
+<!--                    </span>-->
                 </td>
             </tr>
 

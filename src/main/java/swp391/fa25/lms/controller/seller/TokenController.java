@@ -243,4 +243,25 @@ public class TokenController {
         redirectAttrs.addFlashAttribute("info", "Token edit canceled. Returning to tools.");
         return "redirect:/seller/tools";
     }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public String handleTokenValidationError(
+            jakarta.validation.ConstraintViolationException ex,
+            RedirectAttributes redirectAttrs,
+            jakarta.servlet.http.HttpServletRequest request) {
+
+        String message = ex.getConstraintViolations().stream()
+                .map(v -> v.getMessage())
+                .findFirst()
+                .orElse("Invalid token format");
+
+        redirectAttrs.addFlashAttribute("error", message);
+
+        // 🔁 Quay lại đúng trang
+        if (request.getRequestURI().contains("/edit")) {
+            return "redirect:/seller/token-manage/edit";
+        } else {
+            return "redirect:/seller/token-manage";
+        }
+    }
 }

@@ -13,16 +13,16 @@
     --shadow:0 10px 30px rgba(2,6,23,.08);
 }
 
-@media (prefers-color-scheme: dark){
-    :root{
-        --bg:#0b1220;
-        --card:#0f172a;
-        --text:#e5e7eb;
-        --muted:#9aa4b2;
-        --border:#1f2a44;
-        --shadow:0 10px 30px rgba(0,0,0,.35);
-    }
-}
+/*@media (prefers-color-scheme: dark){*/
+/*    :root{*/
+/*        --bg:#0b1220;*/
+/*        --card:#0f172a;*/
+/*        --text:#e5e7eb;*/
+/*        --muted:#9aa4b2;*/
+/*        --border:#1f2a44;*/
+/*        --shadow:0 10px 30px rgba(0,0,0,.35);*/
+/*    }*/
+/*}*/
 
 /* Page background */
 body{

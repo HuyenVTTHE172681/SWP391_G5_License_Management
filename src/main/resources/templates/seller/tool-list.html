@@ -42,10 +42,6 @@
     </div>
 </nav>
 
-<!-- Flash messages -->
-<div th:if="${success}" class="alert alert-success text-center" th:text="${success}"></div>
-<div th:if="${error}" class="alert alert-danger text-center" th:text="${error}"></div>
-
 <!-- Hero -->
 <section class="hero">
     <div class="container">
@@ -61,6 +57,9 @@
     You no longer have access to add, edit, or manage tools.<br>
     Please <a href="/seller/renew" class="text-light fw-bold text-decoration-underline">renew your package</a> to continue using seller features.
 </div>
+<!-- Flash messages -->
+<div th:if="${success}" class="alert alert-success text-center" th:text="${success}"></div>
+<div th:if="${error}" class="alert alert-danger text-center" th:text="${error}"></div>
 
 <!-- Main section -->
 <section class="py-5">

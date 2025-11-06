@@ -35,6 +35,10 @@ public class License {
 
     private LocalDateTime createdAt;
 
+    @OneToMany(mappedBy = "license", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"license", "order"})
+    private List<LicenseAccount> licenseAccounts;
+
     public License() {
     }
 
@@ -112,5 +116,13 @@ public class License {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public List<LicenseAccount> getLicenseAccounts() {
+        return licenseAccounts;
+    }
+
+    public void setLicenseAccounts(List<LicenseAccount> licenseAccounts) {
+        this.licenseAccounts = licenseAccounts;
     }
 }

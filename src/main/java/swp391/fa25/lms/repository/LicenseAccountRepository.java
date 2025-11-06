@@ -16,27 +16,24 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
     // Lấy danh sách token theo tool_id
     List<LicenseAccount> findByLicense_Tool_ToolId(Long toolId);
 
-    // Lấy danh sách token theo tool_id
-    List<LicenseAccount> findByTool_ToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
-
     // Kiểm tra token đã tồn tại trong 1 tool chưa (chống trùng trong DB mode)
-    boolean existsByToolAndToken(Tool tool, String token);
+    boolean existsByLicense_Tool_ToolIdAndToken(Long toolId, String token);
     boolean existsByToken(String token);
-    @Transactional
-    void deleteByTool(Tool tool);
-    LicenseAccount findByToken(String token);
-    List<LicenseAccount> findAllByTool(Tool tool);
-    long countByToolToolIdAndLoginMethod(Long toolId, LicenseAccount.LoginMethod loginMethod);
 
     // Lấy tất cả license còn hoạt động nhưng đã hết hạn
     @Query("SELECT l FROM LicenseAccount l WHERE l.status = 'ACTIVE' AND l.endDate < :now")
     List<LicenseAccount> findExpiredAccounts(LocalDateTime now);
 
-    Optional<LicenseAccount> findFirstByToolAndUsedFalse(Tool tool);
+    //    Optional<LicenseAccount> findFirstByToolAndUsedFalse(Tool tool);
+    Optional<LicenseAccount> findFirstByLicense_ToolAndUsedFalse(Tool tool);
+    @Query("SELECT la FROM LicenseAccount la JOIN la.license l WHERE l.tool.toolId = :toolId AND la.used = false ORDER BY la.licenseAccountId ASC")
+    Optional<LicenseAccount> findFirstByLicense_Tool_ToolIdAndUsedFalse(Long toolId);
 
     Optional<LicenseAccount> findByOrder_OrderId(Long orderId);
 
     boolean existsByOrder_OrderId(Long orderId);
-    List<LicenseAccount> findByToolToolId(Long toolId);
-}
+    @Transactional
+    void deleteByLicense_Tool_ToolId(Long toolId);
+    LicenseAccount findByToken(String token);
 
+}
