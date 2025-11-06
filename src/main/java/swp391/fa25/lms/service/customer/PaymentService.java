@@ -355,33 +355,34 @@ public class PaymentService {
         License license = order.getLicense();
         Account buyer = order.getAccount();
 
-        LicenseAccount acc = new LicenseAccount();
-        acc.setLicense(license);
-        acc.setOrder(order);
-        acc.setTool(tool);
-        acc.setUsed(true);
-        acc.setStatus(LicenseAccount.Status.ACTIVE);
-        acc.setStartDate(LocalDateTime.now());
-        acc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
-
         String loginMethod = tool.getLoginMethod().toString();
-        acc.setLoginMethod(LicenseAccount.LoginMethod.valueOf(loginMethod));
 
         if ("USER_PASSWORD".equals(loginMethod)) {
+            // Tạo mới LicenseAccount cho USER_PASSWORD
+            LicenseAccount acc = new LicenseAccount();
+            acc.setLicense(license);
+            acc.setOrder(order);
+            acc.setUsed(true);
+            acc.setStatus(LicenseAccount.Status.ACTIVE);
+            acc.setStartDate(LocalDateTime.now());
+            acc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
             acc.setUsername("user_" + buyer.getAccountId() + "_" + System.currentTimeMillis());
             acc.setPassword(UUID.randomUUID().toString().substring(0, 8));
             licenseAccountRepository.save(acc);
             sendUserPasswordEmail(order, acc);
         } else if ("TOKEN".equals(loginMethod)) {
-            Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByToolAndUsedFalse(tool);
+            // Tìm token chưa sử dụng đầu tiên của tool (sử dụng toolId để tránh vấn đề object binding)
+            Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByLicense_Tool_ToolIdAndUsedFalse(tool.getToolId());
             if (unusedToken.isPresent()) {
                 LicenseAccount tokenAcc = unusedToken.get();
-                tokenAcc.setUsed(true);
+                tokenAcc.setLicense(license); // Gán license cụ thể cho order này (nếu cần override)
                 tokenAcc.setOrder(order);
+                tokenAcc.setUsed(true);
                 tokenAcc.setStatus(LicenseAccount.Status.ACTIVE);
                 tokenAcc.setStartDate(LocalDateTime.now());
                 tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
                 licenseAccountRepository.save(tokenAcc);
+                System.out.println("Assigned token " + tokenAcc.getToken() + " for order " + order.getOrderId() + ", status set to ACTIVE");
                 sendTokenEmail(order, tokenAcc);
             } else {
                 System.err.println("No unused token for tool " + tool.getToolId());
@@ -452,6 +453,7 @@ public class PaymentService {
 
             helper.setText(body, true);
             mailSender.send(message);
+            System.out.println("Sent TOKEN email for order " + order.getOrderId() + " with token " + tokenAcc.getToken());
 
         } catch (Exception e) {
             System.err.println("Gửi email TOKEN thất bại: " + e.getMessage());

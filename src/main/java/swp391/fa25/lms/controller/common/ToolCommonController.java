@@ -73,6 +73,9 @@ public class ToolCommonController {
         model.addAttribute("totalReviews", totalReviews);
         model.addAttribute("categories", categoryService.getAllCategories());
 
+        // Tham số để view biết đang lọc theo status nào (nếu cần hiển thị)
+        model.addAttribute("feedbackStatus", Feedback.Status.PUBLISHED.name());
+
         return "public/tool-detail";
     }
 }

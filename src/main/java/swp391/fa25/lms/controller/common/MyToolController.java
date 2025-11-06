@@ -90,15 +90,15 @@ public class MyToolController {
         return "customer/mytool-history";
     }
 
-    // ===== Renew =====
-    @PostMapping("/{orderId}/renew")
-    public String renew(@PathVariable Long orderId,
-                        @RequestParam Long licenseId,
-                        RedirectAttributes ra) {
-        String msg = myToolService.renew(orderId, licenseId);
-        ra.addFlashAttribute("ok", msg);
-        return "redirect:/my-tools/" + orderId;
-    }
+//    // ===== Renew =====
+//    @PostMapping("/{orderId}/renew")
+//    public String renew(@PathVariable Long orderId,
+//                        @RequestParam Long licenseId,
+//                        RedirectAttributes ra) {
+//        String msg = myToolService.renew(orderId, licenseId);
+//        ra.addFlashAttribute("ok", msg);
+//        return "redirect:/my-tools/" + orderId;
+//    }
 
     // ===== Đổi username/password =====
     @PostMapping("/{orderId}/account")

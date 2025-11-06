@@ -26,7 +26,6 @@ public class ToolService {
     // 🔹 CRUD TOOL CƠ BẢN
     // ==========================================================
 
-    /** ✅ Tạo mới Tool (luôn ở trạng thái PENDING) */
     public Tool createTool(Tool tool, Category category) {
         tool.setCategory(category);
         tool.setStatus(Tool.Status.PENDING);
@@ -35,18 +34,15 @@ public class ToolService {
         return toolRepository.save(tool);
     }
 
-    /** ✅ Lấy Tool theo ID và Seller */
     public Tool getToolByIdAndSeller(Long id, Account seller) {
         return toolRepository.findByToolIdAndSeller(id, seller).orElse(null);
     }
 
-    /** ✅ Lấy Tool theo ID */
     public Tool getToolById(Long id) {
         return toolRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tool not found."));
     }
 
-    /** ✅ Lấy danh sách Tool của Seller (trừ DEACTIVE) */
     public List<Tool> getToolsBySeller(Account seller) {
         return toolRepository.findBySellerAndStatusNot(seller, Tool.Status.DEACTIVATED);
     }
@@ -54,9 +50,7 @@ public class ToolService {
     @Transactional
     public void deactivateTool(Long id) {
         Tool tool = getToolById(id);
-        if (tool == null) {
-            throw new IllegalArgumentException("Tool not found");
-        }
+        if (tool == null) throw new IllegalArgumentException("Tool not found");
 
         tool.setStatus(Tool.Status.DEACTIVATED);
         tool.setUpdatedAt(LocalDateTime.now());
@@ -64,14 +58,9 @@ public class ToolService {
     }
 
     // ==========================================================
-    // 🔹 UPDATE TOOL (KHI EDIT)
+    // 🔹 UPDATE TOOL
     // ==========================================================
 
-    /**
-     * ✅ Cập nhật Tool
-     * - Nếu imagePath / toolPath null → giữ nguyên
-     * - Cập nhật licenses, category, quantity an toàn
-     */
     @Transactional
     public void updateTool(Long id,
                            Tool updatedTool,
@@ -84,29 +73,22 @@ public class ToolService {
         Tool existingTool = toolRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tool not found."));
 
-        // 1️⃣ Thông tin cơ bản
         existingTool.setToolName(updatedTool.getToolName());
         existingTool.setDescription(updatedTool.getDescription());
         existingTool.setNote(updatedTool.getNote());
         existingTool.setUpdatedAt(LocalDateTime.now());
-
-        if (updatedTool.getQuantity() != null) {
+        if (updatedTool.getQuantity() != null)
             existingTool.setQuantity(updatedTool.getQuantity());
-        }
 
-        // 2️⃣ Category (lấy entity thật từ DB)
         if (updatedTool.getCategory() != null && updatedTool.getCategory().getCategoryId() != null) {
             Category realCategory = categoryRepository.findById(updatedTool.getCategory().getCategoryId())
                     .orElseThrow(() -> new IllegalArgumentException("Category not found."));
             existingTool.setCategory(realCategory);
         }
 
-        // 3️⃣ Cập nhật ảnh (nếu có)
-        if (imagePath != null && !imagePath.isBlank()) {
+        if (imagePath != null && !imagePath.isBlank())
             existingTool.setImage(imagePath);
-        }
 
-        // 4️⃣ Cập nhật file tool (nếu có)
         if (toolPath != null && !toolPath.isBlank()) {
             if (existingTool.getFiles() == null)
                 existingTool.setFiles(new ArrayList<>());
@@ -120,21 +102,23 @@ public class ToolService {
             existingTool.getFiles().add(fileEntity);
         }
 
-        // 5️⃣ Cập nhật licenses (nếu gửi lên)
+        // 🔹 Cập nhật License (chỉ update nội dung, không clear list để tránh mất dữ liệu)
         if (licenseDays != null && licensePrices != null && licenseDays.size() == licensePrices.size()) {
-            if (existingTool.getLicenses() == null)
-                existingTool.setLicenses(new ArrayList<>());
-            else
-                existingTool.getLicenses().clear();
+            List<License> existingLicenses = licenseRepository.findByTool_ToolId(existingTool.getToolId());
 
             for (int i = 0; i < licenseDays.size(); i++) {
-                License lic = new License();
-                lic.setTool(existingTool);
+                License lic;
+                if (i < existingLicenses.size()) {
+                    lic = existingLicenses.get(i);
+                } else {
+                    lic = new License();
+                    lic.setTool(existingTool);
+                    existingLicenses.add(lic);
+                }
                 lic.setName("License " + licenseDays.get(i) + " days");
                 lic.setDurationDays(licenseDays.get(i));
                 lic.setPrice(licensePrices.get(i));
-                lic.setCreatedAt(LocalDateTime.now());
-                existingTool.getLicenses().add(lic);
+                licenseRepository.save(lic);
             }
         }
 
@@ -145,12 +129,10 @@ public class ToolService {
     // 🔹 CATEGORY & LICENSE HANDLERS
     // ==========================================================
 
-    /** ✅ Lấy tất cả Category */
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
     }
 
-    /** ✅ Tìm Category theo ID */
     public Category getCategoryById(Long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found."));
@@ -166,18 +148,23 @@ public class ToolService {
     }
 
     /** ✅ Tạo LicenseAccount khi Tool dùng Token */
-    public void createLicenseAccountsForTool(Tool tool, List<String> tokens) {
+    public void createLicenseAccountsForLicenses(List<License> licenses, List<String> tokens) {
+        if (licenses == null || licenses.isEmpty())
+            throw new IllegalArgumentException("Tool must have at least one License to create accounts.");
+
+        License primaryLicense = licenses.get(0);
+
         for (String token : tokens) {
             if (licenseAccountRepository.existsByToken(token)) {
                 throw new IllegalArgumentException("Duplicate token detected: " + token);
             }
 
             LicenseAccount acc = new LicenseAccount();
-            acc.setTool(tool);
-            acc.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
+            acc.setLicense(primaryLicense);
             acc.setToken(token);
             acc.setStatus(LicenseAccount.Status.ACTIVE);
-            acc.setCreatedAt(LocalDateTime.now());
+            acc.setStartDate(LocalDateTime.now());
+            acc.setEndDate(LocalDateTime.now().plusDays(primaryLicense.getDurationDays()));
             licenseAccountRepository.save(acc);
         }
     }
@@ -186,7 +173,6 @@ public class ToolService {
     // 🔹 QUẢN LÝ TOOL NÂNG CAO
     // ==========================================================
 
-    /** ✅ Đổi trạng thái Tool (VD: Admin duyệt) */
     public void changeToolStatus(Long id, Tool.Status status) {
         Tool tool = getToolById(id);
         tool.setStatus(status);
@@ -194,12 +180,10 @@ public class ToolService {
         toolRepository.save(tool);
     }
 
-    /** ✅ Kiểm tra trùng tên Tool */
     public boolean existsByToolName(String name) {
         return toolRepository.existsByToolName(name);
     }
 
-    /** ✅ Tìm kiếm Tool của Seller (lọc & phân trang) */
     public Page<Tool> searchToolsForSeller(
             Long sellerId,
             String keyword,
@@ -214,17 +198,14 @@ public class ToolService {
         if (status != null && !status.isBlank()) {
             try {
                 statusEnum = Tool.Status.valueOf(status.trim().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                statusEnum = null;
-            }
+            } catch (IllegalArgumentException ignored) {}
         }
+
         Tool.LoginMethod loginEnum = null;
         if (loginMethod != null && !loginMethod.isBlank()) {
             try {
-                loginEnum = Tool.LoginMethod.valueOf(loginMethod);
-            } catch (IllegalArgumentException ignored) {
-                loginEnum = null;
-            }
+                loginEnum = Tool.LoginMethod.valueOf(loginMethod.trim().toUpperCase());
+            } catch (IllegalArgumentException ignored) {}
         }
 
         return toolRepository.searchToolsForSeller(
@@ -232,20 +213,42 @@ public class ToolService {
         );
     }
 
-    /** ✅ Cập nhật Quantity + Licenses cùng lúc */
+    // ==========================================================
+    // 🔹 FIXED: updateQuantityAndLicenses (không còn clear list)
+    // ==========================================================
+
     @Transactional
     public void updateQuantityAndLicenses(Long toolId, int newQuantity, List<License> newLicenses) {
         Tool tool = toolRepository.findById(toolId)
                 .orElseThrow(() -> new IllegalArgumentException("Tool not found with id: " + toolId));
 
-        tool.setQuantity(newQuantity);
-        tool.getLicenses().clear();
+        List<License> existingLicenses = licenseRepository.findByTool_ToolId(toolId);
+        for (int i = 0; i < newLicenses.size(); i++) {
+            License src = newLicenses.get(i);
+            License target;
 
-        for (License license : newLicenses) {
-            license.setTool(tool);
-            tool.getLicenses().add(license);
+            if (i < existingLicenses.size()) {
+                target = existingLicenses.get(i);
+            } else {
+                target = new License();
+                target.setTool(tool);
+                existingLicenses.add(target);
+            }
+
+            target.setName(src.getName());
+            target.setDurationDays(src.getDurationDays());
+            target.setPrice(src.getPrice());
+            licenseRepository.save(target);
         }
 
+        if (existingLicenses.size() > newLicenses.size()) {
+            for (int i = newLicenses.size(); i < existingLicenses.size(); i++) {
+                licenseRepository.delete(existingLicenses.get(i));
+            }
+        }
+
+        tool.setQuantity(newQuantity);
+        tool.setUpdatedAt(LocalDateTime.now());
         toolRepository.save(tool);
     }
 }

@@ -54,22 +54,22 @@ public class MyToolService {
     /** Dữ liệu trang chi tiết tool theo order */
     @Transactional(readOnly = true)
     public ViewData viewTool(Long orderId) {
-        var order = loadOrderOr404(orderId);
+        CustomerOrder order = loadOrderOr404(orderId);
         ensureOrderSuccess(order);
 
         var acc = order.getLicenseAccount();
         if (acc == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa được cấp license.");
 
         List<ToolFile> files = fileRepo.findByTool_ToolIdOrderByCreatedAtDesc(order.getTool().getToolId());
-        List<License> licenses = licenseRepo.findByToolToolId(order.getTool().getToolId());
+        List<License> licenses = licenseRepo.findByTool_ToolId(order.getTool().getToolId());
 
-        var method = acc.getLoginMethod() != null
-                ? acc.getLoginMethod()
+        var method = acc.getLicense().getTool().getLoginMethod() != null
+                ? acc.getLicense().getTool().getLoginMethod()
                 : (order.getTool().getLoginMethod() == Tool.LoginMethod.TOKEN
-                ? LicenseAccount.LoginMethod.TOKEN
-                : LicenseAccount.LoginMethod.USER_PASSWORD);
+                ? Tool.LoginMethod.TOKEN
+                : Tool.LoginMethod.USER_PASSWORD);
 
-        String template = (method == LicenseAccount.LoginMethod.TOKEN)
+        String template = (method == Tool.LoginMethod.TOKEN)
                 ? "customer/mytool-token"
                 : "customer/mytool-userpass";
 
@@ -172,7 +172,7 @@ public class MyToolService {
 
         var acc = order.getLicenseAccount();
         if (acc == null) return new UpdateResult(false, "Đơn chưa được cấp license.");
-        if (acc.getLoginMethod() == LicenseAccount.LoginMethod.TOKEN) {
+        if (acc.getLicense().getTool().getLoginMethod() == Tool.LoginMethod.TOKEN) {
             return new UpdateResult(false, "Tài khoản dùng TOKEN: không thể đổi username/password.");
         }
 
@@ -214,4 +214,52 @@ public class MyToolService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa thành công.");
         }
     }
+    /** Gia hạn có gắn transaction (dùng cho thanh toán VNPay) */
+    @Transactional
+    public void renewWithTransaction(Long orderId, Long licenseId, WalletTransaction tx) {
+        var order = loadOrderOr404(orderId);
+        ensureOrderSuccess(order);
+
+        var acc = order.getLicenseAccount();
+        if (acc == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn chưa được cấp license.");
+        }
+
+        var lic = licenseRepo.findById(licenseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gói license không hợp lệ."));
+        if (!lic.getTool().getToolId().equals(order.getTool().getToolId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gói license không thuộc tool này.");
+        }
+
+        int days = (lic.getDurationDays() != null) ? lic.getDurationDays() : 30;
+        var now = LocalDateTime.now();
+        var base = (acc.getEndDate() != null && acc.getEndDate().isAfter(now)) ? acc.getEndDate() : now;
+        var newEnd = base.plusDays(days);
+
+        // Cập nhật account
+        acc.setEndDate(newEnd);
+        if (acc.getStartDate() == null) acc.setStartDate(now);
+        acc.setStatus(LicenseAccount.Status.ACTIVE);
+        accRepo.save(acc);
+
+        // Ghi log gia hạn
+        var log = new LicenseRenewLog();
+        log.setLicenseAccount(acc);
+        log.setRenewDate(now);
+        log.setNewEndDate(newEnd);
+
+        // Ưu tiên số tiền từ transaction, nếu null thì fallback về price của license
+        BigDecimal amountPaid =
+                (tx != null && tx.getAmount() != null)
+                        ? tx.getAmount()
+                        : (lic.getPrice() != null ? BigDecimal.valueOf(lic.getPrice()) : BigDecimal.ZERO);
+        log.setAmountPaid(amountPaid);
+
+        // Nếu trong LicenseRenewLog bạn có field tham chiếu transaction thì set luôn ở đây
+        // ví dụ:
+        // log.setTransaction(tx);
+
+        renewRepo.save(log);
+    }
+
 }

@@ -77,7 +77,7 @@ public class Tool {
     private List<ToolFile> files;
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties({"tool", "customerOrders"})
+    @JsonIgnoreProperties({"tool", "customerOrders", "licenseAccounts"})
     private List<License> licenses;
 
     private LocalDateTime createdAt;
@@ -320,5 +320,4 @@ public class Tool {
         isFavorite = favorite;
     }
 }
-
 

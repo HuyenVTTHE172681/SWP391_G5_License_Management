@@ -14,11 +14,8 @@ import swp391.fa25.lms.model.Tool;
 
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface ToolRepository extends JpaRepository<Tool, Long> {
@@ -48,10 +45,8 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
                                        @Param("status") Tool.Status status);
 
     List<Tool> findByToolNameContainingIgnoreCase(String keyword);
-
     List<Tool> findBySeller(Account seller);
 
-    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
 //    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
 
 
@@ -64,26 +59,6 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     Optional<Tool> findById(Long toolId);
     Optional<Tool> findByToolName(String toolName);
 
-    /**
-     * 📈 Biểu đồ tăng trưởng tool theo tháng
-     */
-    @Query("""
-                SELECT MONTH(t.createdAt), COUNT(t)
-                FROM Tool t
-                GROUP BY MONTH(t.createdAt)
-                ORDER BY MONTH(t.createdAt)
-            """)
-    List<Object[]> getToolGrowthByMonth();
-
-    /**
-     * 🧩 Tỷ lệ tool theo status
-     */
-    @Query("""
-                SELECT t.status, COUNT(t)
-                FROM Tool t
-                GROUP BY t.status
-            """)
-    List<Object[]> getToolCountByStatus();
     @Query("""
     SELECT t FROM Tool t
     WHERE t.seller.accountId = :sellerId
@@ -107,20 +82,6 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
             Pageable pageable
     );
 
-    List<Tool> findBySellerAndStatusNot(Account seller, Tool.Status status);
-    boolean existsByToolName(String toolName);
-
-//    @Query("""
-//       SELECT t FROM Tool t
-//       WHERE t.seller.accountId = :sellerId
-//         AND (:keyword IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :keyword, '%')))
-//         AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
-//       """)
-//    Page<Tool> findBySellerAndFilter(@Param("sellerId") Long sellerId,
-//                                     @Param("keyword") String keyword,
-//                                     @Param("categoryId") Long categoryId,
-//                                     Pageable pageable);
-//
     @Query("""
     SELECT t FROM Tool t
     WHERE t.status = 'PUBLISHED'
@@ -128,4 +89,29 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
       AND (t.seller.sellerExpiryDate IS NULL OR t.seller.sellerExpiryDate >= CURRENT_TIMESTAMP)
     """)
     List<Tool> findAllPublishedAndSellerActive();
+
+
+    @Query("""
+    SELECT DISTINCT t FROM Tool t
+    LEFT JOIN t.licenses l
+    WHERE t.seller.accountId = :sellerId
+      AND (:keyword IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+      AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+      AND (:status IS NULL OR t.status = :status)
+      AND (:loginMethod IS NULL OR t.loginMethod = :loginMethod)
+      AND (:minPrice IS NULL OR l.price >= :minPrice)
+      AND (:maxPrice IS NULL OR l.price <= :maxPrice)
+""")
+    Page<Tool> searchToolsForSeller(
+            @Param("sellerId") Long sellerId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("status") String status,
+            @Param("loginMethod") Tool.LoginMethod loginMethod,
+            @Param("minPrice") Double minPrice,
+            @Param("maxPrice") Double maxPrice,
+            Pageable pageable
+    );
+    List<Tool> findBySellerAndStatusNot(Account seller, Tool.Status status);
+    boolean existsByToolName(String toolName);
     }

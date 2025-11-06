@@ -31,10 +31,6 @@ public class LicenseAccount {
     @JoinColumn(name = "order_id", nullable = true, unique = true)
     private CustomerOrder order; // mỗi order sinh ra 1 license account
 
-    @ManyToOne
-    @JoinColumn(name = "tool_id")
-    private Tool tool;
-
     @OneToMany(mappedBy = "licenseAccount")
     @OrderBy("renewDate DESC")
     private List<LicenseRenewLog> renewAcc;
@@ -46,12 +42,8 @@ public class LicenseAccount {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
-    // ===== NEW FIELDS =====
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private LoginMethod loginMethod = LoginMethod.USER_PASSWORD;
-    public enum LoginMethod { USER_PASSWORD, TOKEN }
-    private LocalDateTime createdAt;
+
+
     @Column(unique = true)
     @Pattern(
             regexp = "^[A-Za-z0-9_-]+$",
@@ -71,7 +63,6 @@ public class LicenseAccount {
         this.password = password;
         this.license = license;
         this.order = order;
-        this.tool = tool;
         this.renewAcc = renewAcc;
         this.status = status;
         this.startDate = startDate;
@@ -118,14 +109,6 @@ public class LicenseAccount {
         this.order = order;
     }
 
-    public Tool getTool() {
-        return tool;
-    }
-
-    public void setTool(Tool tool) {
-        this.tool = tool;
-    }
-
     public List<LicenseRenewLog> getRenewAcc() {
         return renewAcc;
     }
@@ -157,15 +140,6 @@ public class LicenseAccount {
     public void setEndDate(LocalDateTime endDate) {
         this.endDate = endDate;
     }
-
-    public LoginMethod getLoginMethod() {
-        return loginMethod;
-    }
-
-    public void setLoginMethod(LoginMethod loginMethod) {
-        this.loginMethod = loginMethod;
-    }
-
     public String getToken() {
         return token;
     }
@@ -180,14 +154,6 @@ public class LicenseAccount {
 
     public void setUsed(Boolean used) {
         this.used = used;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 }
 
