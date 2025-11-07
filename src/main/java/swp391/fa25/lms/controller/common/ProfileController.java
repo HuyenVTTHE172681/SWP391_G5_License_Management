@@ -29,7 +29,7 @@ public class ProfileController {
 
         // TH1: Authentication
         if(authentication != null && authentication.isAuthenticated()
-            && authentication.getPrincipal() != null) {
+                && authentication.getPrincipal() != null) {
             email = authentication.getName();
         }
 
@@ -92,27 +92,26 @@ public class ProfileController {
     @PostMapping("/profile/edit")
     public String updateProfile(@ModelAttribute("account") Account updatedAccount,
                                 Authentication authentication,
-                                HttpServletRequest request) {
-        String email = null;
+                                HttpServletRequest request,
+                                Model model) {
+        try {
+            String email = authentication != null ? authentication.getName() : null;
 
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() != null
-                && !(authentication.getPrincipal() instanceof String && authentication.getPrincipal().equals("anonymousUser"))) {
-            email = authentication.getName();
-        }
-
-        if (email == null) {
-            Account sessionAccount = (Account) request.getSession().getAttribute("loggedInAccount");
-            if (sessionAccount != null) {
-                email = sessionAccount.getEmail();
+            if (email == null) {
+                Account sessionAccount = (Account) request.getSession().getAttribute("loggedInAccount");
+                if (sessionAccount != null) email = sessionAccount.getEmail();
             }
-        }
 
-        if (email == null) {
-            return "redirect:/login";
-        }
+            if (email == null) return "redirect:/login";
 
-        accountService.updateProfile(email, updatedAccount);
-        return "redirect:/profile";
+            accountService.updateProfile(email, updatedAccount);
+            model.addAttribute("success", "Cập nhật thông tin thành công!");
+            return "redirect:/profile";
+
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("error", ex.getMessage());
+            model.addAttribute("account", updatedAccount); // Giữ lại dữ liệu đã nhập
+            return "profile/editProfile";
+        }
     }
 }
