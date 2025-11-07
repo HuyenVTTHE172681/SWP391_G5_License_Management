@@ -200,8 +200,10 @@ public class AccountService {
         if (!EMAIL_REGEX.matcher(email).matches()) {
             throw new RuntimeException("Định dạng email không hợp lệ");
         }
+        System.out.println("DEBUG: EMAIL"+email);
+
         Account account = accountRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống"));
+                    .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống"));
 
         // 2 Validate input password
         if (password == null || password.trim().isEmpty()) {
@@ -323,7 +325,27 @@ public class AccountService {
         Account existing = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản email: " + email));
 
-        existing.setFullName(updatedAccount.getFullName());
+
+        if (updatedAccount.getFullName() == null || updatedAccount.getFullName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên đăng nhập không được để trống");
+        }
+
+
+        if (updatedAccount.getPhone() != null && !updatedAccount.getPhone().isEmpty()) {
+            if (!updatedAccount.getPhone().matches("^(0[0-9]{9})$")) {
+                throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải có 10 số, bắt đầu bằng 0)");
+            }
+        }
+
+
+        if (updatedAccount.getAddress() != null && !updatedAccount.getAddress().isEmpty()) {
+            if (updatedAccount.getAddress().matches(".*[@#$%^&*()!].*")) {
+                throw new IllegalArgumentException("Địa chỉ không được chứa ký tự đặc biệt");
+            }
+        }
+
+
+        existing.setFullName(updatedAccount.getFullName().trim());
         existing.setPhone(updatedAccount.getPhone());
         existing.setAddress(updatedAccount.getAddress());
 

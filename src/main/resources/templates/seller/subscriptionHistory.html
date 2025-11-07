@@ -8,8 +8,47 @@
 <body class="bg-light">
 <div class="container mt-5">
     <div class="card p-4 shadow">
-        <h3 class="text-center mb-3">Lịch sử gia hạn tài khoản Seller</h3>
+        <h3 class="text-center mb-4">📜 Lịch sử gia hạn tài khoản Seller</h3>
 
+        <!-- ✅ FORM LỌC DỮ LIỆU -->
+        <form action="/seller/history" method="get" class="mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="startDate" class="form-label">Từ ngày</label>
+                    <input type="date" id="startDate" name="startDate" th:value="${startDate}" class="form-control">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="endDate" class="form-label">Đến ngày</label>
+                    <input type="date" id="endDate" name="endDate" th:value="${endDate}" class="form-control">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="packageName" class="form-label">Tên gói</label>
+                    <input type="text" id="packageName" name="packageName"
+                           th:value="${packageName}" class="form-control"
+                           placeholder="Nhập tên gói...">
+                </div>
+
+                <div class="col-md-2">
+                    <label for="status" class="form-label">Trạng thái</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">-- Tất cả --</option>
+                        <option value="active" th:selected="${status == 'active'}">Hoạt động</option>
+                        <option value="expired" th:selected="${status == 'expired'}">Hết hạn</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1 text-center">
+                    <button type="submit" class="btn btn-primary w-100">Lọc</button>
+                </div>
+            </div>
+            <div class="text-end mt-2">
+                <a href="/seller/history" class="btn btn-secondary btn-sm">Reset</a>
+            </div>
+        </form>
+
+        <!-- ✅ BẢNG LỊCH SỬ GIA HẠN -->
         <table class="table table-bordered text-center align-middle">
             <thead class="table-dark">
             <tr>
@@ -25,18 +64,24 @@
                 <td th:text="${#temporals.format(sub.startDate, 'dd/MM/yyyy')}"></td>
                 <td th:text="${#temporals.format(sub.endDate, 'dd/MM/yyyy')}"></td>
                 <td th:text="${sub.sellerPackage.packageName}"></td>
-                <td th:text="${#numbers.formatDecimal(sub.priceAtPurchase, 0, 'COMMA', 0, 'POINT')} + '₫'"></td>
+                <td th:text="${#numbers.formatDecimal(sub.priceAtPurchase, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
                 <td>
-                    <span th:classappend="${sub.active} ? 'text-success' : 'text-danger'"
-                          th:text="${sub.active ? 'Đang hoạt động' : 'Hết hạn'}"></span>
+                    <span th:text="${sub.endDate.isAfter(T(java.time.LocalDateTime).now()) ? 'Đang hoạt động' : 'Hết hạn'}"
+                          th:classappend="${sub.endDate.isAfter(T(java.time.LocalDateTime).now()) ? 'text-success fw-bold' : 'text-danger fw-bold'}"></span>
                 </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(subscriptions)}">
+                <td colspan="5" class="text-muted fst-italic">Không có dữ liệu phù hợp với bộ lọc.</td>
             </tr>
             </tbody>
         </table>
 
-        <div class="text-center mt-3">
-            <a th:href="@{/seller/renew}" class="btn btn-dark">Gia hạn thêm</a>
+        <!-- ✅ NÚT GIA HẠN -->
+        <div class="text-center mt-4">
+            <a th:href="@{/seller/renew}" class="btn btn-dark px-4">Gia hạn thêm</a>
+            <a th:href="@{/seller/tools}" class="btn btn-dark px-4">Về trang chủ</a>
         </div>
+
     </div>
 </div>
 </body>

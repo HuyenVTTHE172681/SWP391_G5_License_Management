@@ -371,9 +371,9 @@
             <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
                th:href="@{|/orders/${order.orderId}/feedback|}"
                class="btn btn-warning"><i class="bi bi-chat-left-dots"></i> Gửi Feedback</a>
-            <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
-               th:href="@{|/orders/${order.orderId}/report|}"
-               class="btn btn-outline-danger"><i class="bi bi-flag"></i> Báo cáo</a>
+<!--            <a th:if="${order.orderStatus.name() == 'SUCCESS'}"-->
+<!--               th:href="@{|/orders/${order.orderId}/report|}"-->
+<!--               class="btn btn-outline-danger"><i class="bi bi-flag"></i> Báo cáo</a>-->
             <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
                th:href="@{'/my-tools/' + ${order.orderId}}"
                class="btn btn-success"><i class="bi bi-play-circle"></i> Dùng dịch vụ này</a>

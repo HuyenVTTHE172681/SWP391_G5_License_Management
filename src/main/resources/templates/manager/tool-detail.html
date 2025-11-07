@@ -14,7 +14,7 @@
     </header>
 
     <section class="info">
-        <img th:src="@{'/images/' + ${tool.image}}" alt="Tool image" class="tool-img">
+        <img th:if="${tool.image != null}" th:src="@{'/' + ${tool.image}}" alt="Tool image" class="tool-img">
 
         <p><strong>Seller:</strong> <span th:text="${tool.seller.fullName}"></span></p>
         <p><strong>Category:</strong> <span th:text="${tool.category.categoryName}"></span></p>

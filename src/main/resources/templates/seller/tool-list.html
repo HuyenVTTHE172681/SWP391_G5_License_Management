@@ -4,140 +4,244 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seller Dashboard | My Tools</title>
+
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
     <link rel="stylesheet" th:href="@{/css/tool-list.css}">
 </head>
 
 <body>
-<!-- Navbar -->
+
+<!-- ===== Navbar ===== -->
 <nav class="navbar navbar-expand-lg">
     <div class="container">
         <a class="navbar-brand fw-bold" th:href="@{/seller/tools}">SELLER DASHBOARD</a>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul class="navbar-nav">
+                <li class="nav-item"><a th:href="@{/seller/tools/sales-report}" class="nav-link">Sales Report</a></li>
+                <li class="nav-item"><a th:href="@{/seller/renew}" class="nav-link">Renew Packages</a></li>
+                <li class="nav-item"><a th:href="@{/seller/history}" class="nav-link">View History</a></li>
                 <li class="nav-item">
-                    <a th:href="@{/seller/tools/sales-report}" class="nav-link">Sales Report</a>
+                    <a th:href="@{/profile}" class="nav-link">View Profile</a>
                 </li>
-                <li class="nav-item">
-                    <a th:href="@{/seller/renew}" class="nav-link">Renew Packages</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/seller/history}" class="nav-link">View History</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/seller/orders}" class="nav-link">Tool Manager</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/seller/profile}" class="nav-link">Profile</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/logout" class="nav-link text-danger">Logout</a>
-                </li>
+                <li class="nav-item"><a th:href="@{/seller/orders}" class="nav-link">Tool Manager</a></li>
+                <li class="nav-item"><a th:href="@{/seller/feedback}" class="nav-link">View Feedback</a></li>
+                <li class="nav-item"><a href="/logout" class="nav-link text-warning">Logout</a></li>
             </ul>
         </div>
     </div>
 </nav>
 
-<!-- Hero -->
+<!-- ===== Hero Section ===== -->
 <section class="hero">
-    <div class="container">
-        <h1>My Tools</h1>
-        <p class="lead mt-2">Manage and filter your uploaded tools easily</p>
+    <div class="container text-center">
+        <h1 class="fw-bold mb-2">My Tools</h1>
+        <p class="lead">Manage and filter your uploaded tools easily</p>
     </div>
 </section>
 
-<!-- 🔹 Thông báo hết hạn gói Seller -->
-<div th:if="${sellerExpired}" class="alert alert-danger text-center my-4 mx-3">
-    <i class="bi bi-exclamation-octagon-fill me-2"></i>
-    <strong>Your seller package has expired!</strong>
-    You no longer have access to add, edit, or manage tools.<br>
-    Please <a href="/seller/renew" class="text-light fw-bold text-decoration-underline">renew your package</a> to continue using seller features.
-</div>
-<!-- Flash messages -->
+<!-- ===== Flash Messages ===== -->
 <div th:if="${success}" class="alert alert-success text-center" th:text="${success}"></div>
 <div th:if="${error}" class="alert alert-danger text-center" th:text="${error}"></div>
 
-<!-- Main section -->
+<!-- ===== Seller Expired Notice ===== -->
+<div th:if="${sellerExpired}" class="alert alert-danger text-center my-4 mx-3">
+    <i class="bi bi-exclamation-octagon-fill me-2"></i>
+    <strong>Your seller package has expired!</strong>
+    Please <a th:href="@{/seller/renew}" class="text-danger fw-bold text-decoration-underline">renew your package</a>
+    to continue using seller features.
+</div>
+
+<!-- ===== Main Section ===== -->
 <section class="py-5">
     <div class="container">
+
+        <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-semibold">Your Tools</h2>
-            <a href="/seller/tools/add" class="btn btn-add">+ Create New Tool</a>
+            <a th:href="@{/seller/tools/add}" class="btn btn-add">+ Create New Tool</a>
         </div>
 
-        <!-- Filter -->
-        <div class="card mb-4 filter-card p-3">
-            <form class="row gy-2 gx-3 align-items-end flex-wrap" onsubmit="event.preventDefault(); applyFilters(); return false;">
+        <!-- ===== Filter Form ===== -->
+        <div class="card mb-4 p-3 filter-card">
+            <form th:action="@{/seller/tools}" method="get" class="row g-3 align-items-end">
 
-            <div class="col-lg-2 col-md-3 col-sm-6">
+                <div class="col-md-2">
                     <label class="form-label fw-semibold">Keyword</label>
-                    <input id="keyword" type="text" class="form-control" placeholder="Search tool name...">
+                    <input type="text" name="keyword" th:value="${keyword}" class="form-control"
+                           placeholder="Search tool...">
                 </div>
-                <div class="col-lg-2 col-md-3 col-sm-6">
+
+                <div class="col-md-2">
                     <label class="form-label fw-semibold">Category</label>
-                    <select id="category" class="form-select">
+                    <select name="categoryId" class="form-select">
                         <option value="">All</option>
-                        <option th:each="c : ${categories}" th:value="${c.categoryId}"
+                        <option th:each="c : ${categories}"
+                                th:value="${c.categoryId}"
+                                th:selected="${c.categoryId == categoryId}"
                                 th:text="${c.categoryName}"></option>
                     </select>
                 </div>
-                <div class="col-lg-2 col-md-3 col-sm-6">
+
+                <div class="col-md-2">
                     <label class="form-label fw-semibold">Status</label>
-                    <select id="status" class="form-select">
+                    <select name="status" class="form-select">
                         <option value="">All</option>
-                        <option value="PENDING">Pending</option>
-                        <option value="APPROVED">Approved</option>
-                        <option value="REJECTED">Rejected</option>
-                        <option value="PUBLISHED">Published</option>
-                        <option value="DEACTIVATED">Deactivated</option>
-                    </select>
-                </div>
-                <div class="col-lg-2 col-md-3 col-sm-6">
-                    <label class="form-label fw-semibold">Login Method</label>
-                    <select id="loginMethod" class="form-select">
-                        <option value="">All</option>
-                        <option value="USER_PASSWORD">User & Password</option>
-                        <option value="TOKEN">Token</option>
+                        <option value="PENDING" th:selected="${status == 'PENDING'}">Pending</option>
+                        <option value="APPROVED" th:selected="${status == 'APPROVED'}">Approved</option>
+                        <option value="REJECTED" th:selected="${status == 'REJECTED'}">Rejected</option>
+                        <option value="PUBLISHED" th:selected="${status == 'PUBLISHED'}">Published</option>
+                        <option value="DEACTIVATED" th:selected="${status == 'DEACTIVATED'}">Deactivated</option>
                     </select>
                 </div>
 
-                <div class="col-lg-3 col-md-4 col-sm-12">
-                    <label class="form-label fw-semibold">Price Range (VND)</label>
-                    <div class="d-flex gap-2">
-                        <input id="minPrice" type="number" class="form-control" placeholder="Min">
-                        <input id="maxPrice" type="number" class="form-control" placeholder="Max">
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-3 col-sm-6">
-                    <label class="form-label fw-semibold">Sort by</label>
-                    <select id="sort" class="form-select">
-                        <option value="newest">Newest</option>
-                        <option value="oldest">Oldest</option>
-                        <option value="price,asc">Price: Low → High</option>
-                        <option value="price,desc">Price: High → Low</option>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Login Method</label>
+                    <select name="loginMethod" class="form-select">
+                        <option value="">All</option>
+                        <option value="USER_PASSWORD" th:selected="${loginMethod == 'USER_PASSWORD'}">User/Password
+                        </option>
+                        <option value="TOKEN" th:selected="${loginMethod == 'TOKEN'}">Token</option>
                     </select>
                 </div>
-                <div class="col-lg-1 col-md-2 col-sm-3 d-flex align-items-end">
-                    <button type="button" class="btn btn-primary w-100" onclick="applyFilters()">Go</button>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Price Range (₫)</label>
+                    <div class="d-flex gap-2">
+                        <input type="number" name="minPrice" th:value="${minPrice}" placeholder="Min"
+                               class="form-control">
+                        <input type="number" name="maxPrice" th:value="${maxPrice}" placeholder="Max"
+                               class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Sort by</label>
+                    <select name="sort" class="form-select">
+                        <option value="newest" th:selected="${sort == 'newest'}">Newest</option>
+                        <option value="oldest" th:selected="${sort == 'oldest'}">Oldest</option>
+                        <option value="price,asc" th:selected="${sort == 'price,asc'}">Price: Low → High</option>
+                        <option value="price,desc" th:selected="${sort == 'price,desc'}">Price: High → Low</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-outline-primary w-100">Go</button>
                 </div>
             </form>
         </div>
 
-        <!-- Tools grid -->
-        <div class="row g-4" id="toolsContainer"></div>
-        <div id="pagination" class="d-flex justify-content-center mt-4 gap-2"></div>
+        <!-- ===== Tool Grid ===== -->
+        <div th:if="${#lists.isEmpty(tools.content)}" class="text-center text-muted py-5">
+            No tools found.
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col" th:each="tool : ${tools.content}">
+                <div class="card tool-card h-100">
+
+                    <!-- Image -->
+                    <img th:if="${tool.image != null}"
+                         th:src="${tool.image.startsWith('/') ? tool.image : '/' + tool.image}"
+                         alt="Tool image"
+                         class="w-100"
+                         style="height:180px;object-fit:cover;">
+
+                    <img th:if="${tool.image == null}"
+                         th:src="@{/uploads/images/default-placeholder.jpg}"
+                         alt="Default image"
+                         class="w-100"
+                         style="height:180px;object-fit:cover;">
+                    <!-- Card Body -->
+                    <div class="card-body d-flex flex-column justify-content-between">
+
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="fw-bold text-truncate" th:text="${tool.toolName}"></h5>
+                                <span class="quantity-tag">Qty: [[${tool.quantity}]]</span>
+                            </div>
+
+                            <p class="text-muted small mb-1">
+                                <i class="bi bi-tag"></i>
+                                <span th:text="${tool.category.categoryName}">Category name</span>
+                            </p>
+
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-clock"></i>
+                                [[${#temporals.format(tool.updatedAt, 'dd/MM/yyyy HH:mm')}]]
+                            </p>
+
+                            <p class="fw-semibold text-primary mb-2">
+                                <span th:if="${#lists.isEmpty(tool.licenses)}">No license yet</span>
+                                <span th:each="lic : ${tool.licenses}">
+                                [[${lic.durationDays != null ? lic.durationDays + 'd: ' + lic.price + '₫' : '∞: ' + lic.price + '₫'}]]<br>
+                                </span>
+                            </p>
+                        </div>
+
+                        <!-- Footer: Buttons & Status -->
+                        <div class="mt-auto d-flex justify-content-between align-items-center">
+                            <a th:href="@{/seller/tools/edit/{id}(id=${tool.toolId})}"
+                               class="btn btn-outline-primary btn-sm rounded-pill">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+
+                            <!-- ✅ Hiển thị badge theo status luôn, không cần unless -->
+                            <span th:switch="${tool.status?.name()}">
+                                <span th:case="'PENDING'" class="badge bg-warning text-dark">Pending</span>
+                                <span th:case="'APPROVED'" class="badge bg-success">Approved</span>
+                            <span th:case="'REJECTED'" class="badge bg-danger">Rejected</span>
+                            <span th:case="'PUBLISHED'" class="badge bg-primary">Published</span>
+                            <span th:case="'DEACTIVATED'" class="badge bg-secondary">Deactivated</span>
+                            <span th:case="'SUSPECT'" class="badge bg-dark">Suspect</span>
+                            <span th:case="'VIOLATED'" class="badge bg-danger">Violated</span>
+                            <span th:case="*" class="badge bg-light text-dark">Unknown</span>
+                            </span>
+
+                            <!-- ✅ Nếu là published thì thêm nút deactivate -->
+                            <form th:if="${tool.status?.name() == 'PUBLISHED'}"
+                                  th:action="@{/seller/tools/{id}/deactivate(id=${tool.toolId})}"
+                                  method="post"
+                                  onsubmit="return confirm('Are you sure you want to deactivate this tool?');"
+                                  class="d-inline">
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">
+                                    <i class="bi bi-x-circle"></i> Deactivate
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===== Pagination ===== -->
+        <div class="d-flex justify-content-center align-items-center gap-3 mt-4">
+            <a th:if="${tools.hasPrevious()}"
+               th:href="@{/seller/tools(page=${tools.number - 1}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, loginMethod=${loginMethod}, sort=${sort})}"
+               class="btn btn-outline-secondary btn-sm">← Prev</a>
+
+            <span>Page [[${tools.number + 1}]] / [[${tools.totalPages}]]</span>
+
+            <a th:if="${tools.hasNext()}"
+               th:href="@{/seller/tools(page=${tools.number + 1}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, loginMethod=${loginMethod}, sort=${sort})}"
+               class="btn btn-outline-secondary btn-sm">Next →</a>
+        </div>
+
     </div>
 </section>
 
+
+<!-- ===== Footer ===== -->
 <footer>
-    <p>© 2025 Startup Tools. All rights reserved.</p>
+    © 2025 Startup Tools. All rights reserved.
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script th:src="@{/js/tool-list.js}"></script>
 </body>
 </html>
