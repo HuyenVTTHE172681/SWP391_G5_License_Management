@@ -1,4 +1,3 @@
-
 package swp391.fa25.lms.controller.common;
 
 import jakarta.validation.constraints.Max;
@@ -48,10 +47,13 @@ public class FeedbackController {
 
         var order = feedbackService.getOrderForFeedback(orderId);
 
-        // Nếu order này đã có feedback rồi -> quay về trang orders + thông báo
-        if (feedbackRepo.existsByOrder(order)) {
+        Long accId  = order.getAccount().getAccountId();
+        Long toolId = order.getTool().getToolId();
+
+        // Nếu account + tool này đã có feedback rồi -> quay về trang orders + thông báo
+        if (feedbackRepo.existsByAccount_AccountIdAndTool_ToolId(accId, toolId)) {
             ra.addFlashAttribute("error",
-                    "Với mỗi 1 đơn hàng bạn chỉ có thể add 1 feedback.");
+                    "Với mỗi 1 đơn hàng / 1 sản phẩm bạn chỉ có thể đánh giá 1 lần.");
             return "redirect:/orders";
         }
 
@@ -72,13 +74,11 @@ public class FeedbackController {
             return "redirect:/tools/" + toolId + "#review";
 
         } catch (ResponseStatusException ex) {
-            // Đúng lỗi "đã có feedback cho order này rồi" (409 CONFLICT)
             if (ex.getStatusCode().value() == HttpStatus.CONFLICT.value()) {
                 ra.addFlashAttribute("error",
-                        "Với mỗi 1 đơn hàng bạn chỉ có thể add 1 feedback.");
+                        "Với mỗi 1 đơn hàng / 1 sản phẩm bạn chỉ có thể đánh giá 1 lần.");
                 return "redirect:/orders";
             }
-            // Các lỗi khác giữ nguyên behavior cũ
             throw ex;
         }
     }
@@ -111,15 +111,15 @@ public class FeedbackController {
         return "redirect:/tools/" + toolId + "#review";
     }
 
-    // ================== DELETE ==================
-
-    /** “Xoá” feedback => đánh dấu SUSPECT (soft-delete) */
-    @PostMapping("/feedback/{feedbackId}/delete")
-    public String deleteFeedback(@PathVariable Long feedbackId,
-                                 RedirectAttributes ra,
-                                 Principal principal) {
-        Long toolId = feedbackService.deleteFeedback(feedbackId, principal);
-        ra.addFlashAttribute("ok", "Đã ẩn đánh giá."); // đổi thông điệp cho đúng hành vi soft-delete
-        return "redirect:/tools/" + toolId + "#review";
-    }
+//    // ================== DELETE ==================
+//
+//    /** “Xoá” feedback => đánh dấu SUSPECT (soft-delete) */
+//    @PostMapping("/feedback/{feedbackId}/delete")
+//    public String deleteFeedback(@PathVariable Long feedbackId,
+//                                 RedirectAttributes ra,
+//                                 Principal principal) {
+//        Long toolId = feedbackService.deleteFeedback(feedbackId, principal);
+//        ra.addFlashAttribute("ok", "Đã ẩn đánh giá.");
+//        return "redirect:/tools/" + toolId + "#review";
+//    }
 }

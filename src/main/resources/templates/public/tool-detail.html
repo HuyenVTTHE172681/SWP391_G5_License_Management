@@ -131,11 +131,6 @@
                                            th:href="@{/feedback/{fid}/edit(fid=${fb.feedbackId})}">
                                             <i class="fa-regular fa-pen-to-square"></i> Sửa
                                         </a>
-                                        <button class="btn btn-sm btn-outline-danger"
-                                                th:attr="data-fid=${fb.feedbackId}"
-                                                onclick="confirmDeleteFeedback(this)">
-                                            <i class="fa-regular fa-trash-can"></i> Xoá
-                                        </button>
                                     </div>
                                     <!-- Report: Always for logged-in users -->
                                     <button class="btn btn-sm btn-outline-warning"

@@ -11,10 +11,6 @@ import java.time.LocalDateTime;
 @Table(name = "Feedback")
 public class Feedback {
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
-    private CustomerOrder order;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "feedback_id")
@@ -111,13 +107,5 @@ public class Feedback {
 
     public void setStatus(Status status) {
         this.status = status;
-    }
-
-    public CustomerOrder getOrder() {
-        return order;
-    }
-
-    public void setOrder(CustomerOrder order) {
-        this.order = order;
     }
 }

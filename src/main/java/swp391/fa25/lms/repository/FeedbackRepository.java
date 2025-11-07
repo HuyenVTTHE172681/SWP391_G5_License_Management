@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import swp391.fa25.lms.model.Account;
-import swp391.fa25.lms.model.CustomerOrder;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.Tool;
 
@@ -21,7 +20,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     List<Feedback> findByTool(Tool tool);
 
-    // Tính trung bình rating (comment hơi sai, nhưng mình giữ nguyên cho bạn)
+    // Đếm số feedback theo tool
     Long countByTool(Tool tool);
 
     @Query("SELECT AVG(f.rating) FROM Feedback f WHERE f.tool.toolId = :toolId")
@@ -53,14 +52,16 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     @Modifying
     @Transactional
     @Query("DELETE FROM Feedback f WHERE f.feedbackId = :fid AND f.account.accountId = :ownerId")
-    int deleteByIdAndOwner(@Param("fid") Long feedbackId, @Param("ownerId") Long ownerId);
+    int deleteByIdAndOwner(@Param("fid") Long feedbackId,
+                           @Param("ownerId") Long ownerId);
 
     @Query("SELECT COUNT(f) FROM Feedback f WHERE f.tool.toolId = :toolId")
     Long countByToolId(@Param("toolId") Long toolId);
 
     List<Feedback> findByTool_Seller_AccountIdOrderByCreatedAtDesc(Long sellerId);
 
-    List<Feedback> findByTool_Seller_AccountIdAndTool_ToolIdOrderByCreatedAtDesc(Long sellerId, Long toolId);
+    List<Feedback> findByTool_Seller_AccountIdAndTool_ToolIdOrderByCreatedAtDesc(Long sellerId,
+                                                                                 Long toolId);
 
     @Query(value = """
             SELECT COALESCE(AVG(f.rating), 0) AS avg_rating
@@ -108,7 +109,9 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     long countByToolAndStatus(Tool tool, Feedback.Status status);
 
     // Lấy feedback theo tool + status
-    Page<Feedback> findByToolAndStatus(Tool tool, Feedback.Status status, Pageable pageable);
+    Page<Feedback> findByToolAndStatus(Tool tool,
+                                       Feedback.Status status,
+                                       Pageable pageable);
 
     long countByTool_Seller(Account seller);
 
@@ -152,6 +155,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
                                              @Param("status") Feedback.Status status,
                                              Pageable pageable);
 
-    // ⚠️ CHÚ Ý: method này KHÔNG có @Query, để Spring Data tự sinh query dựa trên field "order" trong Feedback
-    boolean existsByOrder(CustomerOrder order);
+    // Check xem 1 account đã feedback cho 1 tool hay chưa
+    boolean existsByAccount_AccountIdAndTool_ToolId(Long accountId, Long toolId);
 }

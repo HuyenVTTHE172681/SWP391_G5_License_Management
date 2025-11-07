@@ -67,18 +67,6 @@ public class CustomerOrder {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToOne(mappedBy = "order")
-    @JsonIgnoreProperties({"order"})
-    private Feedback feedback;
-
-    public Feedback getFeedback() {
-        return feedback;
-    }
-
-    public void setFeedback(Feedback feedback) {
-        this.feedback = feedback;
-    }
-
     public CustomerOrder() {
     }
 
@@ -209,7 +197,7 @@ public class CustomerOrder {
         this.licenseAccount = licenseAccount;
     }
 
-//    Thêm method helper để check retryable
+    //    Thêm method helper để check retryable
     public boolean isPending() {
         return OrderStatus.PENDING.equals(orderStatus);
     }
@@ -227,5 +215,3 @@ public class CustomerOrder {
     }
 
 }
-
-

@@ -53,7 +53,7 @@ public class FeedbackRepositoryImpl {
     public Long submitFeedback(Long orderId, Integer rating, String comment) {
         var order = getOrderForFeedback(orderId);
 
-        // (Khuyến nghị) chỉ cho feedback nếu order SUCCESS
+        // Chỉ cho feedback nếu order SUCCESS
         if (order.getOrderStatus() != CustomerOrder.OrderStatus.SUCCESS) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -61,16 +61,18 @@ public class FeedbackRepositoryImpl {
             );
         }
 
-        // RÀNG BUỘC: 1 order chỉ có 1 feedback
-        if (feedbackRepo.existsByOrder(order)) {
+        // RÀNG BUỘC: 1 account chỉ được feedback 1 lần cho 1 tool (theo đơn)
+        Long accId  = order.getAccount().getAccountId();
+        Long toolId = order.getTool().getToolId();
+
+        if (feedbackRepo.existsByAccount_AccountIdAndTool_ToolId(accId, toolId)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Bạn đã gửi đánh giá cho đơn hàng này rồi."
+                    "Bạn đã gửi đánh giá cho đơn hàng / tool này rồi."
             );
         }
 
         Feedback fb = new Feedback();
-        fb.setOrder(order);
         fb.setAccount(order.getAccount());
         fb.setTool(order.getTool());
         fb.setRating(rating);
@@ -109,6 +111,7 @@ public class FeedbackRepositoryImpl {
 
         // Giới hạn thời gian sửa
         assertEditableWindow(fb);
+
         fb.setRating(rating);
         fb.setComment((comment == null || comment.isBlank()) ? null : comment.trim());
 
@@ -134,10 +137,11 @@ public class FeedbackRepositoryImpl {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.FORBIDDEN, "Không có quyền"));
 
-        fb.setStatus(Feedback.Status.SUSPECT);     // <== soft-delete
+        fb.setStatus(Feedback.Status.SUSPECT);     // soft-delete
         feedbackRepo.save(fb);
         return fb.getTool().getToolId();
     }
+
     private static final Duration EDIT_WINDOW = Duration.ofHours(24); // hoặc ofDays(3)...
 
     private void assertEditableWindow(Feedback fb) {
@@ -151,7 +155,6 @@ public class FeedbackRepositoryImpl {
             );
         }
     }
-
 
     // ====================== Helpers (nếu cần dùng sau) ======================
 }
