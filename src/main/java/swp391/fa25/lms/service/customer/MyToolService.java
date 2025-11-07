@@ -25,16 +25,18 @@ public class MyToolService {
             Pattern.compile("^[A-Za-z0-9._-]{3,100}$");
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)\\S{8,}$");
+
     @Autowired
-    private  CustomerOrderRepository orderRepo;
+    private CustomerOrderRepository orderRepo;
     @Autowired
-    private  LicenseAccountRepository accRepo;
+    private LicenseAccountRepository accRepo;
     @Autowired
-    private  LicenseRenewLogRepository renewRepo;
+    private LicenseRenewLogRepository renewRepo;
     @Autowired
-    private  ToolFileRepository fileRepo;
+    private ToolFileRepository fileRepo;
     @Autowired
-    private  LicenseToolRepository licenseRepo;
+    private LicenseToolRepository licenseRepo;
+
     private final Path storageRoot = Paths.get("uploads");
 
     public MyToolService(CustomerOrderRepository orderRepo,
@@ -57,31 +59,54 @@ public class MyToolService {
         CustomerOrder order = loadOrderOr404(orderId);
         ensureOrderSuccess(order);
 
-        var acc = order.getLicenseAccount();
-        if (acc == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa được cấp license.");
+        LicenseAccount acc = order.getLicenseAccount();
+        if (acc == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa được cấp license.");
+        }
 
-        List<ToolFile> files = fileRepo.findByTool_ToolIdOrderByCreatedAtDesc(order.getTool().getToolId());
-        List<License> licenses = licenseRepo.findByTool_ToolId(order.getTool().getToolId());
+        Tool tool = order.getTool();
 
-        var method = acc.getLicense().getTool().getLoginMethod() != null
-                ? acc.getLicense().getTool().getLoginMethod()
-                : (order.getTool().getLoginMethod() == Tool.LoginMethod.TOKEN
-                ? Tool.LoginMethod.TOKEN
-                : Tool.LoginMethod.USER_PASSWORD);
+        // Lấy loginMethod, nếu null thì default USER_PASSWORD
+        Tool.LoginMethod method = tool.getLoginMethod() != null
+                ? tool.getLoginMethod()
+                : Tool.LoginMethod.USER_PASSWORD;
+        tool.setLoginMethod(method); // để view dùng
+
+        // 🔥 files:
+        // - Nếu TOOL dùng TOKEN: chỉ lấy 1 file WRAPPED mới nhất
+        // - Nếu USER_PASSWORD: giữ nguyên list cũ
+        List<ToolFile> files;
+        if (method == Tool.LoginMethod.TOKEN) {
+            ToolFile latestWrapped = fileRepo
+                    .findTopByTool_ToolIdAndFileTypeOrderByCreatedAtDesc(
+                            tool.getToolId(),
+                            ToolFile.FileType.WRAPPED
+                    )
+                    .orElse(null);
+
+            files = (latestWrapped != null)
+                    ? List.of(latestWrapped)
+                    : List.of();
+        } else {
+            // trang user/pass vẫn cần list đầy đủ, để view tự hiển thị
+            files = fileRepo.findByTool_ToolIdOrderByCreatedAtDesc(tool.getToolId());
+        }
+
+        List<License> licenses = licenseRepo.findByTool_ToolId(tool.getToolId());
 
         String template = (method == Tool.LoginMethod.TOKEN)
                 ? "customer/mytool-token"
                 : "customer/mytool-userpass";
 
-        return new ViewData(order, order.getTool(), acc, files, licenses, template);
+        return new ViewData(order, tool, acc, files, licenses, template);
     }
 
     /** Tải file tool theo order */
     @Transactional(readOnly = true)
     public FileDownload download(Long orderId, Long fileId) {
-        var order = loadOrderOr404(orderId);
+        CustomerOrder order = loadOrderOr404(orderId);
 
-        var f = fileRepo.findById(fileId)
+        ToolFile f = fileRepo.findById(fileId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File không tồn tại"));
 
         if (!f.getTool().getToolId().equals(order.getTool().getToolId())) {
@@ -110,19 +135,21 @@ public class MyToolService {
                                BigDecimal min, BigDecimal max,
                                String sort, String dir,
                                int page, int size) {
-        var order = loadOrderOr404(orderId);
+        CustomerOrder order = loadOrderOr404(orderId);
         ensureOrderSuccess(order);
 
-        var acc = order.getLicenseAccount();
-        if (acc == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn chưa được cấp license.");
+        LicenseAccount acc = order.getLicenseAccount();
+        if (acc == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn chưa được cấp license.");
+        }
 
         String sortProp = switch (sort) {
             case "amount" -> "amountPaid";
             case "newEnd" -> "newEndDate";
             default -> "renewDate";
         };
-        var direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        var pageable = PageRequest.of(Math.max(0, page - 1), Math.max(1, size), Sort.by(direction, sortProp));
+        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), Math.max(1, size), Sort.by(direction, sortProp));
 
         Page<LicenseRenewLog> logsPage =
                 renewRepo.search(acc.getLicenseAccountId(), from, to, min, max, pageable);
@@ -133,29 +160,31 @@ public class MyToolService {
     /** Gia hạn theo license chọn */
     @Transactional
     public String renew(Long orderId, Long licenseId) {
-        var order = loadOrderOr404(orderId);
+        CustomerOrder order = loadOrderOr404(orderId);
         ensureOrderSuccess(order);
 
-        var acc = order.getLicenseAccount();
-        if (acc == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn chưa được cấp license.");
+        LicenseAccount acc = order.getLicenseAccount();
+        if (acc == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn chưa được cấp license.");
+        }
 
-        var lic = licenseRepo.findById(licenseId)
+        License lic = licenseRepo.findById(licenseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gói license không hợp lệ."));
         if (!lic.getTool().getToolId().equals(order.getTool().getToolId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gói license không thuộc tool này.");
         }
 
         int days = (lic.getDurationDays() != null) ? lic.getDurationDays() : 30;
-        var now = LocalDateTime.now();
-        var base = (acc.getEndDate() != null && acc.getEndDate().isAfter(now)) ? acc.getEndDate() : now;
-        var newEnd = base.plusDays(days);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime base = (acc.getEndDate() != null && acc.getEndDate().isAfter(now)) ? acc.getEndDate() : now;
+        LocalDateTime newEnd = base.plusDays(days);
 
         acc.setEndDate(newEnd);
         if (acc.getStartDate() == null) acc.setStartDate(now);
         acc.setStatus(LicenseAccount.Status.ACTIVE);
         accRepo.save(acc);
 
-        var log = new LicenseRenewLog();
+        LicenseRenewLog log = new LicenseRenewLog();
         log.setLicenseAccount(acc);
         log.setRenewDate(now);
         log.setNewEndDate(newEnd);
@@ -168,11 +197,16 @@ public class MyToolService {
     /** Cập nhật username/password */
     @Transactional
     public UpdateResult updateAccount(Long orderId, String username, String password) {
-        var order = loadOrderOr404(orderId);
+        CustomerOrder order = loadOrderOr404(orderId);
 
-        var acc = order.getLicenseAccount();
-        if (acc == null) return new UpdateResult(false, "Đơn chưa được cấp license.");
-        if (acc.getLicense().getTool().getLoginMethod() == Tool.LoginMethod.TOKEN) {
+        LicenseAccount acc = order.getLicenseAccount();
+        if (acc == null) {
+            return new UpdateResult(false, "Đơn chưa được cấp license.");
+        }
+
+        // Check theo loginMethod của Tool, không dùng acc.getLicense() nữa
+        Tool tool = order.getTool();
+        if (tool.getLoginMethod() == Tool.LoginMethod.TOKEN) {
             return new UpdateResult(false, "Tài khoản dùng TOKEN: không thể đổi username/password.");
         }
 
@@ -185,6 +219,7 @@ public class MyToolService {
             return new UpdateResult(false,
                     "Mật khẩu phải ≥ 8 ký tự, có ít nhất 1 chữ thường, 1 CHỮ HOA, 1 chữ số và không có khoảng trắng (không bắt buộc ký tự đặc biệt).");
         }
+
         acc.setUsername(username);
         acc.setPassword(password);
         accRepo.save(acc);
@@ -209,32 +244,34 @@ public class MyToolService {
         return orderRepo.findByOrderId(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
     }
+
     private void ensureOrderSuccess(CustomerOrder order) {
         if (order.getOrderStatus() != CustomerOrder.OrderStatus.SUCCESS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa thành công.");
         }
     }
+
     /** Gia hạn có gắn transaction (dùng cho thanh toán VNPay) */
     @Transactional
     public void renewWithTransaction(Long orderId, Long licenseId, WalletTransaction tx) {
-        var order = loadOrderOr404(orderId);
+        CustomerOrder order = loadOrderOr404(orderId);
         ensureOrderSuccess(order);
 
-        var acc = order.getLicenseAccount();
+        LicenseAccount acc = order.getLicenseAccount();
         if (acc == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn chưa được cấp license.");
         }
 
-        var lic = licenseRepo.findById(licenseId)
+        License lic = licenseRepo.findById(licenseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gói license không hợp lệ."));
         if (!lic.getTool().getToolId().equals(order.getTool().getToolId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gói license không thuộc tool này.");
         }
 
         int days = (lic.getDurationDays() != null) ? lic.getDurationDays() : 30;
-        var now = LocalDateTime.now();
-        var base = (acc.getEndDate() != null && acc.getEndDate().isAfter(now)) ? acc.getEndDate() : now;
-        var newEnd = base.plusDays(days);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime base = (acc.getEndDate() != null && acc.getEndDate().isAfter(now)) ? acc.getEndDate() : now;
+        LocalDateTime newEnd = base.plusDays(days);
 
         // Cập nhật account
         acc.setEndDate(newEnd);
@@ -243,7 +280,7 @@ public class MyToolService {
         accRepo.save(acc);
 
         // Ghi log gia hạn
-        var log = new LicenseRenewLog();
+        LicenseRenewLog log = new LicenseRenewLog();
         log.setLicenseAccount(acc);
         log.setRenewDate(now);
         log.setNewEndDate(newEnd);
@@ -261,5 +298,4 @@ public class MyToolService {
 
         renewRepo.save(log);
     }
-
 }

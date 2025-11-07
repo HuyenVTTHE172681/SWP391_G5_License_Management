@@ -176,7 +176,7 @@ public class LicenseAccountService {
 
     /** Đảm bảo đơn hàng thuộc về currentEmail */
     private CustomerOrder findOwnedOrder(Long orderId, String currentEmail) {
-        var opt = orderRepo.findById(orderId);
+        Optional<CustomerOrder> opt = orderRepo.findById(orderId);
         if (opt.isEmpty()) throw new IllegalArgumentException("Order not found.");
 
         CustomerOrder order = opt.get();

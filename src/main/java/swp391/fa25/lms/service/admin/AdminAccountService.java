@@ -104,6 +104,6 @@ public class AdminAccountService {
         acc.setPhone(phone);
         acc.setAddress(address);
         acc.setUpdatedAt(java.time.LocalDateTime.now());
-        accountRepo.save(acc); // sẽ trigger validate theo annotation trong Account
+        accountRepo.save(acc);
     }
 }

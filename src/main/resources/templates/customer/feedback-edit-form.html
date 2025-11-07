@@ -93,23 +93,23 @@
                                 Vui lòng không gõ theo kiểu “c h ữ  c á c h 1 space”.
                             </div>
                         </div>
-                        <!-- NEW: Chọn trạng thái -->
-                        <div class="mb-3">
-                            <label class="form-label">Trạng thái hiển thị</label>
-                            <select class="form-select" name="status">
-                                <option value="PUBLISHED"
-                                        th:selected="${fb.status != null and fb.status.name() == 'PUBLISHED'}">
-                                    PUBLISHED (hiển thị công khai)
-                                </option>
-                                <option value="HIDDEN"
-                                        th:selected="${fb.status != null and fb.status.name() == 'HIDDEN'}">
-                                    HIDDEN (ẩn khỏi công khai)
-                                </option>
-                            </select>
-                            <div class="form-text">
-                                Lưu ý: Khi nhấn “Xoá đánh giá”, trạng thái sẽ chuyển thành <code>SUSPECT</code>.
-                            </div>
-                        </div>
+<!--                        &lt;!&ndash; NEW: Chọn trạng thái &ndash;&gt;-->
+<!--                        <div class="mb-3">-->
+<!--                            <label class="form-label">Trạng thái hiển thị</label>-->
+<!--                            <select class="form-select" name="status">-->
+<!--                                <option value="PUBLISHED"-->
+<!--                                        th:selected="${fb.status != null and fb.status.name() == 'PUBLISHED'}">-->
+<!--                                    PUBLISHED (hiển thị công khai)-->
+<!--                                </option>-->
+<!--                                <option value="HIDDEN"-->
+<!--                                        th:selected="${fb.status != null and fb.status.name() == 'HIDDEN'}">-->
+<!--                                    HIDDEN (ẩn khỏi công khai)-->
+<!--                                </option>-->
+<!--                            </select>-->
+<!--&lt;!&ndash;                            <div class="form-text">&ndash;&gt;-->
+<!--&lt;!&ndash;                                Lưu ý: Khi nhấn “Xoá đánh giá”, trạng thái sẽ chuyển thành <code>SUSPECT</code>.&ndash;&gt;-->
+<!--&lt;!&ndash;                            </div>&ndash;&gt;-->
+<!--                        </div>-->
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
@@ -119,16 +119,16 @@
                         </div>
                     </form>
 
-                    <hr class="my-4"/>
+<!--                    <hr class="my-4"/>-->
 
-                    <!-- Form DELETE (soft-delete => SUSPECT) giữ nguyên -->
-                    <form th:action="@{|/feedback/${fb.feedbackId}/delete|}" method="post"
-                          onsubmit="return confirm('Bạn chắc chắn xoá đánh giá này?');">
-                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-outline-danger">
-                            <i class="bi bi-trash3"></i> Xoá đánh giá
-                        </button>
-                    </form>
+<!--                    &lt;!&ndash; Form DELETE (soft-delete => SUSPECT) giữ nguyên &ndash;&gt;-->
+<!--                    <form th:action="@{|/feedback/${fb.feedbackId}/delete|}" method="post"-->
+<!--                          onsubmit="return confirm('Bạn chắc chắn xoá đánh giá này?');">-->
+<!--                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>-->
+<!--                        <button type="submit" class="btn btn-outline-danger">-->
+<!--                            <i class="bi bi-trash3"></i> Xoá đánh giá-->
+<!--                        </button>-->
+<!--                    </form>-->
 
                 </div>
             </div>

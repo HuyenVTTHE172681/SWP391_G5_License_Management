@@ -29,10 +29,10 @@ public class DashBoardAdminController {
     private static final String FIXED_ADMIN_EMAIL = "admin@gmail.com";
     @Autowired
     @Qualifier("adminHomeService")
-    private final AdminHomeService adminHomeService;
+    private  AdminHomeService adminHomeService;
     @Autowired
     @Qualifier("adminAccountService")
-    private final AdminAccountService adminAccountService;
+    private AdminAccountService adminAccountService;
 
     public DashBoardAdminController(AdminHomeService adminHomeService,
                                     AdminAccountService adminAccountService) {

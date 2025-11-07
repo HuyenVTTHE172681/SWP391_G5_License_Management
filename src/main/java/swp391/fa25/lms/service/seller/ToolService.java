@@ -208,6 +208,7 @@ public class ToolService {
                 loginEnum = Tool.LoginMethod.valueOf(loginMethod.trim().toUpperCase());
             } catch (IllegalArgumentException ignored) {}
         }
+
         return toolRepository.searchToolsForSeller(
                 sellerId, keyword, categoryId, statusEnum, loginEnum, minPrice, maxPrice, pageable
         );

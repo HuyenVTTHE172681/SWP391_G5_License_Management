@@ -17,7 +17,7 @@ public class AdminHomeService {
     @Autowired
     AccountRepository accountRepository;
 
-    // KPI tổng hợp (trả về map cho gọn)
+    // KPI tổng hợp
     public Map<String, Long> kpis() {
         Map<String, Long> m = new HashMap<>();
         m.put("totalUsers", accountRepository.count());

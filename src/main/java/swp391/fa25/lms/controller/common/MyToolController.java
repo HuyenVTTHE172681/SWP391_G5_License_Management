@@ -106,9 +106,18 @@ public class MyToolController {
                                 @RequestParam String username,
                                 @RequestParam String password,
                                 RedirectAttributes ra) {
+
         var rs = myToolService.updateAccount(orderId, username, password);
-        if (rs.ok()) ra.addFlashAttribute("ok", rs.message());
-        else         ra.addFlashAttribute("err", rs.message());
+
+        if (rs.ok()) {
+            // Thành công: show message ngoài trang chính
+            ra.addFlashAttribute("ok", rs.message());
+        } else {
+            // Thất bại: đẩy thông báo vào trong modal Edit
+            ra.addFlashAttribute("editError", rs.message());
+            // Flag để auto mở lại modal sau khi redirect
+            ra.addFlashAttribute("showEditModal", true);
+        }
         return "redirect:/my-tools/" + orderId;
     }
 }
