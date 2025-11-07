@@ -349,16 +349,15 @@ public class PaymentService {
     }
 
     // REFACTOR: Tách tạo license account
-    // REFACTOR: Tách tạo license account
     private void createAndAssignLicense(CustomerOrder order) {
         Tool tool = order.getTool();
         License license = order.getLicense();
         Account buyer = order.getAccount();
 
-        Tool.LoginMethod loginMethod = tool.getLoginMethod(); // loginMethod lấy từ Tool
+        String loginMethod = tool.getLoginMethod().toString();
 
-        // Nếu là USER_PASSWORD → tạo account mới
-        if (loginMethod == Tool.LoginMethod.USER_PASSWORD) {
+        if ("USER_PASSWORD".equals(loginMethod)) {
+            // Tạo mới LicenseAccount cho USER_PASSWORD
             LicenseAccount acc = new LicenseAccount();
             acc.setLicense(license);
             acc.setOrder(order);
@@ -366,40 +365,55 @@ public class PaymentService {
             acc.setStatus(LicenseAccount.Status.ACTIVE);
             acc.setStartDate(LocalDateTime.now());
             acc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
-
-            // Tạo username/password
-            String username = "user_" + buyer.getAccountId() + "_" + System.currentTimeMillis();
-            String password = UUID.randomUUID().toString().substring(0, 8);
-            acc.setUsername(username);
-            acc.setPassword(password);
-
+            acc.setUsername("user_" + buyer.getAccountId() + "_" + System.currentTimeMillis());
+            acc.setPassword(UUID.randomUUID().toString().substring(0, 8));
             licenseAccountRepository.save(acc);
-
-            // Gửi mail chứa username/password cho người mua
             sendUserPasswordEmail(order, acc);
-        }
+        } else if ("TOKEN".equals(loginMethod)) {
+            try {
+                // Debug count (giữ nguyên)
+                long unusedCount = licenseAccountRepository.findByLicense_Tool_ToolId(tool.getToolId())
+                        .stream()
+                        .filter(acc -> !acc.getUsed())
+                        .count();
+//                System.out.println("Unused token count for toolId " + tool.getToolId() + ": " + unusedCount);
 
-        // Nếu là TOKEN → lấy 1 token chưa dùng
-        else if (loginMethod == Tool.LoginMethod.TOKEN) {
-            Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByLicense_ToolAndUsedFalse(tool);
+                if (unusedCount == 0) {
+                    throw new RuntimeException("No unused tokens available for tool " + tool.getToolId());
+                }
 
-            if (unusedToken.isPresent()) {
-                LicenseAccount tokenAcc = unusedToken.get();
-                tokenAcc.setUsed(true);
-                tokenAcc.setOrder(order);
-                tokenAcc.setStatus(LicenseAccount.Status.ACTIVE);
-                tokenAcc.setStartDate(LocalDateTime.now());
-                tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
+//                System.out.println("Searching unused token for toolId: " + tool.getToolId() + " (using SQL Server TOP 1 query)");
+                Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByLicense_Tool_ToolIdAndUsedFalse(tool.getToolId());
 
-                licenseAccountRepository.save(tokenAcc);
+                // FIX: Log Optional content để debug
+                if (unusedToken.isPresent()) {
+                    LicenseAccount tokenAcc = unusedToken.get();
+//                    System.out.println("SUCCESS: Found unused token via TOP 1: " + tokenAcc.getToken() + " (ID: " + tokenAcc.getLicenseAccountId() + ", licenseId: " + tokenAcc.getLicense().getLicenseId() + ")");
 
-                // Gửi mail chứa token cho người mua
-                sendTokenEmail(order, tokenAcc);
-            } else {
-                System.err.println("No unused token for tool " + tool.getToolId());
+                    // Assign/save/mail (giữ nguyên)
+                    tokenAcc.setLicense(license);
+                    tokenAcc.setOrder(order);
+                    tokenAcc.setUsed(true);
+                    tokenAcc.setStatus(LicenseAccount.Status.ACTIVE);
+                    tokenAcc.setStartDate(LocalDateTime.now());
+                    tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
+
+                    LicenseAccount savedAcc = licenseAccountRepository.save(tokenAcc);
+
+//                    System.out.println("Assigned & saved token " + savedAcc.getToken() + " for order " + order.getOrderId() + ", status: " + savedAcc.getStatus());
+                    sendTokenEmail(order, savedAcc);
+                } else {
+//                    System.out.println("WARNING: Query returned empty despite count=" + unusedCount + ". Possible data inconsistency or query issue.");
+                    throw new RuntimeException("No unused token returned from query for toolId " + tool.getToolId());
+                }
+            } catch (Exception e) {
+//                System.err.println("Error assigning TOKEN for order " + order.getOrderId() + ": " + e.getMessage());
+                e.printStackTrace();
+                throw e; // Rollback
             }
         }
     }
+
     /**
      * Gửi mail cho tool dạng USER_PASSWORD
      */

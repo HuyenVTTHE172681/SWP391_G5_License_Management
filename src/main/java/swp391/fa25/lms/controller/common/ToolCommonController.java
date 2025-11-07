@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 @Controller
 public class ToolCommonController {
-
     @Autowired
     private ToolService toolService;
 
@@ -32,32 +31,27 @@ public class ToolCommonController {
     private FeedbackReadService feedbackReadService;
 
     /**
-     * Hiển thị trang detail tool (chỉ cho Tool ở trạng thái PUBLISHED).
-     * Feedback cũng chỉ lấy PUBLISHED (hoặc NULL nếu DB cũ) theo logic trong Service.
+     * Hiển thị trang detail tool
      */
     @GetMapping("/tools/{id}")
     public String showToolDetail(@PathVariable("id") Long id,
                                  @RequestParam(value = "reviewPage", defaultValue = "0") int reviewPage,
                                  Model model) {
 
-        // Lấy tool theo id, CHỈ trạng thái PUBLISHED
+        // Lấy tool theo id
         Optional<Tool> maybeTool = toolService.findPublishedToolById(id);
         if (maybeTool.isEmpty()) {
             model.addAttribute("errorMessage", "Không tìm thấy sản phẩm hoặc sản phẩm chưa công khai.");
-            return "public/404";
+            return "public/404"; // 404.html
         }
 
         Tool tool = maybeTool.get();
+        System.out.println("Detail Tool ID: " + tool.getToolId() + ", Image path: '" + tool.getImage() + "'");
 
-        // Guard trang âm
-        int page = Math.max(0, reviewPage);
+        // Lấy danh sách feedback
+        Page<Feedback> feedbackPage = toolService.getFeedbackPageForTool(tool, reviewPage, 5);
 
-        // Lấy danh sách feedback CHỈ PUBLISHED (theo Cách B: Sort nằm ở Pageable trong Service)
-        Page<Feedback> feedbackPage = toolService.getFeedbackPageForTool(
-                tool, page, 5, Feedback.Status.PUBLISHED
-        );
-
-        // Nạp repliesMap để hiển thị phản hồi seller dưới từng feedback
+        // ===== THÊM: nạp repliesMap để hiển thị phản hồi seller ngay dưới feedback =====
         List<Long> fbIds = feedbackPage.getContent()
                 .stream()
                 .map(Feedback::getFeedbackId)
@@ -71,10 +65,8 @@ public class ToolCommonController {
         System.out.println("");
         // Tổng số review
         long totalReviews = toolService.getTotalReviewsForTool(tool);
-        // Tính rating trung bình & tổng review (chỉ PUBLISHED)
 
-
-        // Data cho view
+        // Data view
         model.addAttribute("tool", tool);
         model.addAttribute("feedbackPage", feedbackPage);
         model.addAttribute("avgRating", avgRating);

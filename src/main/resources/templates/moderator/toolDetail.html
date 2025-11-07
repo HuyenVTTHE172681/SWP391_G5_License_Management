@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Tool Detail - Moderator</title>
-    <link rel="stylesheet" th:href="@{/css/toolDetailMod.css}">
+    <link rel="stylesheet" th:href="@{/css/manager-tool-detail.css}">
 </head>
 <body>
 
@@ -11,12 +11,10 @@
     <h1>Tool Detail</h1>
 
     <div class="tool-card">
-        <!-- Hình ảnh tool -->
         <div class="tool-image">
-            <img th:src="@{${tool.image}}" alt="Tool Image">
+            <img th:if="${tool.image != null}" th:src="@{'/' + ${tool.image}}" alt="Tool image" class="tool-img">
         </div>
 
-        <!-- Thông tin tool -->
         <div class="tool-info">
             <h2 class="tool-name" th:text="${tool.toolName}"></h2>
             <p class="desc" th:text="${tool.description}"></p>
@@ -31,6 +29,10 @@
 
                 <p><strong>Seller:</strong>
                     <span th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></span>
+                </p>
+
+                <p><strong>Login Method:</strong>
+                    <span th:text="${tool.loginMethod}"></span>
                 </p>
 
                 <p><strong>Upload Date:</strong>
@@ -48,9 +50,8 @@
                 </p>
             </div>
 
-            <!-- Danh sách file đính kèm -->
             <div class="files-section">
-                <h3>📎 File đính kèm</h3>
+                <h3>File đính kèm</h3>
 
                 <ul class="file-list" th:if="${tool.files != null and !#lists.isEmpty(tool.files)}">
                     <li th:each="file : ${tool.files}">
@@ -59,10 +60,19 @@
                         </a>
                         <span class="file-type" th:text="'(' + ${file.fileType} + ')'"></span>
                     </li>
+
+                    <!-- ✅ Chỉ hiển thị token khi loginMethod = TOKEN -->
+                    <li th:if="${tool.loginMethod?.name() == 'TOKEN' and licenseAccounts != null and !#lists.isEmpty(licenseAccounts)}">
+                        <ul>
+                            <li th:each="l : ${licenseAccounts}">
+                                <span th:text="${l.token != null ? '*****' + #strings.substring(l.token, l.token.length() - 4) : 'No token'}"></span>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
 
                 <p th:if="${tool.files == null or #lists.isEmpty(tool.files)}" class="no-file">
-                    Không có file đính kèm.
+                    No file appended
                 </p>
             </div>
 
@@ -96,7 +106,6 @@
            th:href="@{/moderator/history}"
            class="back-link">← Back</a>
     </div>
-</div>
 </div>
 
 <script>

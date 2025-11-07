@@ -1,4 +1,3 @@
-// src/main/java/swp391/fa25/lms/service/customer/ToolService.java
 package swp391.fa25.lms.service.customer;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +28,7 @@ public class ToolService {
 
         List<Tool> tools = toolRepo.findAllPublishedAndSellerActive();
 
+//        List<Tool> tools = toolRepo.findAll();
         // Search keyword (tool name hoặc seller name)
         if (keyword != null && !keyword.isEmpty()) {
             String kwLower = keyword.toLowerCase();
@@ -112,6 +112,7 @@ public class ToolService {
         int start = page * size;
         int end = Math.min(start + size, tools.size());
         List<Tool> pagedList = tools.subList(Math.min(start, tools.size()), end);
+
         return new PageImpl<>(pagedList, PageRequest.of(page, size), tools.size());
     }
 

@@ -103,18 +103,23 @@ public class ToolService {
             existingTool.getFiles().add(fileEntity);
         }
 
-        // 🔹 Cập nhật License
+        // 🔹 Cập nhật License (chỉ update nội dung, không clear list để tránh mất dữ liệu)
         if (licenseDays != null && licensePrices != null && licenseDays.size() == licensePrices.size()) {
-            existingTool.getLicenses().clear();
+            List<License> existingLicenses = licenseRepository.findByTool_ToolId(existingTool.getToolId());
 
             for (int i = 0; i < licenseDays.size(); i++) {
-                License lic = new License();
-                lic.setTool(existingTool);
+                License lic;
+                if (i < existingLicenses.size()) {
+                    lic = existingLicenses.get(i);
+                } else {
+                    lic = new License();
+                    lic.setTool(existingTool);
+                    existingLicenses.add(lic);
+                }
                 lic.setName("License " + licenseDays.get(i) + " days");
                 lic.setDurationDays(licenseDays.get(i));
                 lic.setPrice(licensePrices.get(i));
-                lic.setCreatedAt(LocalDateTime.now());
-                existingTool.getLicenses().add(lic);
+                licenseRepository.save(lic);
             }
         }
 
@@ -158,6 +163,9 @@ public class ToolService {
             LicenseAccount acc = new LicenseAccount();
             acc.setLicense(primaryLicense);
             acc.setToken(token);
+            acc.setStatus(LicenseAccount.Status.ACTIVE);
+            acc.setStartDate(LocalDateTime.now());
+            acc.setEndDate(LocalDateTime.now().plusDays(primaryLicense.getDurationDays()));
             licenseAccountRepository.save(acc);
         }
     }
@@ -206,19 +214,43 @@ public class ToolService {
         );
     }
 
+    // ==========================================================
+    // 🔹 FIXED: updateQuantityAndLicenses (không còn clear list)
+    // ==========================================================
+
     @Transactional
     public void updateQuantityAndLicenses(Long toolId, int newQuantity, List<License> newLicenses) {
         Tool tool = toolRepository.findById(toolId)
                 .orElseThrow(() -> new IllegalArgumentException("Tool not found with id: " + toolId));
 
-        tool.setQuantity(newQuantity);
-        tool.getLicenses().clear();
+        List<License> existingLicenses = licenseRepository.findByTool_ToolId(toolId);
 
-        for (License license : newLicenses) {
-            license.setTool(tool);
-            tool.getLicenses().add(license);
+        for (int i = 0; i < newLicenses.size(); i++) {
+            License src = newLicenses.get(i);
+            License target;
+
+            if (i < existingLicenses.size()) {
+                target = existingLicenses.get(i);
+            } else {
+                target = new License();
+                target.setTool(tool);
+                existingLicenses.add(target);
+            }
+
+            target.setName(src.getName());
+            target.setDurationDays(src.getDurationDays());
+            target.setPrice(src.getPrice());
+            licenseRepository.save(target);
         }
 
+        if (existingLicenses.size() > newLicenses.size()) {
+            for (int i = newLicenses.size(); i < existingLicenses.size(); i++) {
+                licenseRepository.delete(existingLicenses.get(i));
+            }
+        }
+
+        tool.setQuantity(newQuantity);
+        tool.setUpdatedAt(LocalDateTime.now());
         toolRepository.save(tool);
     }
 }

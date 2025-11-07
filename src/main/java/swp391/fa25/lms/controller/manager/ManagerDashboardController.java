@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Category;
+import swp391.fa25.lms.model.LicenseAccount;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.service.moderator.CategoryService;
 import swp391.fa25.lms.service.manager.ToolService;
+import swp391.fa25.lms.service.moderator.LicenseAccountService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +31,9 @@ public class ManagerDashboardController {
 
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    @Qualifier("moderatorLicenseAccountService")
+    private LicenseAccountService licenseAccountService;
 
     @GetMapping({"", "/"})
     public String managerDashboard(Model model) {
@@ -72,23 +77,35 @@ public class ManagerDashboardController {
     }
 
     @GetMapping("/tool/{id}")
-    public String viewToolDetail(@PathVariable Long id, Model model) {
+    public String viewToolDetail(@PathVariable("id") Long id, Model model) {
         Tool tool = toolService.findById(id);
+
         if (tool == null) {
-            model.addAttribute("error", "Tool not found.");
-            return "redirect:/manager/upload-tool";
+            model.addAttribute("errorMessage", "Tool not found");
+            return "redirect:/moderator/uploadRequest";
         }
 
         model.addAttribute("tool", tool);
+
+        // Nếu tool có login method là TOKEN thì lấy danh sách license account
+        if (tool.getLoginMethod() == Tool.LoginMethod.TOKEN) {
+            List<LicenseAccount> licenseAccounts = licenseAccountService.findByToolId(tool.getToolId());
+            if (licenseAccounts != null && !licenseAccounts.isEmpty()) {
+                model.addAttribute("licenseAccounts", licenseAccounts);
+            }
+        }
+
         return "manager/tool-detail";
     }
 
     @PostMapping("/tool/{id}/publish")
     public String publishTool(@PathVariable Long id, RedirectAttributes redirect, HttpServletRequest request) {
         Tool tool = toolService.findById(id);
+        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
+
         if (tool != null) {
             tool.setStatus(Tool.Status.PUBLISHED);
-            tool.setReviewedBy(request.getSession().getAttribute("loggedInAccount").toString());
+            tool.setReviewedBy(account.getRole().getRoleName().toString());
             tool.setUpdatedAt(LocalDateTime.now());
             toolService.save(tool);
             redirect.addFlashAttribute("success", "Tool has been published successfully!");
@@ -147,7 +164,10 @@ public class ManagerDashboardController {
         List<Tool> tools = toolService.filterNonPendingTools(
                 sellerId, categoryId, uploadFrom, uploadTo, approvedFrom, approvedTo, reviewedBy, status
         );
+        List<Category> categories = categoryService.getAllCategories();
 
+        model.addAttribute("categories", categories);
+        model.addAttribute("categoryId", categoryId);
         model.addAttribute("tools", tools);
         model.addAttribute("selectedSellerId", sellerId);
         model.addAttribute("selectedCategoryId", categoryId);
@@ -160,5 +180,6 @@ public class ManagerDashboardController {
 
         return "manager/tool-list";
     }
+
 
 }

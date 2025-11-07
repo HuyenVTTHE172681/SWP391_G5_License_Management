@@ -18,7 +18,7 @@ public class SellerPackage {
     @Column(nullable = false)
     private double price;
 
-    @Column(nullable = true)
+    @Column(nullable = true, columnDefinition = "NVARCHAR(100)")
     private String description;
 
     @Enumerated(EnumType.STRING)

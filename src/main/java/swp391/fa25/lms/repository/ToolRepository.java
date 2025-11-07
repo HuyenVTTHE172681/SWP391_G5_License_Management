@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface ToolRepository extends JpaRepository<Tool, Long> {
@@ -28,17 +26,20 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     List<Tool> findAllByToolNameContainingIgnoreCase(String toolName, Sort sort);
 
     List<Tool> findAll(Sort sort);
+
     List<Tool> findAll(Specification<Tool> spec);
+
     Tool findByToolId(long toolId);
+
     List<Tool> findByStatus(Tool.Status status);
 
     @Query("""
-        SELECT t FROM Tool t
-        WHERE (:toolName IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :toolName, '%')))
-          AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
-          AND (:status IS NULL OR t.status = :status)
-        ORDER BY t.updatedAt DESC
-    """)
+                SELECT t FROM Tool t
+                WHERE (:toolName IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :toolName, '%')))
+                  AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+                  AND (:status IS NULL OR t.status = :status)
+                ORDER BY t.updatedAt DESC
+            """)
     List<Tool> filterToolsForModerator(@Param("toolName") String toolName,
                                        @Param("categoryId") Long categoryId,
                                        @Param("status") Tool.Status status);
@@ -47,6 +48,7 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
 //    List<Tool> findByToolNameContainingIgnoreCase(String keyword);
     List<Tool> findByToolNameContainingIgnoreCase(String keyword);
     List<Tool> findBySeller(Account seller);
+
 //    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
 
 
@@ -59,6 +61,7 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     Optional<Tool> findById(Long toolId);
     Optional<Tool> findByToolName(String toolName);
 
+    @EntityGraph(attributePaths = {"category", "licenses", "seller"})
     @Query("""
     SELECT t FROM Tool t
     WHERE t.seller.accountId = :sellerId
@@ -81,21 +84,10 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
             @Param("maxPrice") Double maxPrice,
             Pageable pageable
     );
-
+    @EntityGraph(attributePaths = {"category", "licenses"})
     List<Tool> findBySellerAndStatusNot(Account seller, Tool.Status status);
     boolean existsByToolName(String toolName);
 
-//    @Query("""
-//       SELECT t FROM Tool t
-//       WHERE t.seller.accountId = :sellerId
-//         AND (:keyword IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :keyword, '%')))
-//         AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
-//       """)
-//    Page<Tool> findBySellerAndFilter(@Param("sellerId") Long sellerId,
-//                                     @Param("keyword") String keyword,
-//                                     @Param("categoryId") Long categoryId,
-//                                     Pageable pageable);
-//
     @Query("""
     SELECT t FROM Tool t
     WHERE t.status = 'PUBLISHED'
