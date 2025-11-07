@@ -74,17 +74,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     Double findAverageRatingBySellerId(@Param("sellerId") Long sellerId);
 
     Optional<Feedback> findByFeedbackIdAndAccount_Email(Long id, String email);
-
-    @Query("""
-       select f
-       from Feedback f
-       where f.tool = :tool
-         and (f.status = :status or f.status is null)
-       """)
-    Page<Feedback> findByToolAndStatusOrNull(@Param("tool") Tool tool,
-                                             @Param("status") Feedback.Status status,
-                                             Pageable pageable);
-
     @Query("""
            select avg(f.rating)
            from Feedback f
@@ -150,7 +139,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     @Query("SELECT COUNT(f) FROM Feedback f WHERE f.tool.toolId = :toolId AND f.status = 'PUBLISHED'")
     Long countByToolIdByStatus(@Param("toolId") Long toolId);
-    Optional<Feedback> findByFeedbackIdAndAccount_Email(Long id, String email);
 
     @Query("""
        select f
@@ -168,28 +156,18 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
            where f.tool = :tool
              and (f.status = :status or f.status is null)
            """)
-    Double avgRatingByToolAndStatusOrNull(@Param("tool") Tool tool,
-                                          @Param("status") Feedback.Status status);
 
-    @Query("""
-           select count(f)
-           from Feedback f
-           where f.tool = :tool
-             and (f.status = :status or f.status is null)
-           """)
-    long countByToolAndStatusOrNull(@Param("tool") Tool tool,
-                                    @Param("status") Feedback.Status status);
-
-    Page<Feedback> findByToolAndStatusOrderByCreatedAtDesc(Tool tool, Feedback.Status status, org.springframework.data.domain.Pageable pageable);
-
-    @org.springframework.data.jpa.repository.Query("""
-    select avg(f.rating) from Feedback f
-    where f.tool = :tool and f.status = :status
-""")
-    Double avgRatingByToolAndStatus(@org.springframework.data.repository.query.Param("tool") Tool tool,
-                                    @org.springframework.data.repository.query.Param("status") Feedback.Status status);
-
-    long countByToolAndStatus(Tool tool, Feedback.Status status);
+//    @Query("""
+//           select count(f)
+//           from Feedback f
+//           where f.tool = :tool
+//             and (f.status = :status or f.status is null)
+//           """)
+//
+//    @org.springframework.data.jpa.repository.Query("""
+//    select avg(f.rating) from Feedback f
+//    where f.tool = :tool and f.status = :status
+//""")
 
 
     boolean existsByOrder(CustomerOrder order);

@@ -1,7 +1,6 @@
-// src/main/java/swp391/fa25/lms/controller/common/FeedbackController.java
+
 package swp391.fa25.lms.controller.common;
 
-import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
@@ -20,9 +19,6 @@ import swp391.fa25.lms.repository.FeedbackRepository;
 import swp391.fa25.lms.service.customer.FeedbackRepositoryImpl;
 
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 @Controller
 @Validated
@@ -106,6 +102,7 @@ public class FeedbackController {
     public String updateFeedback(@PathVariable Long feedbackId,
                                  @RequestParam @Min(1) @Max(5) Integer rating,
                                  @RequestParam(required = false) @Size(max = 100) String comment,
+                                 @RequestParam(required = false) Feedback.Status status,
                                  RedirectAttributes ra,
                                  Principal principal) {
 
