@@ -82,35 +82,64 @@
         <!-- Search and Filter Bar -->
         <form class="search-filter-bar" id="filterForm">
             <div class="row g-3 align-items-end">
-                <div class="col-md-6">
-                    <div class="search-box position-relative">
-                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
-                        <input type="text" class="form-control ps-5" name="keyword" placeholder="Tìm kiếm theo tên...">
-                    </div>
+                <!--SEARCH theo: tên tool, thêm tên seller-->
+                <div class="col-md-5 search-box">
+                    <input type="text" class="form-control" name="keyword" placeholder="Tìm kiếm tool hoặc seller"
+                           th:value="${keyword}">
                 </div>
 
-                <div class="col-md-3">
+                <!--Filter theo category-->
+                <div class="col-md-2">
                     <select class="form-select" name="categoryId">
-                        <option value="">Dịch vụ</option>
+                        <option value="">Tất cả dịch vụ</option>
                         <option th:each="cate : ${categories}"
                                 th:value="${cate.categoryId}"
-                                th:text="${cate.categoryName}">
-                        </option>
+                                th:text="${cate.categoryName}"
+                                th:selected="${cate.categoryId == selectedCategory}"></option>
                     </select>
                 </div>
 
+                <!--Filter theo ngày đăng-->
                 <div class="col-md-2">
                     <select class="form-select" name="dateFilter">
                         <option value="">Ngày đăng</option>
-                        <option value="1">Mới nhất</option>
-                        <option value="2">30 ngày qua</option>
-                        <option value="3">3 tháng qua</option>
+                        <option value="1" th:selected="${dateFilter=='1'}">Mới nhất</option>
+                        <option value="2" th:selected="${dateFilter=='2'}">30 ngày qua</option>
+                        <option value="3" th:selected="${dateFilter=='3'}">3 tháng qua</option>
                     </select>
                 </div>
 
-                <div class="col-md-1 text-center">
-                    <button type="submit" class="submit btn btn-outline-primary w-100">
-                        <i class="fas fa-search"></i>
+                <!--Filter theo giá: Mọi giá, Dưới 100.000, 100.000 - 500.000, 500.000 - 1.000.000, Trên 1.000.000-->
+                <div class="col-md-2">
+                    <select class="form-select" name="priceFilter">
+                        <option value="all" th:selected="${priceFilter=='all'}">Mọi giá</option>
+                        <option value="under100k" th:selected="${priceFilter=='under100k'}">Dưới 100.000</option>
+                        <option value="100k-500k" th:selected="${priceFilter=='100k-500k'}">100.000 - 500.000</option>
+                        <option value="500k-1m" th:selected="${priceFilter=='500k-1m'}">500.000 - 1.000.000</option>
+                        <option value="above1m" th:selected="${priceFilter=='above1m'}">Trên 1.000.000</option>
+                    </select>
+                </div>
+
+                <!--Filter theo số sao-->
+                <div class="col-md-2">
+                    <select class="form-select" name="ratingFilter">
+                        <option value="">Số sao</option>
+                        <option value="1" th:selected="${ratingFilter==1}">1⭐ trở lên</option>
+                        <option value="2" th:selected="${ratingFilter==2}">2⭐ trở lên</option>
+                        <option value="3" th:selected="${ratingFilter==3}">3⭐ trở lên</option>
+                        <option value="4" th:selected="${ratingFilter==4}">4⭐ trở lên</option>
+                        <option value="5" th:selected="${ratingFilter==5}">5⭐</option>
+                    </select>
+                </div>
+
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-search"></i> Tìm kiếm
+                    </button>
+                </div>
+                <div class="col-md-auto">
+                    <button type="button" id="clearFilters" class="btn btn-secondary px-4">
+                        <i class="bi bi-x-circle"></i> Xóa lọc
                     </button>
                 </div>
             </div>
@@ -118,7 +147,97 @@
 
 
         <!-- Danh sách sản phẩm (load động) -->
-        <div id="product-list"></div>
+        <div id="product-list">
+            <div id="toolList" th:fragment="toolList">
+                <th:block th:if="${#lists.isEmpty(tools)}">
+                    <div class="col-12 text-center py-4 text-muted">
+                        <h5>Không có sản phẩm phù hợp</h5>
+                    </div>
+                </th:block>
+                <div class="row g-4">
+                    <div class="col-md-4" th:each="tool : ${tools}">
+                        <a th:href="@{'/tools/' + ${tool.toolId}}" class="product-card">
+                            <div class="product-image">
+                                <div class="favorite-icon" th:attr="data-tool-id=${tool.toolId}">
+                                    <i class="far fa-heart" th:classappend="${tool.isFavorite} ? 'fas' : 'far'"></i>
+                                </div>
+                                <img th:src="${tool.image != null ? tool.image : '/placeholder.svg?height=250&width=350'}" alt="Product">
+                            </div>
+                            <div class="product-info">
+
+                                <!-- Tool Name + Hết hàng -->
+                                <h3 class="product-name fs-5 fw-bold">
+                                    <span th:text="${tool.toolName}"></span>
+                                    <span th:if="${tool.quantity == 0}" class="text-danger fw-bold ms-2 fs-6">(Hết hàng)</span>
+                                </h3>
+
+                                <span th:text="'👤 ' + ${tool.seller.fullName}"></span>
+
+                                <!--Review-->
+                                <div class="product-rating">
+                                    <div class="stars">
+                            <span th:each="i : ${#numbers.sequence(1,5)}">
+                                <i th:classappend="${i <= tool.averageRating} ? 'fas fa-star text-warning' :
+                                (${i - tool.averageRating < 1} ? 'fas fa-star-half-alt text-warning' : 'far fa-star text-warning')"></i>
+                            </span>
+                                    </div>
+                                    <span class="review-count" th:text="${tool.totalReviews + ' reviews'}"></span>
+                                </div>
+
+                                <!--Price-->
+                                <p class="product-price fw-bold mt-2">
+                                    <i class="bi bi-cash-stack"></i>
+                                    <span th:if="${tool.minPrice != null && tool.maxPrice != null}">
+                            <span th:text="${tool.minPrice.equals(tool.maxPrice) ?
+                            #numbers.formatDecimal(tool.minPrice, 0, 'COMMA', 0, 'POINT') :
+                            #numbers.formatDecimal(tool.minPrice, 0, 'COMMA', 0, 'POINT') + ' – ' +
+                            #numbers.formatDecimal(tool.maxPrice, 0, 'COMMA', 0, 'POINT')}"></span>
+                                VND
+                            </span>
+                                </p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-wrapper mt-4" th:if="${totalPages >= 1}">
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            <!-- Previous -->
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a href="#" class="page-link"
+                                   th:data-page="${currentPage - 1}"
+                                   tabindex="-1">Trước</a>
+                            </li>
+
+                            <!-- Page numbers -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                                th:classappend="${i == currentPage} ? 'active'">
+                                <a href="#" class="page-link" th:data-page="${i}" th:text="${i + 1}"></a>
+                            </li>
+
+                            <!-- Next -->
+                            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                <a href="#" class="page-link"
+                                   th:data-page="${currentPage + 1}">Sau</a>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <!-- Combo chọn số sản phẩm / trang -->
+                    <div class="ms-3">
+                        <label for="pageSizeSelect" class="form-label me-2 mb-0">Số sản phẩm / trang:</label>
+                        <select id="pageSizeSelect" class="form-select d-inline-block w-auto pe-5">
+                            <option value="6">6</option>
+                            <option value="9" selected>9</option>
+                            <option value="12">12</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+        </div>
 
     </div>
 </section>
@@ -129,45 +248,170 @@
 <!-- Thêm Bootstrap JS Bundle ở cuối -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Global function để header có thể gọi
+    window.loadFavoriteCount = async function() {
+        const badge = document.getElementById("favoriteCountBadge");
+        if (!badge) return;
+        try {
+            const res = await fetch("/favorite/count", { credentials: "include" });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const count = await res.json();
+            badge.textContent = count;
+            console.log("Favorite count từ API:", count);
+        } catch (error) {
+            console.error("Lỗi khi load favorite count:", error);
+            badge.textContent = "0";
+        }
+    };
+
     document.addEventListener("DOMContentLoaded", function () {
-        const form = document.getElementById("filterForm");
-        const productList = document.getElementById("product-list");
+        const filterForm = document.getElementById("filterForm");
+        const productListContainer = document.getElementById("product-list");
+        const clearFiltersBtn = document.getElementById("clearFilters");
 
-        // Load dữ liệu ban đầu
-        loadTools();
-
-        // Khi thay đổi filter/search thì reload lại danh sách
-        form.addEventListener("change", () => loadTools());
-        form.addEventListener("submit", e => {
-            e.preventDefault();
-            loadTools();
-        });
-
-        function loadTools(page = 0) {
-            const formData = new FormData(form);
-            formData.append("page", page);
-            const query = new URLSearchParams(formData).toString();
-
-            fetch(`/home/tools?${query}`)
-                .then(res => res.text())
-                .then(html => {
-                    productList.innerHTML = html;
-                    bindPagination();
-                })
-                .catch(err => console.error("Error loading tools:", err));
+        if (!productListContainer) {
+            console.error("Không tìm thấy #product-list container");
+            return;
         }
 
-        function bindPagination() {
-            productList.querySelectorAll(".page-link").forEach(link => {
-                link.addEventListener("click", e => {
+        // ======================= LOAD TOOL FRAGMENT =======================
+        async function loadTools(params = {}) {
+            try {
+                const formData = new FormData(filterForm);
+                for (const [k, v] of Object.entries(params)) formData.set(k, v);
+
+                if (!formData.has("page")) formData.set("page", "0");
+
+                let size = params.size || (document.getElementById("pageSizeSelect")?.value || "9");
+                formData.set("size", size);
+
+                const query = new URLSearchParams(formData).toString();
+                const res = await fetch(`/home/tools?${query}`, {
+                    method: "GET",
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                    credentials: "include"
+                });
+
+                if (!res.ok) {
+                    console.error("Lỗi tải tools:", res.status, await res.text());
+                    return;
+                }
+
+                const html = await res.text();
+                productListContainer.innerHTML = html;
+
+                attachPaginationListeners();
+                attachPageSizeListener();
+                window.loadFavoriteCount();
+            } catch (err) {
+                console.error("loadTools() error:", err);
+            }
+        }
+
+        // ======================= FAVORITE TOGGLE =======================
+        productListContainer.addEventListener("click", async function (ev) {
+            const favEl = ev.target.closest(".favorite-icon");
+            if (!favEl) return;
+
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            const toolId = favEl.getAttribute("data-tool-id");
+            if (!toolId) return;
+
+            try {
+                const res = await fetch(`/favorite/toggle?toolId=${encodeURIComponent(toolId)}`, {
+                    method: "POST",
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                    credentials: "include"
+                });
+
+                if (res.status === 401) {
+                    window.location.href = "/login";
+                    return;
+                }
+
+                const result = await res.text();
+                console.log("Toggle result:", result.trim());
+
+                const icon = favEl.querySelector("i");
+                if (!icon) return;
+
+                let currentCount = parseInt(document.getElementById("favoriteCountBadge").textContent) || 0;
+                let newCount = currentCount;
+
+                if (result.trim() === "added") {
+                    // Toggle to filled + increase count
+                    icon.classList.remove("far");
+                    icon.classList.add("fas", "text-danger");
+                    newCount = currentCount + 1;
+                } else {
+                    // Toggle to empty + decrease count
+                    icon.classList.remove("fas", "text-danger");
+                    icon.classList.add("far");
+                    newCount = Math.max(0, currentCount - 1);
+                }
+
+                // Update badge local
+                document.getElementById("favoriteCountBadge").textContent = newCount;
+
+                document.dispatchEvent(new Event("favorite-changed"));
+                console.log("Favorite toggled smoothly! New count:", newCount);
+            } catch (err) {
+                console.error("toggle favorite error:", err);
+            }
+        });
+
+        // ======================= PHÂN TRANG =======================
+        function attachPaginationListeners() {
+            productListContainer.querySelectorAll(".page-link").forEach(link => {
+                link.addEventListener("click", function (e) {
                     e.preventDefault();
-                    const page = link.getAttribute("data-page");
-                    loadTools(page);
+                    const page = this.getAttribute("data-page");
+                    if (page == null) return;
+
+                    const sizeSelect = document.getElementById("pageSizeSelect");
+                    const size = sizeSelect ? parseInt(sizeSelect.value) : 9;
+                    loadTools({ page, size });
                 });
             });
         }
+
+        // ======================= PAGE SIZE SELECT =======================
+        function attachPageSizeListener() {
+            const sizeSelect = document.getElementById("pageSizeSelect");
+            if (!sizeSelect) return;
+
+            const newSelect = sizeSelect.cloneNode(true);
+            sizeSelect.parentNode.replaceChild(newSelect, sizeSelect);
+
+            newSelect.addEventListener("change", function () {
+                const newSize = parseInt(this.value) || 9;
+                loadTools({ page: 0, size: newSize });
+            });
+        }
+
+        // ======================= FILTER + CLEAR =======================
+        if (filterForm) {
+            filterForm.addEventListener("change", () => loadTools({ page: 0 }));
+            filterForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                loadTools({ page: 0 });
+            });
+        }
+
+        if (clearFiltersBtn && filterForm) {
+            clearFiltersBtn.addEventListener("click", () => {
+                filterForm.reset();
+                loadTools({ page: 0 });
+            });
+        }
+
+        // ======================= GỌI LẦN ĐẦU =======================
+        loadTools();
     });
 
+    // Category carousel (giữ nguyên)
     document.addEventListener("DOMContentLoaded", function () {
         const items = document.querySelectorAll(".category-item");
         const nextBtn = document.getElementById("nextBtn");
@@ -181,7 +425,6 @@
                 items[i].style.display = "block";
             }
 
-            // Ẩn/hiện nút điều hướng
             prevBtn.style.display = currentIndex === 0 ? "none" : "block";
             nextBtn.style.display = currentIndex + itemsPerPage >= items.length ? "none" : "block";
         }
@@ -200,22 +443,11 @@
             }
         });
 
-        showItems(); // Hiển thị ban đầu
+        showItems();
     });
 
-    document.getElementById("filterForm").addEventListener("submit", function (e) {
-        e.preventDefault(); // Không reload trang
-
-        const formData = new FormData(this);
-        const params = new URLSearchParams(formData).toString();
-
-        fetch(`/home/tools?${params}`)
-            .then(res => res.text())
-            .then(html => {
-                document.getElementById("toolContainer").innerHTML = html;
-            });
-    });
-
+    // Listen global event cho header (backup)
+    document.addEventListener("favorite-changed", window.loadFavoriteCount);
 </script>
 
 </body>

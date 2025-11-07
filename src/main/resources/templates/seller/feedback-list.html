@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Feedback từ khách hàng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSRF (Spring Security – nếu có) -->
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}">
+
+    <!-- Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/seller-feedback.css}" rel="stylesheet"/>
+    <style>
+        .feedback-table .w-date{width:160px}
+        .feedback-table .w-tool{width:220px}
+        .feedback-table .w-customer{width:220px}
+        .feedback-table .w-reply{width:340px}
+        .star{font-size:1rem;color:#f59e0b}
+        .star.gray{color:#e5e7eb}
+        .reply-card{background:#fff;border:1px solid #e5e7eb}
+        .filter-card{background:#fff;border:1px solid #e5e7eb}
+        .page-size{width:auto}
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Lưu toolId filter của trang (có thể null) -->
+<input type="hidden" id="pageToolId" th:value="${toolId}">
+<!-- CSRF để JS dùng -->
+<input type="hidden" id="csrfParam"  th:value="${_csrf != null ? _csrf.parameterName : '_csrf'}">
+<input type="hidden" id="csrfToken" th:value="${_csrf != null ? _csrf.token : ''}">
+
+<div class="container py-4">
+    <div class="page-header d-flex align-items-center justify-content-between mb-3">
+        <h3 class="mb-0">Feedback từ khách hàng</h3>
+        <a class="btn btn-outline-secondary" th:href="@{/seller/tools}">
+            <i class="bi bi-arrow-left"></i>
+            <span class="d-none d-sm-inline">Quay lại</span>
+        </a>
+    </div>
+
+    <!-- Bộ lọc nâng cao -->
+    <form class="card filter-card shadow-sm p-3 mb-3" method="get" th:action="@{/seller/feedback}">
+        <div class="row g-3 align-items-end">
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="toolIdInput">Tool ID</label>
+                <input id="toolIdInput" type="number" min="1" class="form-control" name="toolId" th:value="${toolId}">
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="qInput">Từ khóa</label>
+                <input id="qInput" type="text" class="form-control" name="q" th:value="${q}" placeholder="comment, tên KH, email, tên tool">
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="ratingMin">Rating từ</label>
+                <select id="ratingMin" class="form-select" name="ratingMin">
+                    <option th:value="${null}" th:selected="${ratingMin == null}">--</option>
+                    <option th:each="i : ${#numbers.sequence(1,5)}"
+                            th:value="${i}" th:text="${i}"
+                            th:selected="${ratingMin != null and ratingMin == i}"></option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="ratingMax">đến</label>
+                <select id="ratingMax" class="form-select" name="ratingMax">
+                    <option th:value="${null}" th:selected="${ratingMax == null}">--</option>
+                    <option th:each="i : ${#numbers.sequence(1,5)}"
+                            th:value="${i}" th:text="${i}"
+                            th:selected="${ratingMax != null and ratingMax == i}"></option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="hasReply">Reply</label>
+                <select id="hasReply" class="form-select" name="hasReply">
+                    <option th:value="${null}" th:selected="${hasReply == null}">Tất cả</option>
+                    <option th:value="true"  th:selected="${hasReply != null and hasReply}">Đã có reply</option>
+                    <option th:value="false" th:selected="${hasReply != null and !hasReply}">Chưa reply</option>
+                </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="fromDate">Từ ngày</label>
+                <input id="fromDate" type="date" class="form-control" name="from" th:value="${from}">
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="toDate">Đến ngày</label>
+                <input id="toDate" type="date" class="form-control" name="to" th:value="${to}">
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="sortSel">Sắp xếp theo</label>
+                <select id="sortSel" class="form-select" name="sort">
+                    <option value="createdAt" th:selected="${sort == 'createdAt'}">Ngày tạo</option>
+                    <option value="rating"    th:selected="${sort == 'rating'}">Rating</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="dirSel">Chiều</label>
+                <select id="dirSel" class="form-select" name="dir">
+                    <option value="desc" th:selected="${dir == 'desc'}">Giảm dần</option>
+                    <option value="asc"  th:selected="${dir == 'asc'}">Tăng dần</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label" for="sizeSel">Kích thước trang</label>
+                <select id="sizeSel" class="form-select page-size" name="size">
+                    <option th:each="s : ${new int[]{5,10,20,50}}"
+                            th:value="${s}" th:text="${s}"
+                            th:selected="${size == s}"></option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3 text-md-end">
+                <button class="btn btn-primary"><i class="bi bi-funnel"></i> Lọc</button>
+                <a class="btn btn-outline-secondary" th:href="@{/seller/feedback}">Xóa lọc</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Bảng danh sách -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle feedback-table">
+                <thead class="table-light">
+                <tr>
+                    <th class="w-date">Ngày</th>
+                    <th class="w-tool">Tool</th>
+                    <th class="w-customer">Khách</th>
+                    <th>Rating / Comment</th>
+                    <th class="w-reply">Phản hồi của Seller</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="fb : ${feedbacks}">
+                    <td th:text="${#temporals.format(fb.createdAt, 'dd/MM/yyyy HH:mm')}">01/10/2025 12:00</td>
+
+                    <td>
+                        <div class="tool-line">
+                            <a th:if="${fb.tool != null}"
+                               th:href="@{/tools/{id}(id=${fb.tool.toolId})}"
+                               th:text="${fb.tool.toolName}">Tool name</a>
+                            <span th:if="${fb.tool == null}" class="text-muted">Tool</span>
+                        </div>
+                        <div class="text-muted small">
+                            ID: <span th:text="${fb.tool != null ? fb.tool.toolId : '—'}">1</span>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div th:text="${fb.account != null ? fb.account.fullName : '—'}">Nguyễn Văn A</div>
+                        <div class="text-muted small" th:text="${fb.account != null ? fb.account.email : ''}">email@example.com</div>
+                    </td>
+
+                    <td>
+                        <div class="stars">
+                            <i th:each="i : ${#numbers.sequence(1,5)}"
+                               class="bi bi-star-fill star"
+                               th:classappend="${i <= fb.rating} ? '' : ' gray'"></i>
+                            <span class="ms-2 badge text-bg-light" th:text="|${fb.rating}/5|">5/5</span>
+                        </div>
+                        <div class="mt-1" th:text="${fb.comment}">Nội dung nhận xét…</div>
+                    </td>
+
+                    <td>
+                        <!-- repliesMap do controller cung cấp -->
+                        <div th:with="reps=${repliesMap[fb.feedbackId]}">
+                            <div th:attr="id=${'reply-box-' + fb.feedbackId}">
+                                <!-- ĐÃ CÓ REPLY -->
+                                <div th:if="${reps != null and !#lists.isEmpty(reps)}" th:with="r=${reps.get(0)}">
+                                    <div class="p-3 rounded reply-card">
+                                        <div class="d-flex justify-content-between gap-3 flex-wrap">
+                                            <strong class="reply-title">
+                                                <i class="bi bi-reply"></i> Phản hồi
+                                            </strong>
+                                            <small class="text-muted"
+                                                   th:text="|Cập nhật: ${#temporals.format(r.updatedAt, 'dd/MM/yyyy HH:mm')}|">
+                                                Cập nhật: --
+                                            </small>
+                                        </div>
+                                        <div class="mt-2" th:text="${r.content}">Nội dung phản hồi…</div>
+                                        <div class="mt-3 d-flex gap-2">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary edit-reply-btn"
+                                                    th:attr="data-feedback-id=${fb.feedbackId},
+                                                             data-tool-id=${fb.tool != null ? fb.tool.toolId : ''},
+                                                             data-content=${#strings.escapeXml(r.content)}">
+                                                <i class="bi bi-pencil-square"></i> Sửa
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger delete-reply-btn"
+                                                    th:attr="data-feedback-id=${fb.feedbackId},
+                                                             data-tool-id=${fb.tool != null ? fb.tool.toolId : ''}">
+                                                <i class="bi bi-trash3"></i> Xóa
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CHƯA CÓ REPLY -->
+                                <div th:if="${reps == null or #lists.isEmpty(reps)}">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary open-reply-btn"
+                                            th:attr="data-feedback-id=${fb.feedbackId},
+                                                     data-tool-id=${fb.tool != null ? fb.tool.toolId : ''}">
+                                        <i class="bi bi-reply"></i> Trả lời
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(feedbacks)}">
+                    <td colspan="5" class="text-center text-muted py-4">Chưa có feedback nào.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Phân trang -->
+        <div class="card-footer d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="text-muted small">
+                Trang <span th:text="${page.number + 1}">1</span>/<span th:text="${page.totalPages}">1</span>,
+                Tổng: <span th:text="${page.totalElements}">0</span> feedback
+            </div>
+
+            <nav th:if="${page.totalPages > 1}">
+                <ul class="pagination mb-0">
+                    <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{'/seller/feedback'(toolId=${toolId},q=${q},ratingMin=${ratingMin},ratingMax=${ratingMax},hasReply=${hasReply},from=${from},to=${to},sort=${sort},dir=${dir},size=${size},page=${page.number-1})}">
+                            «
+                        </a>
+                    </li>
+
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, page.totalPages-1)}"
+                        th:classappend="${i == page.number} ? 'active'">
+                        <a class="page-link"
+                           th:text="${i + 1}"
+                           th:href="@{'/seller/feedback'(toolId=${toolId},q=${q},ratingMin=${ratingMin},ratingMax=${ratingMax},hasReply=${hasReply},from=${from},to=${to},sort=${sort},dir=${dir},size=${size},page=${i})}">1</a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{'/seller/feedback'(toolId=${toolId},q=${q},ratingMin=${ratingMin},ratingMax=${ratingMax},hasReply=${hasReply},from=${from},to=${to},sort=${sort},dir=${dir},size=${size},page=${page.number+1})}">
+                            »
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal trả lời -->
+<div class="modal fade" id="replyModal" tabindex="-1" aria-labelledby="replyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="replyModalLabel">Trả lời Feedback</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="replyForm" method="post">
+                    <input type="hidden" name="feedbackId" id="feedbackId"/>
+                    <input type="hidden" name="toolId" id="toolId"/>
+                    <textarea name="content" class="form-control" rows="3" maxlength="200"
+                              placeholder="Nhập phản hồi của bạn..." required></textarea>
+                    <!-- Thêm bộ đếm & lỗi khoảng trắng giữa từng ký tự -->
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <small class="text-muted">Hệ thống sẽ tự chuẩn hoá: chỉ 1 khoảng trắng giữa các từ.</small>
+                        <small class="text-muted"><span id="replyCc">0</span>/200</small>
+                    </div>
+                    <div class="text-end mt-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Gửi Phản hồi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Tắt inline để Thymeleaf không parse ${} trong template string JS -->
+<script th:inline="none">
+    (function () {
+        /* ---------- Chuẩn hoá khoảng trắng: giữ 1 space giữa các từ (KHÔNG trim ở đây) ---------- */
+        function oneSpaceBetweenWords(s){
+            return (s ?? "")
+                .replace(/\u00A0/g, ' ')
+                .replace(/\s+/g, ' ');
+        }
+
+        const csrfParamEl = document.getElementById('csrfParam');
+        const csrfTokenEl = document.getElementById('csrfToken');
+        const csrfHeader  = (document.querySelector('meta[name="_csrf_header"]') || {}).content || 'X-CSRF-TOKEN';
+        const csrfMeta    = (document.querySelector('meta[name="_csrf"]') || {}).content || '';
+        const csrfParam   = csrfParamEl ? csrfParamEl.value : '_csrf';
+        const csrfToken   = csrfTokenEl ? csrfTokenEl.value : '';
+
+        function buildHeaders(json=false){
+            const h = {
+                'Accept': json ? 'application/json' : 'text/html,application/xhtml+xml',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            if (json) h['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+            const tok = csrfToken || csrfMeta;
+            if (tok) h[csrfHeader] = tok;
+            return h;
+        }
+
+        function getPageToolId(){
+            return (document.getElementById('pageToolId') || {}).value || '';
+        }
+
+        function openModal(feedbackId, presetContent, toolIdFromBtn){
+            const toolId = toolIdFromBtn || getPageToolId();
+            document.getElementById('feedbackId').value = feedbackId;
+            document.getElementById('toolId').value = toolId;
+
+            const ta = document.querySelector('#replyForm textarea[name="content"]');
+            const cc = document.getElementById('replyCc');
+
+            ta.value = oneSpaceBetweenWords(presetContent || '');
+            cc.textContent = ta.value.length;
+
+            const modalEl = document.getElementById('replyModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+
+        // Open create/edit/delete reply
+        document.addEventListener('click', function (ev) {
+            const addBtn = ev.target.closest('.open-reply-btn');
+            if (addBtn){
+                openModal(
+                    addBtn.getAttribute('data-feedback-id'),
+                    '',
+                    addBtn.getAttribute('data-tool-id')
+                );
+                return;
+            }
+            const editBtn = ev.target.closest('.edit-reply-btn');
+            if (editBtn){
+                openModal(
+                    editBtn.getAttribute('data-feedback-id'),
+                    editBtn.getAttribute('data-content') || '',
+                    editBtn.getAttribute('data-tool-id')
+                );
+                return;
+            }
+            const delBtn = ev.target.closest('.delete-reply-btn');
+            if (delBtn){
+                const fid = delBtn.getAttribute('data-feedback-id');
+                const toolId = delBtn.getAttribute('data-tool-id') || getPageToolId();
+                if (!fid) return;
+                if (!toolId){ alert('Thiếu Tool ID để xoá phản hồi.'); return; }
+                if (!confirm('Xóa phản hồi này?')) return;
+
+                const body = new URLSearchParams();
+                body.append('toolId', toolId);
+                if (csrfToken) body.append(csrfParam, csrfToken);
+
+                fetch('/seller/feedback/' + encodeURIComponent(fid) + '/reply/delete', {
+                    method: 'POST', headers: buildHeaders(true), body
+                }).then(resp => {
+                    if (!resp.ok){
+                        return resp.text().then(t => { throw new Error('HTTP '+resp.status+' '+t); });
+                    }
+                    const box = document.getElementById('reply-box-' + fid);
+                    if (box){
+                        box.innerHTML =
+                            '<button type="button" class="btn btn-sm btn-outline-primary open-reply-btn" ' +
+                            'data-feedback-id="'+fid+'" data-tool-id="'+toolId+'">' +
+                            '<i class="bi bi-reply"></i> Trả lời</button>';
+                    }
+                }).catch(err => {
+                    console.error('Delete failed:', err);
+                    alert('Có lỗi khi xóa phản hồi: ' + err.message);
+                });
+            }
+        });
+
+        // Chuẩn hoá khi gõ/dán (không trim) + giữ caret
+        (function bindTypingNormalization(){
+            const ta = document.querySelector('#replyForm textarea[name="content"]');
+            const cc = document.getElementById('replyCc');
+            if (!ta) return;
+
+            const normalizeAndKeepCaret = () => {
+                const start = ta.selectionStart ?? ta.value.length;
+                const before = ta.value.slice(0, start);
+
+                const newBefore = oneSpaceBetweenWords(before);
+                const newAll    = oneSpaceBetweenWords(ta.value);
+                const newPos    = Math.min(newBefore.length, newAll.length);
+
+                if (newAll !== ta.value) {
+                    ta.value = newAll;
+                    ta.selectionStart = ta.selectionEnd = newPos;
+                }
+                if (cc) cc.textContent = ta.value.length;
+            };
+
+            ta.addEventListener('input', normalizeAndKeepCaret);
+
+            ta.addEventListener('paste', e => {
+                e.preventDefault();
+                const raw = (e.clipboardData || window.clipboardData).getData('text');
+
+                const start = ta.selectionStart ?? ta.value.length;
+                const end   = ta.selectionEnd ?? ta.value.length;
+                ta.value = ta.value.slice(0, start) + raw + ta.value.slice(end);
+                ta.selectionStart = ta.selectionEnd = start + raw.length;
+
+                normalizeAndKeepCaret();
+            });
+        })();
+
+        // Submit create/update reply
+        document.getElementById('replyForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const ta   = document.querySelector('#replyForm textarea[name="content"]');
+            const cc   = document.getElementById('replyCc');
+
+            // Chuẩn hoá + TRIM khi gửi
+            ta.value = oneSpaceBetweenWords(ta.value).trim();
+            cc.textContent = ta.value.length;
+
+            const feedbackId = document.getElementById('feedbackId').value;
+            const toolId     = document.getElementById('toolId').value;
+            const content    = ta.value;
+
+            if (!toolId){ alert('Thiếu Tool ID. Hãy mở form từ đúng dòng feedback.'); return; }
+            if (!content){ alert('Vui lòng nhập phản hồi!'); return; }
+            if (content.length > 200){ alert('Tối đa 200 ký tự.'); return; }
+
+            let url = '/seller/feedback/' + encodeURIComponent(feedbackId) + '/reply?toolId=' + encodeURIComponent(toolId);
+
+            const body = new URLSearchParams({ content, toolId });
+            if (csrfToken) body.append(csrfParam, csrfToken);
+
+            try {
+                const resp = await fetch(url, { method: 'POST', headers: buildHeaders(true), body });
+                if (!resp.ok) {
+                    const t = await resp.text();
+                    throw new Error('HTTP '+resp.status+' '+t);
+                }
+                // {feedbackId, replyId, sellerName, content, updatedAt}
+                const data = await resp.json();
+
+                // Đóng modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('replyModal'));
+                if (modal) modal.hide();
+
+                // Cập nhật hiển thị (escape &,<,>)
+                const normalized = oneSpaceBetweenWords(data.content || '').trim();
+                const safeContent = normalized
+                    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const updatedAt = data.updatedAt ? ('Cập nhật: ' + data.updatedAt) : '';
+
+                const box = document.getElementById('reply-box-' + data.feedbackId);
+                if (box) {
+                    box.innerHTML =
+                        '<div class="p-3 rounded reply-card">' +
+                        '<div class="d-flex justify-content-between gap-3 flex-wrap">' +
+                        '<strong class="reply-title"><i class="bi bi-reply"></i> Phản hồi</strong>' +
+                        '<small class="text-muted">'+updatedAt+'</small>' +
+                        '</div>' +
+                        '<div class="mt-2">'+ safeContent +'</div>' +
+                        '<div class="mt-3 d-flex gap-2">' +
+                        '<button type="button" class="btn btn-sm btn-outline-primary edit-reply-btn" '+
+                        'data-feedback-id="'+data.feedbackId+'" data-tool-id="'+toolId+'" '+
+                        'data-content="'+normalized.replaceAll('"','&quot;')+'">' +
+                        '<i class="bi bi-pencil-square"></i> Sửa</button>' +
+                        '<button type="button" class="btn btn-sm btn-outline-danger delete-reply-btn" '+
+                        'data-feedback-id="'+data.feedbackId+'" data-tool-id="'+toolId+'">' +
+                        '<i class="bi bi-trash3"></i> Xóa</button>' +
+                        '</div>' +
+                        '</div>';
+                }
+
+                // Reset
+                ta.value = '';
+                cc.textContent = '0';
+            } catch (err) {
+                console.error('Reply failed:', err);
+                alert('Có lỗi xảy ra khi gửi phản hồi: ' + err.message);
+            }
+        });
+    })();
+</script>
+</body>
+</html>

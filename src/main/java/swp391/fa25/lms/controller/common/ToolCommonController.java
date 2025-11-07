@@ -10,9 +10,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.service.customer.CategoryService;
+import swp391.fa25.lms.service.customer.FeedbackReadService;
 import swp391.fa25.lms.service.customer.ToolService;
 
 import java.util.Optional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 @Controller
 public class ToolCommonController {
@@ -22,12 +27,11 @@ public class ToolCommonController {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private FeedbackReadService feedbackReadService;
+
     /**
      * Hiển thị trang detail tool
-     * @param id
-     * @param reviewPage
-     * @param model
-     * @return
      */
     @GetMapping("/tools/{id}")
     public String showToolDetail(@PathVariable("id") Long id,
@@ -42,11 +46,23 @@ public class ToolCommonController {
         }
 
         Tool tool = maybeTool.get();
+        System.out.println("Detail Tool ID: " + tool.getToolId() + ", Image path: '" + tool.getImage() + "'");
 
         // Lấy danh sách feedback
         Page<Feedback> feedbackPage = toolService.getFeedbackPageForTool(tool, reviewPage, 5);
+
+        // ===== THÊM: nạp repliesMap để hiển thị phản hồi seller ngay dưới feedback =====
+        List<Long> fbIds = feedbackPage.getContent()
+                .stream()
+                .map(Feedback::getFeedbackId)
+                .collect(Collectors.toList());
+        var repliesMap = feedbackReadService.mapRepliesByFeedbackIds(fbIds);
+        model.addAttribute("repliesMap", repliesMap);
+        // ==============================================================================
+
         // Tính rating trung bình
         double avgRating = toolService.getAverageRatingForTool(tool);
+        System.out.println("");
         // Tổng số review
         long totalReviews = toolService.getTotalReviewsForTool(tool);
 
@@ -56,6 +72,9 @@ public class ToolCommonController {
         model.addAttribute("avgRating", avgRating);
         model.addAttribute("totalReviews", totalReviews);
         model.addAttribute("categories", categoryService.getAllCategories());
+
+        // Tham số để view biết đang lọc theo status nào (nếu cần hiển thị)
+        model.addAttribute("feedbackStatus", Feedback.Status.PUBLISHED.name());
 
         return "public/tool-detail";
     }

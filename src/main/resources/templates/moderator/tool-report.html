@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Moderator - Tool Reports</title>
+    <link rel="stylesheet" th:href="@{/css/tool-report.css}">
+</head>
+<body>
+
+<div class="dashboard-container">
+    <!-- 🧭 Sidebar -->
+    <aside class="sidebar">
+        <h2>Moderator Panel</h2>
+        <nav class="menu">
+            <a th:href="@{/moderator/dashboard}">Dashboard</a>
+            <a th:href="@{/moderator/uploadRequest}">Upload Requests</a>
+            <a th:href="@{/moderator/feedback}">Feedback Reports</a>
+            <a th:href="@{/moderator/tool/report}" class="active">Tool Reports</a>
+            <a th:href="@{/moderator/history}">Uploaded Tools</a>
+            <!-- Profile Section -->
+            <a th:href="@{/profile}">Profile</a>
+            <a th:href="@{/profile/reset-password}">Change Password</a>
+            <a th:href="@{/logout}" class="text-danger">Logout</a>
+        </nav>
+    </aside>
+
+    <!-- 🌐 Main content -->
+    <main class="main-content">
+        <h1>Tool Reports</h1>
+
+        <!-- 🔍 Filter form -->
+        <form method="get" class="filter-form">
+            <label>Tool ID:</label>
+            <input type="number" name="toolId" min="1" step="1" th:value="${toolId}" placeholder="Enter Tool ID">
+
+            <label>Reporter ID:</label>
+            <input type="number" name="reporterId" min="1" step="1" th:value="${reporterId}" placeholder="Enter Reporter ID">
+
+            <label>Status:</label>
+            <select name="status">
+                <option value="">All</option>
+                <option th:each="s : ${T(swp391.fa25.lms.model.ToolReport.Status).values()}"
+                        th:value="${s.name()}"
+                        th:text="${s.name()}"
+                        th:selected="${status == s}">
+                </option>
+            </select>
+
+            <label>From Date:</label>
+            <input type="date" name="fromDate"
+                   th:value="${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : ''}">
+
+            <label>To Date:</label>
+            <input type="date" name="toDate"
+                   th:value="${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : ''}">
+
+            <button type="submit" class="btn btn-filter">Filter</button>
+            <a th:href="@{/moderator/tool/report}" class="btn btn-reset">Reset</a>
+        </form>
+
+        <!-- 📋 Report table -->
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tool</th>
+                <th>Reporter</th>
+                <th>Reason</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Reported At</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${reports}">
+                <td>
+                    <a th:href="@{'/moderator/tool/' + ${r.tool.toolId}}"
+                       th:text="${r.tool.toolId}"></a>
+                </td>
+                <td>
+                    <a th:href="@{'/moderator/tool/' + ${r.tool.toolId}}"
+                       th:text="${r.tool.toolName}"></a>
+                </td>                <td th:text="${r.reporter != null ? r.reporter.fullName : 'N/A'}"></td>
+                <td th:text="${r.reason}"></td>
+                <td th:text="${r.description}"></td>
+                <td><span th:text="${r.status}" th:class="'status ' + ${r.status}"></span></td>
+                <td th:text="${#temporals.format(r.reportedAt, 'yyyy-MM-dd')}"></td>
+                <td>
+                    <div th:if="${r.status.name() == 'PENDING'}">
+                        <form th:action="@{'/moderator/tool/report/' + ${r.toolReportId} + '/approve'}" method="post" style="display:inline">
+                            <button type="submit" class="btn btn-approve">Approve</button>
+                        </form>
+                        <form th:action="@{'/moderator/tool/report/' + ${r.toolReportId} + '/reject'}" method="post" style="display:inline">
+                            <button type="submit" class="btn btn-reject">Reject</button>
+                        </form>
+                    </div>
+                    <div th:if="${r.status.name() != 'PENDING'}" style="text-align:center; color: gray;">
+                        <span>—</span>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(reports)}">
+                <td colspan="8" style="text-align:center;">No reports found.</td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+
+</body>
+</html>

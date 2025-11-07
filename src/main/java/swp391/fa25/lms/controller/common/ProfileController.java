@@ -29,7 +29,7 @@ public class ProfileController {
 
         // TH1: Authentication
         if(authentication != null && authentication.isAuthenticated()
-            && authentication.getPrincipal() != null) {
+                && authentication.getPrincipal() != null) {
             email = authentication.getName();
         }
 

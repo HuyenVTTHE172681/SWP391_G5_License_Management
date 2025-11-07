@@ -1,6 +1,8 @@
 package swp391.fa25.lms.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -8,6 +10,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "Account")
+@JsonIgnoreProperties({
+        "hibernateLazyInitializer", "handler",
+        "orders", "favorites", "feedbacks", "tools", "uploadedFiles", "wallet"
+})
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,10 +65,12 @@ public class Account {
     private Role role;
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"transactions"})
     private Wallet wallet;
 
     // quan hệ với các bảng con
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"account", "license", "tool", "transaction"})
     private List<CustomerOrder> orders;
 
     @OneToMany(mappedBy = "account")
@@ -72,8 +80,13 @@ public class Account {
     private List<Favorite> favorites;
 
     @OneToMany(mappedBy = "seller")
-    @JsonBackReference(value = "tool-seller")
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "tool-seller")
     private List<Tool> tools;
+
+    @OneToMany(mappedBy = "uploadedBy")
+    @JsonManagedReference(value = "file-uploader")
+    private List<ToolFile> uploadedFiles;
+
 
     @ManyToOne
     @JoinColumn(name = "seller_package_id") // tên cột trong bảng Account
@@ -111,6 +124,14 @@ public class Account {
         this.favorites = favorites;
         this.feedbacks = feedbacks;
         this.orders = orders;
+    }
+
+    public List<ToolFile> getUploadedFiles() {
+        return uploadedFiles;
+    }
+
+    public void setUploadedFiles(List<ToolFile> uploadedFiles) {
+        this.uploadedFiles = uploadedFiles;
     }
 
     public Long getAccountId() {

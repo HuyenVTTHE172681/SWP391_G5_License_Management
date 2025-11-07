@@ -10,11 +10,11 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.*;
 import swp391.fa25.lms.repository.*;
-import swp391.fa25.lms.service.seller.SellerService;
 
+import java.math.BigDecimal;
+import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -23,19 +23,24 @@ import java.util.*;
 
 @Service
 public class PaymentService {
+    @Autowired
+    private ToolRepository toolRepository;
+    @Autowired
+    private LicenseToolRepository licenseToolRepository;
+    @Autowired
+    private CustomerOrderRepository orderRepository;
+    @Autowired
+    private WalletTransactionRepository transactionRepository;
+    @Autowired
+    private LicenseAccountRepository licenseAccountRepository;
+    @Autowired
+    private JavaMailSender mailSender;
+    @Autowired
+    private WalletRepository walletRepository;
+    @Autowired
+    private AccountRepository accountRepository;
 
-    private final ToolRepository toolRepository;
-    private final LicenseToolRepository licenseToolRepository;
-    private final CustomerOrderRepository orderRepository;
-    private final WalletTransactionRepository transactionRepository;
-    private final LicenseAccountRepository licenseAccountRepository;
-    private final JavaMailSender mailSender;
-    private final WalletRepository walletRepository;
-
-    @Autowired private SellerPackageRepository sellerPackageRepository;
-    @Autowired private SellerService sellerService;
-    @Autowired private AccountRepository accountRepository;
-
+    // Các biến môi trường VNPay (được config trong application.properties)
     @Value("${vnpay.tmnCode}")
     private String tmnCode;
     @Value("${vnpay.hashSecret}")
@@ -45,197 +50,443 @@ public class PaymentService {
     @Value("${vnpay.returnUrl}")
     private String returnUrl;
 
-    public PaymentService(ToolRepository toolRepository,
-                          LicenseToolRepository licenseToolRepository,
-                          CustomerOrderRepository orderRepository,
-                          WalletTransactionRepository transactionRepository,
-                          LicenseAccountRepository licenseAccountRepository,
-                          JavaMailSender mailSender,
-                          WalletRepository walletRepository) {
-        this.toolRepository = toolRepository;
-        this.licenseToolRepository = licenseToolRepository;
-        this.orderRepository = orderRepository;
-        this.transactionRepository = transactionRepository;
-        this.licenseAccountRepository = licenseAccountRepository;
-        this.mailSender = mailSender;
-        this.walletRepository = walletRepository;
-    }
-
-    // ===========================================
-    // ========== CREATE PAYMENT (TOOL) ==========
-    // ===========================================
+    /**
+     * Tạo URL thanh toán VNPay: Tạo order PENDING + transaction PENDING trước
+     */
+    @Transactional
     public String createPaymentUrl(Long toolId, Long licenseId, Account buyer, HttpServletRequest request) {
         Tool tool = toolRepository.findById(toolId).orElseThrow();
         License license = licenseToolRepository.findById(licenseId).orElseThrow();
-        long amountInt = Math.round((license.getPrice() == null ? 0.0 : license.getPrice()) * 100);
 
-        Map<String, String> vnpParams = new LinkedHashMap<>();
+        // Tạo wallet cho buyer nếu chưa có
+        if (buyer.getWallet() == null) {
+            Wallet buyerWallet = new Wallet();
+            buyerWallet.setAccount(buyer);
+            buyerWallet.setBalance(BigDecimal.ZERO);
+            buyerWallet.setCurrency("VND");
+            buyerWallet.setUpdatedAt(LocalDateTime.now());
+            walletRepository.save(buyerWallet);
+            buyer.setWallet(buyerWallet);
+            accountRepository.save(buyer);
+            System.out.println("Created default wallet for buyer: " + buyer.getEmail());
+        }
+
+        // Tạo order PENDING trước thanh toán
+        CustomerOrder order = new CustomerOrder();
+        order.setAccount(buyer);
+        order.setTool(tool);
+        order.setLicense(license);
+        order.setPrice(license.getPrice() == null ? 0.0 : license.getPrice());
+        order.setPaymentMethod(CustomerOrder.PaymentMethod.BANK);
+        order.setOrderStatus(CustomerOrder.OrderStatus.PENDING);
+        order.setCreatedAt(LocalDateTime.now());
+        orderRepository.save(order); // Lưu order với ID
+
+        System.out.println("Created PENDING order ID: " + order.getOrderId() + " for tool: " + tool.getToolName());
+
+        // Tạo wallet transaction PENDING
+        WalletTransaction tx = new WalletTransaction();
+        tx.setWallet(buyer.getWallet());
+        tx.setTransactionType(WalletTransaction.TransactionType.BUY);
+        tx.setStatus(WalletTransaction.TransactionStatus.PENDING);
+        tx.setAmount(BigDecimal.valueOf(order.getPrice()));
+        tx.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(tx);
+        order.setTransaction(tx);
+        orderRepository.save(order);
+
+        // Tạo txnRef unique (timestamp)
+        String txnRef = String.valueOf(System.currentTimeMillis());
+
+        // OrderInfo: orderId (để callback match)
+        String orderInfo = String.valueOf(order.getOrderId());
+
+        // Tạo params VNPay
+        long amountInt = Math.round(order.getPrice() * 100);
+
+        Map<String, String> vnpParams = new HashMap<>();
         vnpParams.put("vnp_Version", "2.1.0");
         vnpParams.put("vnp_Command", "pay");
         vnpParams.put("vnp_TmnCode", tmnCode.trim());
         vnpParams.put("vnp_Amount", String.valueOf(amountInt));
         vnpParams.put("vnp_CurrCode", "VND");
-        vnpParams.put("vnp_TxnRef", String.valueOf(System.currentTimeMillis()));
-        vnpParams.put("vnp_OrderInfo", toolId + "_" + licenseId + "_" + buyer.getAccountId());
+        vnpParams.put("vnp_TxnRef", txnRef);
+        vnpParams.put("vnp_OrderInfo", orderInfo);
         vnpParams.put("vnp_OrderType", "billpayment");
         vnpParams.put("vnp_Locale", "vn");
         vnpParams.put("vnp_ReturnUrl", returnUrl.trim());
         vnpParams.put("vnp_IpAddr", request.getRemoteAddr());
         vnpParams.put("vnp_CreateDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 
-        return buildPaymentUrl(vnpParams);
+        // Build hash/query
+        String hashDataStr = buildVnpHashData(vnpParams);
+        String queryStr = buildVnpQuery(vnpParams);
+
+        String secureHash = hmacSHA512(hashSecret.trim(), hashDataStr).toUpperCase(Locale.ROOT);
+        String paymentUrl = baseUrl + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
+
+        // Lưu txnRef vào order cho callback match
+        order.setLastTxnRef(txnRef);
+        orderRepository.save(order);
+
+        System.out.println("Payment URL: " + order.getOrderId() + ": " + paymentUrl);
+        return paymentUrl;
     }
 
-    // ===========================================
-    // ========== CREATE PAYMENT (SELLER) ========
-    // ===========================================
-    public String createPaymentUrlForSeller(int packageId, Account account, HttpServletRequest request) {
-        SellerPackage pkg = sellerPackageRepository.findById(packageId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy gói Seller"));
+    /**
+     * Tạo URL cho retry: Unique txnRef + lưu lastTxnRef
+     */
+    @Transactional
+    public String createPaymentUrlForRetry(Long orderId, Long licenseId, Account buyer, HttpServletRequest request) {
+        CustomerOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order không tồn tại"));
 
-        long amountInt = Math.round(pkg.getPrice() * 100);
+        if (order.getOrderStatus() != CustomerOrder.OrderStatus.PENDING &&
+                order.getOrderStatus() != CustomerOrder.OrderStatus.FAILED) {  // Sửa: Cho phép retry FAILED
+            throw new RuntimeException("Chỉ có thể retry order PENDING/FAILED!");
+        }
 
-        Map<String, String> vnpParams = new LinkedHashMap<>();
+        // Cập nhật license/price nếu thay đổi
+        License license = licenseToolRepository.findById(licenseId).orElseThrow();
+        order.setLicense(license);
+        order.setPrice(license.getPrice() == null ? 0.0 : license.getPrice());
+        orderRepository.save(order);
+
+        // Reset transaction PENDING (nếu FAILED thì tạo mới hoặc reset)
+        WalletTransaction tx = order.getTransaction();
+        if (tx == null || tx.getStatus() == WalletTransaction.TransactionStatus.FAILED) {
+            tx = new WalletTransaction();
+            tx.setWallet(buyer.getWallet());
+            tx.setTransactionType(WalletTransaction.TransactionType.BUY);
+            tx.setStatus(WalletTransaction.TransactionStatus.PENDING);
+            tx.setAmount(BigDecimal.valueOf(order.getPrice()));
+            tx.setCreatedAt(LocalDateTime.now());
+            transactionRepository.save(tx);
+            order.setTransaction(tx);
+        } else {
+            tx.setStatus(WalletTransaction.TransactionStatus.PENDING);
+            tx.setAmount(BigDecimal.valueOf(order.getPrice()));
+            tx.setCreatedAt(LocalDateTime.now());
+            transactionRepository.save(tx);
+        }
+        orderRepository.save(order);
+
+        // Tạo unique txnRef mới cho retry
+        String uniqueTxnRef = String.valueOf(System.currentTimeMillis());
+        String orderInfo = String.valueOf(orderId);
+        long amountInt = Math.round(order.getPrice() * 100);
+
+        Map<String, String> vnpParams = new HashMap<>();
         vnpParams.put("vnp_Version", "2.1.0");
         vnpParams.put("vnp_Command", "pay");
         vnpParams.put("vnp_TmnCode", tmnCode.trim());
         vnpParams.put("vnp_Amount", String.valueOf(amountInt));
         vnpParams.put("vnp_CurrCode", "VND");
-        vnpParams.put("vnp_TxnRef", String.valueOf(System.currentTimeMillis()));
-        vnpParams.put("vnp_OrderInfo", "SELLER_" + packageId + "_" + account.getAccountId());
+        vnpParams.put("vnp_TxnRef", uniqueTxnRef);
+        vnpParams.put("vnp_OrderInfo", orderInfo);
         vnpParams.put("vnp_OrderType", "billpayment");
         vnpParams.put("vnp_Locale", "vn");
         vnpParams.put("vnp_ReturnUrl", returnUrl.trim());
         vnpParams.put("vnp_IpAddr", request.getRemoteAddr());
         vnpParams.put("vnp_CreateDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 
-        return buildPaymentUrl(vnpParams);
+        String hashDataStr = buildVnpHashData(vnpParams);
+        String queryStr = buildVnpQuery(vnpParams);
+        String secureHash = hmacSHA512(hashSecret.trim(), hashDataStr).toUpperCase(Locale.ROOT);
+        String paymentUrl = baseUrl + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
+
+        // Lưu txnRef mới
+        order.setLastTxnRef(uniqueTxnRef);
+        orderRepository.save(order);
+
+        System.out.println("Retry txnRef generated: " + uniqueTxnRef + " for orderId: " + orderId);
+        return paymentUrl;
     }
 
-    // ===========================================
-    // ========== HANDLE PAYMENT RETURN ==========
-    // ===========================================
+    /**
+     * Helper build hash data (không lambda)
+     */
+    private String buildVnpHashData(Map<String, String> params) {
+        List<String> fieldNames = new ArrayList<>(params.keySet());
+        Collections.sort(fieldNames);
+
+        StringBuilder hashData = new StringBuilder();
+        for (String fieldName : fieldNames) {
+            String value = params.get(fieldName);
+            if (value == null || value.length() == 0) continue;
+
+            if (hashData.length() > 0) {
+                hashData.append('&');
+            }
+
+            try {
+                String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+                hashData.append(fieldName).append('=').append(encodedValue);
+            } catch (Exception e) {
+                throw new RuntimeException("Encoding error at field: " + fieldName, e);
+            }
+        }
+        return hashData.toString();
+    }
+
+    /**
+     * Helper build query string (không lambda)
+     */
+    private String buildVnpQuery(Map<String, String> params) {
+        List<String> fieldNames = new ArrayList<>(params.keySet());
+        Collections.sort(fieldNames);
+
+        StringBuilder query = new StringBuilder();
+        for (String fieldName : fieldNames) {
+            String value = params.get(fieldName);
+            if (value == null || value.length() == 0) continue;
+
+            if (query.length() > 0) {
+                query.append('&');
+            }
+
+            try {
+                String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+                String encodedFieldName = URLEncoder.encode(fieldName, StandardCharsets.UTF_8.toString());
+                query.append(encodedFieldName).append('=').append(encodedValue);
+            } catch (Exception e) {
+                throw new RuntimeException("Encoding error at field: " + fieldName, e);
+            }
+        }
+        return query.toString();
+    }
+
+    /**
+     * Xử lý kết quả thanh toán từ VNPay
+     */
     @Transactional
     public boolean handlePaymentCallback(Map<String, String> params) {
         try {
             String responseCode = params.get("vnp_ResponseCode");
-            String orderInfo = params.get("vnp_OrderInfo");
-            double amount = Double.parseDouble(params.get("vnp_Amount")) / 100.0;
+            String txnRef = params.get("vnp_TxnRef");
+            String orderInfoStr = params.get("vnp_OrderInfo");
+            String vnpAmount = params.get("vnp_Amount");
+            double amount = vnpAmount != null ? Double.parseDouble(vnpAmount) / 100.0 : 0.0;
+
             boolean success = "00".equals(responseCode);
+//            System.out.println("VNPay ResponseCode: " + responseCode + ", Success: " + success + ", Amount: " + amount);
 
-            // ============ CASE: SELLER RENEW ============
-            if (orderInfo.startsWith("SELLER_")) {
-                String[] parts = orderInfo.split("_");
-                int packageId = Integer.parseInt(parts[1]);
-                Long accountId = Long.parseLong(parts[2]);
-                Account acc = accountRepository.findById(accountId).orElseThrow();
-
-                if (success) {
-                    sellerService.renewSeller(acc.getEmail(), packageId);
-                }
-                return success;
+            if (orderInfoStr == null) {
+                System.err.println("No vnp_OrderInfo in params!");
+                return false;
             }
 
-            // ============ CASE: TOOL LICENSE ============
-            String[] parts = orderInfo.split("_");
-            Long toolId = Long.parseLong(parts[0]);
-            Long licenseId = Long.parseLong(parts[1]);
-            Long buyerId = Long.parseLong(parts[2]);
+            Long orderId;
+            try {
+                orderId = Long.parseLong(orderInfoStr);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid orderId from vnp_OrderInfo: " + orderInfoStr);
+                return false;
+            }
 
-            Tool tool = toolRepository.findById(toolId).orElseThrow();
-            License license = licenseToolRepository.findById(licenseId).orElseThrow();
+            Optional<CustomerOrder> optionalOrder = orderRepository.findById(orderId);
+            if (optionalOrder.isEmpty()) {
+                System.err.println("Order not found: " + orderId);
+                return false;
+            }
 
-            Account seller = tool.getSeller();
-            if (seller == null) throw new RuntimeException("Tool has no seller linked!");
+            CustomerOrder order = optionalOrder.get();
+            System.out.println("Matched orderId: " + order.getOrderId() + " (status: " + order.getOrderStatus() + ")");
 
-            Wallet wallet = walletRepository.findByAccount(seller)
-                    .orElseThrow(() -> new RuntimeException("Wallet not found for seller ID: " + seller.getAccountId()));
+            WalletTransaction tx = order.getTransaction();
+            if (tx == null) {
+                System.err.println("No transaction linked to order " + orderId);
+                return false;
+            }
 
-            WalletTransaction tx = new WalletTransaction();
-            tx.setWallet(wallet);
-            tx.setTransactionType(WalletTransaction.TransactionType.BUY);
+            // Update transaction
             tx.setStatus(success ? WalletTransaction.TransactionStatus.SUCCESS : WalletTransaction.TransactionStatus.FAILED);
-            tx.setAmount(BigDecimal.valueOf(amount));
-            tx.setCreatedAt(LocalDateTime.now());
+            tx.setUpdatedAt(LocalDateTime.now());
             transactionRepository.save(tx);
 
+            // Update order
             if (success) {
-                if (wallet.getBalance() == null) wallet.setBalance(BigDecimal.ZERO);
-                wallet.setBalance(wallet.getBalance().add(BigDecimal.valueOf(amount)));
-                wallet.setUpdatedAt(LocalDateTime.now());
-                walletRepository.save(wallet);
+                order.setOrderStatus(CustomerOrder.OrderStatus.SUCCESS);
+
+                Account seller = order.getTool().getSeller();
+                Optional<Wallet> sellerWalletOpt = walletRepository.findByAccount(seller);
+                if (sellerWalletOpt.isPresent()) {
+                    Wallet sellerWallet = sellerWalletOpt.get();
+                    if (sellerWallet.getBalance() == null) sellerWallet.setBalance(BigDecimal.ZERO);
+                    sellerWallet.setBalance(sellerWallet.getBalance().add(BigDecimal.valueOf(amount)));
+                    sellerWallet.setUpdatedAt(LocalDateTime.now());
+                    walletRepository.save(sellerWallet);
+                    System.out.println("Updated seller wallet balance: " + sellerWallet.getBalance());
+                } else {
+                    System.err.println("No wallet for seller: " + seller.getEmail());
+                }
+
+                // Giảm quantity tool
+                Tool tool = order.getTool();
+                if (tool.getQuantity() > 0) {
+                    tool.setQuantity(tool.getQuantity() - 1);
+                    toolRepository.save(tool);
+                    System.out.println("Decreased quantity for tool " + tool.getToolId() + " to " + tool.getQuantity());
+                }
+
+                // Tạo license account + gửi email
+                createAndAssignLicense(order);
+            } else {
+                order.setOrderStatus(CustomerOrder.OrderStatus.FAILED);
+                String message = params.get("vnp_Message") != null ? params.get("vnp_Message") : "Unknown error";
+                System.err.println("Payment failed for order " + order.getOrderId() + ": " + message + " (Code: " + responseCode + ")");
             }
 
-            Account buyer = new Account();
-            buyer.setAccountId(buyerId);
-
-            CustomerOrder order = new CustomerOrder();
-            order.setAccount(buyer);
-            order.setTool(tool);
-            order.setLicense(license);
-            order.setPrice(amount);
-            order.setPaymentMethod(CustomerOrder.PaymentMethod.BANK);
-            order.setTransaction(tx);
-            order.setCreatedAt(LocalDateTime.now());
-            order.setOrderStatus(success ? CustomerOrder.OrderStatus.SUCCESS : CustomerOrder.OrderStatus.FAILED);
+            order.setUpdatedAt(LocalDateTime.now());
             orderRepository.save(order);
 
-            if (success) {
-                LicenseAccount acc = new LicenseAccount();
-                acc.setUsername("user_" + buyerId);
-                acc.setPassword(UUID.randomUUID().toString().substring(0, 8));
-                acc.setLicense(license);
-                acc.setOrder(order);
-                acc.setTool(tool);
-                acc.setStatus(LicenseAccount.Status.ACTIVE);
-                acc.setStartDate(LocalDateTime.now());
-                acc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
-                licenseAccountRepository.save(acc);
-                sendOrderSuccessEmail(order, acc);
-            }
-
+            System.out.println("Updated order " + order.getOrderId() + " to status: " + order.getOrderStatus());
             return success;
-
         } catch (Exception e) {
+            System.err.println("Callback error: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    // ===========================================
-    // ========== PRIVATE HELPERS ================
-    // ===========================================
-    private String buildPaymentUrl(Map<String, String> params) {
-        try {
-            List<String> fieldNames = new ArrayList<>(params.keySet());
-            Collections.sort(fieldNames);
-            StringBuilder hashData = new StringBuilder();
-            StringBuilder query = new StringBuilder();
+    // REFACTOR: Tách tạo license account
+    private void createAndAssignLicense(CustomerOrder order) {
+        Tool tool = order.getTool();
+        License license = order.getLicense();
+        Account buyer = order.getAccount();
 
-            for (String fieldName : fieldNames) {
-                String value = params.get(fieldName);
-                if (value == null || value.isEmpty()) continue;
+        String loginMethod = tool.getLoginMethod().toString();
 
-                if (hashData.length() > 0) {
-                    hashData.append('&');
-                    query.append('&');
+        if ("USER_PASSWORD".equals(loginMethod)) {
+            // Tạo mới LicenseAccount cho USER_PASSWORD
+            LicenseAccount acc = new LicenseAccount();
+            acc.setLicense(license);
+            acc.setOrder(order);
+            acc.setUsed(true);
+            acc.setStatus(LicenseAccount.Status.ACTIVE);
+            acc.setStartDate(LocalDateTime.now());
+            acc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
+            acc.setUsername("user_" + buyer.getAccountId() + "_" + System.currentTimeMillis());
+            acc.setPassword(UUID.randomUUID().toString().substring(0, 8));
+            licenseAccountRepository.save(acc);
+            sendUserPasswordEmail(order, acc);
+        } else if ("TOKEN".equals(loginMethod)) {
+            try {
+                // Debug count (giữ nguyên)
+                long unusedCount = licenseAccountRepository.findByLicense_Tool_ToolId(tool.getToolId())
+                        .stream()
+                        .filter(acc -> !acc.getUsed())
+                        .count();
+//                System.out.println("Unused token count for toolId " + tool.getToolId() + ": " + unusedCount);
+
+                if (unusedCount == 0) {
+                    throw new RuntimeException("No unused tokens available for tool " + tool.getToolId());
                 }
 
-                String encodedField = URLEncoder.encode(fieldName, StandardCharsets.UTF_8);
-                String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8);
+//                System.out.println("Searching unused token for toolId: " + tool.getToolId() + " (using SQL Server TOP 1 query)");
+                Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByLicense_Tool_ToolIdAndUsedFalse(tool.getToolId());
 
-                hashData.append(fieldName).append('=').append(encodedValue);
-                query.append(encodedField).append('=').append(encodedValue);
+                // FIX: Log Optional content để debug
+                if (unusedToken.isPresent()) {
+                    LicenseAccount tokenAcc = unusedToken.get();
+//                    System.out.println("SUCCESS: Found unused token via TOP 1: " + tokenAcc.getToken() + " (ID: " + tokenAcc.getLicenseAccountId() + ", licenseId: " + tokenAcc.getLicense().getLicenseId() + ")");
+
+                    // Assign/save/mail (giữ nguyên)
+                    tokenAcc.setLicense(license);
+                    tokenAcc.setOrder(order);
+                    tokenAcc.setUsed(true);
+                    tokenAcc.setStatus(LicenseAccount.Status.ACTIVE);
+                    tokenAcc.setStartDate(LocalDateTime.now());
+                    tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
+
+                    LicenseAccount savedAcc = licenseAccountRepository.save(tokenAcc);
+
+//                    System.out.println("Assigned & saved token " + savedAcc.getToken() + " for order " + order.getOrderId() + ", status: " + savedAcc.getStatus());
+                    sendTokenEmail(order, savedAcc);
+                } else {
+//                    System.out.println("WARNING: Query returned empty despite count=" + unusedCount + ". Possible data inconsistency or query issue.");
+                    throw new RuntimeException("No unused token returned from query for toolId " + tool.getToolId());
+                }
+            } catch (Exception e) {
+//                System.err.println("Error assigning TOKEN for order " + order.getOrderId() + ": " + e.getMessage());
+                e.printStackTrace();
+                throw e; // Rollback
             }
-
-            String secureHash = hmacSHA512(hashSecret.trim(), hashData.toString()).toUpperCase(Locale.ROOT);
-            return baseUrl + "?" + query + "&vnp_SecureHash=" + secureHash;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Error building VNPay URL", e);
         }
     }
 
+    /**
+     * Gửi mail cho tool dạng USER_PASSWORD
+     */
+    private void sendUserPasswordEmail(CustomerOrder order, LicenseAccount acc) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(order.getAccount().getEmail());
+            helper.setSubject("[LMS] Thanh toán thành công - Thông tin tài khoản Tool");
+
+            String body = """
+                <h2>Bạn đã mua thành công tool: <b>%s</b></h2>
+                <p><b>License:</b> %s</p>
+                <p><b>Tên đăng nhập:</b> %s</p>
+                <p><b>Mật khẩu:</b> %s</p>
+                <p>Thời hạn sử dụng đến: %s</p>
+                <br/>
+                <p>Chúc bạn trải nghiệm vui vẻ!</p>
+                """.formatted(
+                    order.getTool().getToolName(),
+                    order.getLicense().getName(),
+                    acc.getUsername(),
+                    acc.getPassword(),
+                    acc.getEndDate().toLocalDate()
+            );
+
+            helper.setText(body, true);
+            mailSender.send(message);
+
+        } catch (Exception e) {
+            System.err.println("Gửi email USER_PASSWORD thất bại: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Gửi mail cho tool dạng TOKEN
+     */
+    private void sendTokenEmail(CustomerOrder order, LicenseAccount tokenAcc) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(order.getAccount().getEmail());
+            helper.setSubject("[LMS] Thanh toán thành công - Tool Token");
+
+            String body = """
+                <h2>Bạn đã mua thành công tool: <b>%s</b></h2>
+                <p><b>License:</b> %s</p>
+                <p><b>Token sử dụng:</b> %s</p>
+                <p><b>Trạng thái token:</b> Đã kích hoạt</p>
+                <p>Thời hạn sử dụng đến: %s</p>
+                <br/>
+                <p><i>Lưu ý:</i> Token này chỉ được dùng một lần và không thể chỉnh sửa.</p>
+                """.formatted(
+                    order.getTool().getToolName(),
+                    order.getLicense().getName(),
+                    tokenAcc.getToken(),
+                    tokenAcc.getEndDate().toLocalDate()
+            );
+
+            helper.setText(body, true);
+            mailSender.send(message);
+
+        } catch (Exception e) {
+            System.err.println("Gửi email TOKEN thất bại: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Sinh mã HMAC SHA512 (VNPay dùng để ký request)
+     */
     private String hmacSHA512(String key, String data) {
         try {
             Mac hmac = Mac.getInstance("HmacSHA512");
@@ -243,46 +494,12 @@ public class PaymentService {
             hmac.init(secretKey);
             byte[] hash = hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
-            for (byte b : hash) sb.append(String.format("%02x", b));
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
             return sb.toString();
         } catch (Exception e) {
             throw new RuntimeException("Error generating HMAC", e);
-        }
-    }
-
-    private void sendOrderSuccessEmail(CustomerOrder order, LicenseAccount licenseAcc) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            String to = order.getAccount().getEmail();
-            String subject = "[LMS] Thanh toán thành công!";
-            String body = """
-                    <h2>Cảm ơn bạn đã mua tool trên Tool Market!</h2>
-                    <p><b>Tool:</b> %s</p>
-                    <p><b>License:</b> %s</p>
-                    <p><b>Giá:</b> %,.0f VND</p>
-                    <p><b>Tài khoản sử dụng:</b> %s</p>
-                    <p><b>Mật khẩu:</b> %s</p>
-                    <p>Hạn sử dụng đến: %s</p>
-                    <br/>
-                    <p>Chúc bạn có trải nghiệm tuyệt vời!</p>
-                    """.formatted(
-                    order.getTool().getToolName(),
-                    order.getLicense().getName(),
-                    order.getPrice(),
-                    licenseAcc.getUsername(),
-                    licenseAcc.getPassword(),
-                    licenseAcc.getEndDate().toLocalDate()
-            );
-
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(body, true);
-            mailSender.send(message);
-
-        } catch (Exception e) {
-            System.err.println("Gửi email thất bại: " + e.getMessage());
         }
     }
 }

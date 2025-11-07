@@ -12,22 +12,20 @@
     <aside class="sidebar">
         <h2>Moderator Panel</h2>
         <nav class="menu">
-            <a th:href="@{/moderator/}" class="active">🏠 Dashboard</a>
-            <a th:href="@{/moderator/uploadRequest}">📤 Upload Requests</a>
-            <a th:href="@{/moderator/feedback}">💬 Feedback Reports</a>
-            <a th:href="@{/moderator/reports}">📊 Tool Reports</a>
-            <a th:href="@{/moderator/history}">📁 Uploaded Tools</a>
-            <!-- Profile Section -->
-            <a th:href="@{/profile}">👤 Thông tin tài khoản</a>
-            <a th:href="@{/profile/reset-password}">🔒 Đặt lại mật khẩu</a>
-            <a th:href="@{/logout}" class="text-danger">🚪 Thoát</a>
+            <a th:href="@{/moderator/}" class="active">Dashboard</a>
+            <a th:href="@{/moderator/uploadRequest}">Upload Requests</a>
+            <a th:href="@{/moderator/feedback}">Feedback Reports</a>
+            <a th:href="@{/moderator/tool/report}">Tool Reports</a>
+            <a th:href="@{/moderator/history}">Uploaded Tools</a>
+            <a th:href="@{/profile}">Profile</a>
+            <a th:href="@{/profile/reset-password}">Change Password</a>
+            <a th:href="@{/logout}" class="text-danger">Logout</a>
         </nav>
     </aside>
 
-    <!-- Main content -->
     <main class="main-content">
-        <h1>Welcome, Moderator 👋</h1>
-        <p>Chọn một chức năng ở thanh bên trái để bắt đầu quản lý.</p>
+        <h1>Welcome, Moderator</h1>
+        <p>Choose function from left side navigation</p>
 
         <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
             <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">

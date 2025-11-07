@@ -1,19 +1,25 @@
 package swp391.fa25.lms.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
+
 
 @Entity
 @Table(name = "Tool")
-@JsonIgnoreProperties({"seller", "toolFiles"})
+@JsonIgnoreProperties({
+        "hibernateLazyInitializer", "handler",
+        "feedbacks", "orders", "files", "toolFiles"
+})
 public class Tool {
 
     @Id
@@ -22,47 +28,67 @@ public class Tool {
     private Long toolId;
 
     @NotBlank(message = "Tool name cannot be blank")
+    @Size(max = 100, message = "Tool name must be less than 100 characters")
     @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
+//    @Pattern(
+//            regexp = "^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$",
+//            message = "Tool name can only contain letters and numbers, separated by a single space"
+//    )
     private String toolName;
 
-    @NotBlank(message = "Image cannot be blank")
+    private String reviewedBy;
+
     @Column(nullable = false)
     private String image;
 
     @NotBlank(message = "Description cannot be blank")
+    @Size(max = 500, message = "Description must be under 500 characters")
     @Column(columnDefinition = "NVARCHAR(100)", nullable = false)
     private String description;
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
-    @JsonManagedReference(value = "tool-seller")
+    @com.fasterxml.jackson.annotation.JsonBackReference(value = "tool-seller")
+//    @JsonManagedReference(value = "tool-seller")
     private Account seller;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "tool_login_methods", joinColumns = @JoinColumn(name = "tool_id"))
-    @Column(name = "login_method")
-    private Set<String> loginMethods = new HashSet<>();
+    @Enumerated(EnumType.STRING)
+    @Column(name = "login_method", nullable = false)
+    private LoginMethod loginMethod;
+
+    public enum LoginMethod {
+        USER_PASSWORD,
+        TOKEN
+    }
 
     @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
-    @JsonManagedReference(value = "tool-category")
+    @JsonIgnoreProperties("tools")
     private Category category;
 
     @Enumerated(EnumType.STRING)
     private Status status;
-    public enum Status { PENDING, APPROVED, REJECTED, PUBLISHED, DEACTIVE }
+
+    public enum Status {PENDING, APPROVED, REJECTED, PUBLISHED, SUSPECT, DEACTIVATED, VIOLATED}
 
     @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference(value = "tool-files")
     private List<ToolFile> files;
 
-    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
-    @JsonManagedReference(value = "tool-licenses")
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"tool", "customerOrders", "licenseAccounts"})
     private List<License> licenses;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonManagedReference(value = "feedback-tool")
+    private List<Feedback> feedbacks;
+
+    @OneToMany(mappedBy = "tool", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties({"tool", "license"})
+    private List<CustomerOrder> orders;
 
     @Column(columnDefinition = "NVARCHAR(255)")
     private String note;
@@ -77,6 +103,7 @@ public class Tool {
     public void setNote(String note) {
         this.note = note;
     }
+
     public Tool() {
     }
 
@@ -110,11 +137,11 @@ public class Tool {
         this.toolName = toolName;
     }
 
-    public @NotBlank(message = "Image cannot be blank") String getImage() {
+    public String getImage() {
         return image;
     }
 
-    public void setImage(@NotBlank(message = "Image cannot be blank") String image) {
+    public void setImage(String image) {
         this.image = image;
     }
 
@@ -204,12 +231,71 @@ public class Tool {
         this.totalReviews = totalReviews;
     }
 
-    public Set<String> getLoginMethods() {
-        return loginMethods;
+    public LoginMethod getLoginMethod() {
+        return loginMethod;
     }
 
-    public void setLoginMethods(Set<String> loginMethods) {
-        this.loginMethods = loginMethods;
+    public void setLoginMethod(LoginMethod loginMethod) {
+        this.loginMethod = loginMethod;
+    }
+
+    public Tool(LoginMethod loginMethod) {
+        this.loginMethod = loginMethod;
+    }
+
+    // ================== PRICE HELPERS ==================
+    @Transient
+    private BigDecimal minPrice;
+
+    @Transient
+    private BigDecimal maxPrice;
+
+    public BigDecimal getMinPrice() {
+        return minPrice;
+    }
+
+    public void setMinPrice(BigDecimal minPrice) {
+        this.minPrice = minPrice;
+    }
+
+    public BigDecimal getMaxPrice() {
+        return maxPrice;
+    }
+
+    public void setMaxPrice(BigDecimal maxPrice) {
+        this.maxPrice = maxPrice;
+    }
+
+    @Transient
+    private boolean isFavorite;
+
+    public boolean isIsFavorite() {
+        return isFavorite;
+    }
+
+    public void setIsFavorite(boolean isFavorite) {
+        this.isFavorite = isFavorite;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Tool tool = (Tool) o;
+        return Objects.equals(toolId, tool.toolId);  // So sánh chỉ ID
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(toolId);  // Hash dựa ID
+    }
+
+    public String getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(String reviewedBy) {
+        this.reviewedBy = reviewedBy;
     }
 
     public Integer getQuantity() {
@@ -219,4 +305,29 @@ public class Tool {
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
+
+    public List<Feedback> getFeedbacks() {
+        return feedbacks;
+    }
+
+    public void setFeedbacks(List<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
+    }
+
+    public List<CustomerOrder> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<CustomerOrder> orders) {
+        this.orders = orders;
+    }
+
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
+    }
 }
+

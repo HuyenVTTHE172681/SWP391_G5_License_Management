@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sales Report</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <script th:inline="javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawCharts);
+
+        function drawCharts() {
+            // Lấy dữ liệu từ Model (Thymeleaf sẽ serialize thành JS literal)
+            var revenue = /*[[${revenueChartData}]]*/ [];   // List<Map>{period, amount}
+            var methods = /*[[${methodChartData}]]*/ [];    // List<Map>{method, count}
+            var fb      = /*[[${feedback}]]*/ {};           // Map{averageRating, details: [{star,count}]}
+
+            // === Doanh thu ===
+            var revData = new google.visualization.DataTable();
+            revData.addColumn('string', 'Thời gian');
+            revData.addColumn('number', 'Doanh thu');
+            for (var i = 0; i < revenue.length; i++) {
+                revData.addRow([ String(revenue[i].period), Number(revenue[i].amount) ]);
+            }
+            var revOpt = { title: '📈 Doanh thu theo thời gian', curveType: 'function', legend: { position: 'bottom' } };
+            new google.visualization.LineChart(document.getElementById('revenueChart')).draw(revData, revOpt);
+
+            // === Phương thức mua Tool ===
+            var methodData = new google.visualization.DataTable();
+            methodData.addColumn('string', 'Phương thức');
+            methodData.addColumn('number', 'Số lượng');
+            for (var j = 0; j < methods.length; j++) {
+                methodData.addRow([ String(methods[j].method), Number(methods[j].count) ]);
+            }
+            var methOpt = { title: '💳 Phương thức mua Tool', pieHole: 0.4 };
+            new google.visualization.PieChart(document.getElementById('methodChart')).draw(methodData, methOpt);
+
+            // === Feedback ===
+            var rateData = new google.visualization.DataTable();
+            rateData.addColumn('string', 'Sao');
+            rateData.addColumn('number', 'Số lượng');
+            if (fb.details) {
+                for (var k = 0; k < fb.details.length; k++) {
+                    rateData.addRow([ String(fb.details[k].star) + '⭐', Number(fb.details[k].count) ]);
+                }
+            }
+            var rateOpt = { title: '⭐ Đánh giá trung bình: ' + (fb.averageRating || '0.0') + ' sao' };
+            new google.visualization.ColumnChart(document.getElementById('ratingChart')).draw(rateData, rateOpt);
+        }
+    </script>
+
+
+</head>
+
+<body class="bg-light">
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">📊 Sales Report</h3>
+            <p class="text-muted mb-0">Báo cáo tổng quan doanh thu và đánh giá người dùng</p>
+        </div>
+        <a th:href="@{/seller/tools}" class="btn btn-outline-secondary">← Quay lại Tool Manager</a>
+    </div>
+
+    <!-- Bộ lọc -->
+    <form th:action="@{/seller/tools/sales-report}" method="get" class="row g-3 mb-4 bg-white p-3 rounded shadow-sm">
+        <div class="col-md-3">
+            <label class="form-label">Phương thức</label>
+            <select name="method" class="form-select">
+                <option value="all" th:selected="${method == 'all'}">Tất cả</option>
+                <option value="TOKEN" th:selected="${method == 'TOKEN'}">Token</option>
+                <option value="USER_PASSWORD" th:selected="${method == 'USER_PASSWORD'}">User/Password</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Khoảng thời gian</label>
+            <select name="filter" class="form-select">
+                <option value="day" th:selected="${filter == 'day'}">Ngày</option>
+                <option value="week" th:selected="${filter == 'week'}">Tuần</option>
+                <option value="month" th:selected="${filter == 'month'}">Tháng</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Từ ngày</label>
+            <input type="date" name="start" class="form-control">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Đến ngày</label>
+            <input type="date" name="end" class="form-control">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+        </div>
+    </form>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="card text-center shadow-sm border-0"><div class="card-body">
+            <h6 class="text-muted">Tổng doanh thu</h6>
+            <h4 class="fw-bold text-primary">[[${summary.totalRevenue}]] ₫</h4>
+        </div></div></div>
+
+        <div class="col-md-4"><div class="card text-center shadow-sm border-0"><div class="card-body">
+            <h6 class="text-muted">Tổng lượt mua</h6>
+            <h4 class="fw-bold text-success">[[${summary.totalOrders}]]</h4>
+        </div></div></div>
+
+        <div class="col-md-4"><div class="card text-center shadow-sm border-0"><div class="card-body">
+            <h6 class="text-muted">Tổng Feedback</h6>
+            <h4 class="fw-bold text-info">[[${summary.totalFeedbacks}]]</h4>
+        </div></div></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-3 mb-5">
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0"><div class="card-body">
+                <div id="revenueChart" style="width:100%;height:400px;"></div>
+            </div></div>
+        </div>
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0"><div class="card-body">
+                <div id="methodChart" style="width:100%;height:400px;"></div>
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Feedback -->
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="card-body">
+            <h5 class="fw-bold mb-4">⭐ Tổng quan & Đánh giá</h5>
+
+            <div class="row text-center mb-4">
+                <div class="col-md-6">
+                    <h6 class="text-muted">Tổng số Feedback</h6>
+                    <h4 class="fw-bold">[[${feedback.totalFeedbacks}]]</h4>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted">Điểm trung bình</h6>
+                    <h4 class="fw-bold text-warning">
+                        ⭐ [[${feedback.averageRating}]]
+                    </h4>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">Phân bố đánh giá sao</h6>
+                    <div id="ratingChart" style="width:100%;height:300px;"></div>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">Chi tiết đánh giá sao</h6>
+
+                    <div th:each="f : ${feedback.details}" class="mb-2">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>[[${f.star}]] Sao</span>
+                            <span>[[${f.count}]]</span>
+                        </div>
+                        <div class="progress" style="height:8px">
+                            <div class="progress-bar bg-warning" role="progressbar"
+                                 th:style="'width:' + (${feedback.totalFeedbacks} > 0 ? ${f.count} * 100 / ${feedback.totalFeedbacks} : 0) + '%'">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

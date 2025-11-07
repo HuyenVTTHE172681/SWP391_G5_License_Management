@@ -2,6 +2,7 @@ package swp391.fa25.lms.repository;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,31 +19,35 @@ import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface ToolRepository extends JpaRepository<Tool, Long> {
-
+    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
     List<Tool> findAllByToolNameContainingIgnoreCaseAndCategory_CategoryId(
             String toolName, Long categoryId, Sort sort);
 
     List<Tool> findAllByToolNameContainingIgnoreCase(String toolName, Sort sort);
 
     List<Tool> findAll(Sort sort);
+
     List<Tool> findAll(Specification<Tool> spec);
+
     Tool findByToolId(long toolId);
+
     List<Tool> findByStatus(Tool.Status status);
 
     @Query("""
-        SELECT t FROM Tool t
-        WHERE (:toolName IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :toolName, '%')))
-          AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
-          AND (:status IS NULL OR t.status = :status)
-        ORDER BY t.updatedAt DESC
-    """)
+                SELECT t FROM Tool t
+                WHERE (:toolName IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :toolName, '%')))
+                  AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+                  AND (:status IS NULL OR t.status = :status)
+                ORDER BY t.updatedAt DESC
+            """)
     List<Tool> filterToolsForModerator(@Param("toolName") String toolName,
                                        @Param("categoryId") Long categoryId,
                                        @Param("status") Tool.Status status);
 
     List<Tool> findByToolNameContainingIgnoreCase(String keyword);
     List<Tool> findBySeller(Account seller);
-    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
+
+//    Optional<Tool> findByToolIdAndSeller(Long toolId, Account seller);
 
 
     List<Tool> findByStatusNot(Tool.Status status);
@@ -50,6 +55,42 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     // Lấy Tool theo id status PUBLISHED
     @EntityGraph(attributePaths = {"licenses", "seller", "category"})
     Optional<Tool> findByToolIdAndStatus(Long toolId, Tool.Status status);
-    Optional<Tool> findById(Long toolId);
 
-}
+    Optional<Tool> findById(Long toolId);
+    Optional<Tool> findByToolName(String toolName);
+
+    @EntityGraph(attributePaths = {"category", "licenses", "seller"})
+    @Query("""
+    SELECT t FROM Tool t
+    WHERE t.seller.accountId = :sellerId
+      AND (:keyword IS NULL OR LOWER(t.toolName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+      AND (:categoryId IS NULL OR t.category.categoryId = :categoryId)
+      AND (:status IS NULL OR t.status = :status)
+      AND (:loginMethod IS NULL OR t.loginMethod = :loginMethod)
+      AND (:minPrice IS NULL OR EXISTS (
+           SELECT 1 FROM License l WHERE l.tool = t AND l.price >= :minPrice))
+      AND (:maxPrice IS NULL OR EXISTS (
+           SELECT 1 FROM License l WHERE l.tool = t AND l.price <= :maxPrice))
+""")
+    Page<Tool> searchToolsForSeller(
+            @Param("sellerId") Long sellerId,
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("status") Tool.Status status,
+            @Param("loginMethod") Tool.LoginMethod loginMethod,
+            @Param("minPrice") Double minPrice,
+            @Param("maxPrice") Double maxPrice,
+            Pageable pageable
+    );
+    @EntityGraph(attributePaths = {"category", "licenses"})
+    List<Tool> findBySellerAndStatusNot(Account seller, Tool.Status status);
+    boolean existsByToolName(String toolName);
+
+    @Query("""
+    SELECT t FROM Tool t
+    WHERE t.status = 'PUBLISHED'
+      AND t.seller.sellerActive = true
+      AND (t.seller.sellerExpiryDate IS NULL OR t.seller.sellerExpiryDate >= CURRENT_TIMESTAMP)
+    """)
+    List<Tool> findAllPublishedAndSellerActive();
+    }

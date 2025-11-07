@@ -200,8 +200,10 @@ public class AccountService {
         if (!EMAIL_REGEX.matcher(email).matches()) {
             throw new RuntimeException("Định dạng email không hợp lệ");
         }
+        System.out.println("DEBUG: EMAIL"+email);
+
         Account account = accountRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống"));
+                    .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống"));
 
         // 2 Validate input password
         if (password == null || password.trim().isEmpty()) {

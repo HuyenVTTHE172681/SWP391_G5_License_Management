@@ -7,6 +7,35 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link th:href="@{/css/home.css}" rel="stylesheet">
+    <style>
+        /* Căn tất cả nút hành động trên cùng 1 dòng */
+        td.text-center > .btn {
+            display: inline-flex;      /* cho phép icon và text nằm gọn gàng */
+            align-items: center;       /* căn giữa icon và text theo chiều dọc */
+            margin: 0 2px;             /* khoảng cách giữa các nút */
+            white-space: nowrap;       /* không cho xuống dòng */
+        }
+
+        /* Tùy chọn: làm hàng nút gọn hơn trong cột */
+        td.text-center {
+            white-space: nowrap;       /* toàn bộ ô không bị wrap */
+        }
+
+        /* Nếu icon → chữ, cho khoảng cách nhỏ giữa icon và chữ */
+        .btn i {
+            margin-right: 2px;
+        }
+        .custom-modal-height {
+            height: 90vh; /* Chiều cao tối đa = 90% viewport */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .custom-modal-height .modal-content {
+            height: 100%;
+        }
+    </style>
+
 </head>
 <body>
 <!--Header-->
@@ -16,74 +45,450 @@
 <div class="container mt-5">
     <h3 class="text-center mb-4">🛒 Đơn hàng đã mua</h3>
 
-    <!-- Bộ lọc -->
+    <!-- FORM LỌC & TÌM KIẾM -->
+    <!-- hx-get: gọi endpoint /orders/filter khi form submit -->
+    <!-- hx-target: phần tử sẽ được thay thế nội dung -->
+    <!-- hx-swap="innerHTML": chỉ thay nội dung bên trong -->
     <form hx-get="/orders/filter"
           hx-target="#orderTableContainer"
           hx-trigger="submit"
           hx-swap="innerHTML"
           class="row g-2 mb-3">
-        <!--SEARCH: mã, người bán, tool, hạn sử dụng-->
-        <div class="col-md-3">
-            <input type="text" name="keyword" th:value="${keyword}" class="form-control"
-                   placeholder="Tìm theo mã, tool, người bán, license...">
-        </div>
-        <!-- FILTER trạng thái -->
-        <div class="col-md-2">
-            <select name="status" class="form-select">
-                <option value="">-- Tất cả trạng thái --</option>
-                <option value="SUCCESS" th:selected="${status == 'SUCCESS'}">Thành công</option>
-                <option value="PENDING" th:selected="${status == 'PENDING'}">Đang xử lý</option>
-                <option value="FAILED" th:selected="${status == 'FAILED'}">Thất bại</option>
-            </select>
-        </div>
-        <!-- FILTER thời gian -->
-        <div class="col-md-2">
-            <select name="dateRange" class="form-select">
-                <option value="">-- Mọi thời gian --</option>
-                <option value="7" th:selected="${dateRange == '7'}">7 ngày gần đây</option>
-                <option value="30" th:selected="${dateRange == '30'}">1 tháng gần đây</option>
-                <option value="90" th:selected="${dateRange == '90'}">3 tháng gần đây</option>
-            </select>
-        </div>
-        <!-- FILTER giá -->
-        <div class="col-md-2">
-            <select name="priceRange" class="form-select">
-                <option value="">-- Mọi giá --</option>
-                <option value="0-100000">Dưới 100.000</option>
-                <option value="100000-500000">100.000 - 500.000</option>
-                <option value="500000-1000000">500.000 - 1.000.000</option>
-                <option value="1000000+">Trên 1.000.000</option>
-            </select>
-        </div>
-        <!-- Sắp xếp -->
-        <div class="col-md-2">
-            <select name="sortField" class="form-select">
-                <option value="createdAt" th:selected="${sortField == 'createdAt'}">Ngày mua</option>
-                <option value="price" th:selected="${sortField == 'price'}">Đơn giá</option>
-                <option value="orderId" th:selected="${sortField == 'orderId'}">Mã đơn hàng</option>
-            </select>
+
+        <!-- Hàng 1: SEARCH - TRẠNG THÁI - THỜI GIAN - GIÁ -->
+        <div class="row g-2 align-items-center mb-2">
+            <div class="col-md-3">
+                <input type="text" name="keyword" th:value="${keyword}" class="form-control"
+                       placeholder="Tìm theo mã, tool, người bán, license...">
+            </div>
+
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="SUCCESS" th:selected="${status == 'SUCCESS'}">Thành công</option>
+                    <option value="PENDING" th:selected="${status == 'PENDING'}">Đang xử lý</option>
+                    <option value="FAILED" th:selected="${status == 'FAILED'}">Thất bại</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select name="dateRange" class="form-select">
+                    <option value="">Mọi thời gian</option>
+                    <option value="7" th:selected="${dateRange == '7'}">7 ngày gần đây</option>
+                    <option value="30" th:selected="${dateRange == '30'}">1 tháng gần đây</option>
+                    <option value="90" th:selected="${dateRange == '90'}">3 tháng gần đây</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select name="priceRange" class="form-select">
+                    <option value="">Mọi giá</option>
+                    <option value="0-100000" th:selected="${priceRange == '0-100000'}">Dưới 100.000</option>
+                    <option value="100000-500000" th:selected="${priceRange == '100000-500000'}">100.000 - 500.000</option>
+                    <option value="500000-1000000" th:selected="${priceRange == '500000-1000000'}">500.000 - 1.000.000</option>
+                    <option value="1000000+" th:selected="${priceRange == '1000000+'}">Trên 1.000.000</option>
+                </select>
+            </div>
         </div>
 
-        <div class="col-md-1">
-            <select name="sortDir" class="form-select">
-                <option value="desc" th:selected="${sortDir == 'desc'}">↓</option>
-                <option value="asc" th:selected="${sortDir == 'asc'}">↑</option>
-            </select>
-        </div>
-        <div class="col-md-12 text-end mt-2">
-            <button type="submit" class="btn btn-primary px-4">
-                <i class="bi bi-search"></i> Tìm kiếm
-            </button>
+        <!-- Hàng 2: SORT + DIRECTION + BUTTONS -->
+        <div class="row g-2 justify-content-left align-items-center">
+            <div class="col-md-2">
+                <select name="sortField" class="form-select pe-5">
+                    <option value="createdAt" th:selected="${sortField == 'createdAt'}">Ngày mua</option>
+                    <option value="price" th:selected="${sortField == 'price'}">Đơn giá</option>
+                    <option value="orderId" th:selected="${sortField == 'orderId'}">Mã đơn hàng</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select name="sortDir" class="form-select text-left">
+                    <option value="desc" th:selected="${sortDir == 'desc'}">Giảm dần</option>
+                    <option value="asc" th:selected="${sortDir == 'asc'}">Tăng dần</option>
+                </select>
+            </div>
+
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="bi bi-search"></i> Tìm kiếm
+                </button>
+            </div>
+
+            <div class="col-md-auto">
+                <a href="/orders" class="btn btn-secondary px-4">
+                    <i class="bi bi-x-circle"></i> Xóa lọc
+                </a>
+            </div>
         </div>
     </form>
 
-    <!-- Container chứa bảng order -->
-    <div id="orderTableContainer" th:replace="customer/order-table :: orderTable"></div>
-</div>
+    <!-- Thông báo -->
+    <div th:if="${message}" class="alert alert-info alert-dismissible fade show mt-2" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+
+    <!-- DANH SÁCH ĐƠN HÀNG -->
+    <div id="orderTableContainer" th:fragment="orderTableFragment">
+
+        <!-- Nếu không có dữ liệu -->
+        <div th:if="${ordersPage == null or ordersPage.isEmpty()}"
+             class="alert alert-warning text-center">
+            Không có đơn hàng nào phù hợp với bộ lọc.
+        </div>
+
+        <!-- Nếu có dữ liệu, hiển thị bảng -->
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-primary text-center">
+            <tr>
+                <th>Mã đơn hàng</th>
+                <th>Ngày mua</th>
+                <th>Người bán</th>
+                <th>Mặt hàng</th>
+                <th>Gói</th>
+                <th>Đơn giá</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="order : ${ordersPage.content}">
+                <td th:text="${order.orderId}"></td>
+                <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                <td th:text="${order.tool.seller.fullName}"></td>
+                <td th:text="${order.tool.toolName}"></td>
+                <td th:text="${order.license.name}"></td>
+                <td th:text="${#numbers.formatDecimal(order.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></td>
+                <td class="text-center">
+                                <span th:switch="${order.orderStatus.name()}">
+                                    <span th:case="'PENDING'" class="badge bg-warning">Chờ thanh toán</span>
+                                    <span th:case="'SUCCESS'" class="badge bg-success">Thành công</span>
+                                    <span th:case="'FAILED'" class="badge bg-danger">Thất bại</span>
+                                    <span th:case="*">Không xác định</span>
+                                </span>
+                </td>
+                <td class="text-start align-middle">
+                    <!-- Xem chi tiết -->
+                    <a th:href="@{/orders/{id}(id=${order.orderId})}"
+                       th:attr="hx-get=@{/orders/{id}(id=${order.orderId})}"
+                       class="btn btn-sm btn-primary"
+                       title="Xem chi tiết"
+                       hx-target="#orderDetailModalBody"
+                       hx-trigger="click"
+                       hx-swap="innerHTML">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <!-- Gưi Feedback  -->
+                    <span th:if="${order.orderStatus.name() == 'SUCCESS'}">
+                        <span th:if="${order.canFeedbackOrReport}">
+                            <a class="btn btn-sm btn-warning"
+                                th:href="@{|/orders/${order.orderId}/feedback|}">
+                                Feedback
+                            </a>
+                        </span>
+                    </span>
+                    <!-- Báo cáo  -->
+                    <span th:if="${order.orderStatus.name() == 'SUCCESS'}">
+                        <span th:if="${order.canFeedbackOrReport}">
+                            <button type="button"
+                                    class="btn btn-outline-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#reportToolModal"
+                                    th:attr="data-tool-id=${order.tool.toolId}">
+                                <i class="bi bi-flag-fill me-1"></i> Báo cáo
+                            </button>
+                        </span>
+                    </span>
+                    <!-- Dùng dịch vụ -->
+                    <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
+                       th:href="@{'/my-tools/' + ${order.orderId}}"
+                       class="btn btn-sm btn-success"
+                       th:disabled="${!order.canFeedbackOrReport}">
+                        <i class="bi bi-arrow-right"></i> Dùng dịch vụ
+                    </a>
+                    <!-- PENDING: Thanh toán lại -->
+                    <a th:if="${order.orderStatus.name() == 'PENDING'}"
+                       th:href="@{'/payment/create?toolId=' + ${order.tool.toolId} + '&licenseId=' + ${order.license.licenseId} + '&orderId=' + ${order.orderId}}"
+                       class="btn btn-sm btn-info">
+                        <i class="bi bi-credit-card"></i> Thanh toán lại
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Phân trang -->
+        <nav th:if="${totalPages >= 1}">
+            <ul class="pagination justify-content-center align-items-center">
+
+                <!-- Trang trước -->
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link"
+                       th:attr="hx-get=@{'/orders/filter'(page=${currentPage - 1}, keyword=${keyword}, status=${status},
+                                                dateRange=${dateRange}, priceRange=${priceRange},
+                                                sortField=${sortField}, sortDir=${sortDir}, size=${size})}"
+                       hx-target="#orderTableContainer"
+                       hx-swap="innerHTML">
+                        Trước
+                    </a>
+                </li>
+
+                <!-- Các số trang -->
+                <li class="page-item"
+                    th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                    th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link"
+                       th:attr="hx-get=@{'/orders/filter'(page=${i}, keyword=${keyword}, status=${status},
+                                                dateRange=${dateRange}, priceRange=${priceRange},
+                                                sortField=${sortField}, sortDir=${sortDir}, size=${size})}"
+                       hx-target="#orderTableContainer"
+                       hx-swap="innerHTML"
+                       th:text="${i + 1}">
+                    </a>
+                </li>
+
+                <!-- Trang sau -->
+                <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                    <a class="page-link"
+                       th:attr="hx-get=@{'/orders/filter'(page=${currentPage + 1}, keyword=${keyword}, status=${status},
+                                                dateRange=${dateRange}, priceRange=${priceRange},
+                                                sortField=${sortField}, sortDir=${sortDir}, size=${size})}"
+                       hx-target="#orderTableContainer"
+                       hx-swap="innerHTML">
+                        Sau
+                    </a>
+                </li>
+
+                <!-- Dropdown chọn số bản ghi -->
+                <li class="page-item ms-3 align-self-center">
+                    <select name="size"
+                            class="form-select w-auto pe-5"
+                            hx-get="/orders/filter"
+                            hx-target="#orderTableContainer"
+                            hx-swap="innerHTML"
+                            hx-include="[name='keyword'], [name='status'], [name='dateRange'], [name='priceRange'], [name='sortField'], [name='sortDir']">
+                        <option value="5" th:selected="${size == 5}">5 bản ghi</option>
+                        <option value="10" th:selected="${size == 10}">10 bản ghi</option>
+                        <option value="20" th:selected="${size == 20}">20 bản ghi</option>
+                    </select>
+                </li>
+            </ul>
+        </nav>
+    </div> <!-- end orderTableContainer -->
+</div> <!-- end container -->
 <!--Footer-->
 <div th:replace="common/footer :: footer"></div>
 
+<!-- THÊM MỚI: MODAL CHI TIẾT ORDER -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailModalLabel">Chi tiết đơn hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="orderDetailModalBody">
+                <!-- HTMX load fragment vào đây -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:fragment="orderDetailModal" th:if="${order != null}">
+    <div class="order-detail p-3">
+        <div class="border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Mã đơn: <b th:text="${order.orderId}">DH001</b></h6>
+                    <h6 class="mb-3"><i class="bi bi-calendar3"></i> Ngày mua:
+                        <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                    </h6>
+                    <!-- Seller info -->
+                    <div class="mb-3">
+                        <h6 th:text="'👤 ' + ${order.tool.seller.fullName}"></h6>
+                        <div>
+                        <span th:each="i : ${#numbers.sequence(1, 5)}">
+                            <i th:class="${i <= sellerRating ? 'fas fa-star text-warning' : 'far fa-star text-muted'}"></i>
+                        </span>
+                            <small class="text-muted" th:text="${#numbers.formatDecimal(sellerRating,1,1)} + '/5'">4.8/5</small>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h6>Trạng thái:
+                        <span th:switch="${order.orderStatus.name()}">
+                            <span th:case="'SUCCESS'" class="badge bg-success">Thành công</span>
+                            <span th:case="'PENDING'" class="badge bg-warning text-dark">Chờ thanh toán</span>
+                            <span th:case="'FAILED'" class="badge bg-danger">Thất bại</span>
+                        </span>
+                    </h6>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product info -->
+        <div class="border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-8">
+                    <h6 class="fw-bold" th:text="${order.tool.toolName}">Email Bulk Sender Pro</h6>
+                    <p class="text-muted mb-6" th:text="${order.tool.description}">Công cụ gửi email hàng loạt chuyên nghiệp</p>
+                    <div class="col-md-5 mb-2"><strong>Category:</strong> <span th:text="${order.tool.category.categoryName}"></span></div>
+                    <div class="col-md-8 mb-2">
+                        <strong>Gói:</strong>
+                        <span th:text="${order.license.name}"></span>
+                        <span class="text-muted fst-italic">(
+                        <span th:text="${order.license.durationDays}"></span> ngày)</span>
+                    </div>
+<!--                    <div class="col-md-8 mb-2">-->
+<!--                        <strong>Hạn sử dụng: </strong><span class="fw-bold text-danger" th:text="${#temporals.format(order.licenseAccount.endDate, 'dd/MM/yyyy HH:mm')}"></span>-->
+<!--                    </div>-->
+                    <div class="col-md-8 mb-2" th:if="${order.licenseAccount != null and order.licenseAccount.endDate != null}">
+                        <strong>Hạn sử dụng: </strong><span class="fw-bold text-danger" th:text="${#temporals.format(order.licenseAccount.endDate, 'dd/MM/yyyy HH:mm')}"></span>
+                    </div>
+                    <div class="col-md-8 mb-2" th:if="${order.licenseAccount == null or order.licenseAccount.endDate == null}">
+                        <strong>Hạn sử dụng: </strong><span class="text-muted">Chưa xác định (đơn hàng chưa hoàn tất)</span>
+                    </div>
+                    <div class="col-md-4"><strong>Giá:</strong> <span class="fw-bold text-success" th:text="${#numbers.formatDecimal(basePrice,0,'COMMA',0,'POINT')} + ' VND'"></span></div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <img th:src="${order.tool.image}" alt="Tool image" class="img-fluid rounded">
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-end gap-2">
+            <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
+               th:href="@{|/orders/${order.orderId}/feedback|}"
+               class="btn btn-warning"><i class="bi bi-chat-left-dots"></i> Gửi Feedback</a>
+<!--            <a th:if="${order.orderStatus.name() == 'SUCCESS'}"-->
+<!--               th:href="@{|/orders/${order.orderId}/report|}"-->
+<!--               class="btn btn-outline-danger"><i class="bi bi-flag"></i> Báo cáo</a>-->
+            <a th:if="${order.orderStatus.name() == 'SUCCESS'}"
+               th:href="@{'/my-tools/' + ${order.orderId}}"
+               class="btn btn-success"><i class="bi bi-play-circle"></i> Dùng dịch vụ này</a>
+        </div>
+    </div>
+</div>
+
+<!-- THÊM MỚI: Modal Báo cáo -->
+<div class="modal fade" id="reportToolModal" tabindex="-1" aria-labelledby="reportToolModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg custom-report-modal">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <form id="reportForm" method="post">
+                <div class="modal-header bg-danger text-white rounded-top-4">
+                    <h5 class="modal-title" id="reportToolModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Báo cáo công cụ
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Lý do</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="">-- Chọn lý do --</option>
+                            <option value="SPAM">Spam</option>
+                            <option value="MALICIOUS_CONTENT">Nội dung độc hại</option>
+                            <option value="COPYRIGHT_VIOLATION">Vi phạm bản quyền</option>
+                            <option value="INAPPROPRIATE_CONTENT">Nội dung không phù hợp</option>
+                            <option value="MISLEADING_INFO">Thông tin sai lệch</option>
+                            <option value="IRRELEVANT_CATEGORY">Danh mục không phù hợp</option>
+                            <option value="OTHER">Khác</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mô tả thêm</label>
+                        <textarea name="description" class="form-control" rows="3"
+                                  placeholder="Hãy mô tả chi tiết lý do bạn báo cáo..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-send-fill me-1"></i> Gửi báo cáo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- JS cho Modal (show sau HTMX load) -->
+<script>
+    // Hiển thị modal chi tiết sau khi HTMX load
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'orderDetailModalBody') {
+            var modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+            modal.show();
+        }
+    });
+
+    // Fallback if no HTMX (direct href)
+    function showOrderModal(id) {
+        window.location.href = '/orders/' + id;
+    }
+
+    // Thiết lập form báo cáo
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('reportToolModal');
+        const form = document.getElementById('reportForm');
+
+        modal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const toolId = button.getAttribute('data-tool-id');
+            form.action = `/tools/${toolId}/report`;
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const url = form.action;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const message = await response.text();
+
+                if (response.ok) {
+                    alert(message);
+                } else if (response.status === 409) {
+                    alert(message); // đã báo cáo trước đó
+                } else if (response.status === 401) {
+                    alert(message); // chưa đăng nhập
+                    window.location.href = "/login";
+                } else {
+                    alert(message);
+                }
+
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                bsModal.hide();
+                form.reset();
+
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    });
+</script>
+
+<!-- htmx: thư viện giúp cập nhật từng phần HTML mà không reload trang -->
+<script src="https://unpkg.com/htmx.org@1.9.3"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

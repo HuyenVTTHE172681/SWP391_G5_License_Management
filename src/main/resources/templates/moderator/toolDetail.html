@@ -3,31 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Tool Detail - Moderator</title>
-    <link rel="stylesheet" th:href="@{/css/toolDetailMod.css}">
+    <link rel="stylesheet" th:href="@{/css/manager-tool-detail.css}">
 </head>
 <body>
 
 <div class="container">
-    <h1>🧰 Tool Detail</h1>
+    <h1>Tool Detail</h1>
 
     <div class="tool-card">
-        <!-- Hình ảnh tool -->
         <div class="tool-image">
-            <img th:src="@{${tool.image}}" alt="Tool Image">
+            <img th:if="${tool.image != null}" th:src="@{'/' + ${tool.image}}" alt="Tool image" class="tool-img">
         </div>
 
-        <!-- Thông tin tool -->
         <div class="tool-info">
             <h2 class="tool-name" th:text="${tool.toolName}"></h2>
             <p class="desc" th:text="${tool.description}"></p>
 
             <div class="meta">
+                <p><strong>Tool ID:</strong>
+                    <span th:text="${tool.toolId}"></span>
+                </p>
                 <p><strong>Category:</strong>
                     <span th:text="${tool.category != null ? tool.category.categoryName : 'N/A'}"></span>
                 </p>
 
                 <p><strong>Seller:</strong>
                     <span th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></span>
+                </p>
+
+                <p><strong>Login Method:</strong>
+                    <span th:text="${tool.loginMethod}"></span>
                 </p>
 
                 <p><strong>Upload Date:</strong>
@@ -45,21 +50,29 @@
                 </p>
             </div>
 
-            <!-- Danh sách file đính kèm -->
             <div class="files-section">
-                <h3>📎 File đính kèm</h3>
+                <h3>File đính kèm</h3>
 
-                <ul class="file-list" th:if="${toolFiles != null and !#lists.isEmpty(toolFiles)}">
-                    <li th:each="file : ${toolFiles}">
+                <ul class="file-list" th:if="${tool.files != null and !#lists.isEmpty(tool.files)}">
+                    <li th:each="file : ${tool.files}">
                         <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
                             <span th:text="${file.filePath}"></span>
                         </a>
                         <span class="file-type" th:text="'(' + ${file.fileType} + ')'"></span>
                     </li>
+
+                    <!-- ✅ Chỉ hiển thị token khi loginMethod = TOKEN -->
+                    <li th:if="${tool.loginMethod?.name() == 'TOKEN' and licenseAccounts != null and !#lists.isEmpty(licenseAccounts)}">
+                        <ul>
+                            <li th:each="l : ${licenseAccounts}">
+                                <span th:text="${l.token != null ? '*****' + #strings.substring(l.token, l.token.length() - 4) : 'No token'}"></span>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
 
-                <p th:if="${toolFiles == null or #lists.isEmpty(toolFiles)}" class="no-file">
-                    Không có file đính kèm.
+                <p th:if="${tool.files == null or #lists.isEmpty(tool.files)}" class="no-file">
+                    No file appended
                 </p>
             </div>
 
@@ -72,22 +85,26 @@
                 <button type="button" class="btn-reject" onclick="toggleReject()">Reject</button>
             </div>
 
-                <!-- Form reject -->
-                <form id="rejectForm"
-                      th:action="@{'/moderator/tool/' + ${tool.toolId} + '/reject'}"
-                      method="post"
-                      class="reject-form hidden">
-                    <input type="text" name="reason" placeholder="Reason..." required>
-                    <div class="reject-actions">
-                        <button type="submit" class="btn-confirm">Submit</button>
-                        <button type="button" class="btn-cancel" onclick="toggleReject()">Cancel</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Quay lại -->
-            <a th:href="@{/moderator/uploadRequest}" class="back-link">← Back</a>
+            <!-- Form reject -->
+            <form id="rejectForm"
+                  th:action="@{'/moderator/tool/' + ${tool.toolId} + '/reject'}"
+                  method="post"
+                  class="reject-form hidden">
+                <input type="text" name="reason" placeholder="Reason..." required>
+                <div class="reject-actions">
+                    <button type="submit" class="btn-confirm">Submit</button>
+                    <button type="button" class="btn-cancel" onclick="toggleReject()">Cancel</button>
+                </div>
+            </form>
         </div>
+
+        <a th:if="${tool.status.name() == 'PENDING'}"
+           th:href="@{/moderator/uploadRequest}"
+           class="back-link">← Back</a>
+
+        <a th:unless="${tool.status.name() == 'PENDING'}"
+           th:href="@{/moderator/history}"
+           class="back-link">← Back</a>
     </div>
 </div>
 

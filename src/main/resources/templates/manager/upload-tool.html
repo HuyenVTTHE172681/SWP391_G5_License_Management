@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager - Upload Tools</title>
+    <link rel="stylesheet" th:href="@{/css/manager-upload.css}">
+</head>
+<body>
+<div class="layout">
+
+    <!-- 🧭 SIDEBAR -->
+    <aside class="sidebar">
+        <h2 class="sidebar-title">Manager Panel</h2>
+        <nav>
+            <a th:href="@{/manager/}" class="nav-link" th:classappend="${active == 'dashboard'} ? 'active' : ''">Dashboard</a>
+            <a th:href="@{/manager/tool/list}" class="nav-link" th:classappend="${active == 'tools'} ? 'active' : ''">Tools</a>
+            <a th:href="@{/manager/category/list}" class="nav-link" th:classappend="${active == 'categories'} ? 'active' : ''">Categories</a>
+            <a th:href="@{/manager/package/list}" class="nav-link" th:classappend="${active == 'packages'} ? 'active' : ''">Packages</a>
+            <a th:href="@{/manager/upload-tool}" class="nav-link" th:classappend="'active'">Upload Tools</a>
+            <a th:href="@{/logout}" class="nav-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <!-- 📋 MAIN CONTENT -->
+    <main class="content">
+        <h1>Approved Tools for Upload</h1>
+
+        <form method="get" class="filter-form">
+            <label>Seller ID:</label>
+            <input type="number" name="sellerId" th:value="${sellerId}" placeholder="Enter Seller ID">
+
+            <label>Category:</label>
+            <select name="categoryId">
+                <option value="">All</option>
+                <option th:each="c : ${categories}"
+                        th:value="${c.categoryId}"
+                        th:text="${c.categoryName}"
+                        th:selected="${categoryId == c.categoryId}"></option>
+            </select>
+
+            <label>Upload From:</label>
+            <input type="date" name="uploadFrom" th:value="${#temporals.format(uploadFrom, 'yyyy-MM-dd')}">
+
+            <label>Upload To:</label>
+            <input type="date" name="uploadTo" th:value="${#temporals.format(uploadTo, 'yyyy-MM-dd')}">
+
+            <button type="submit" class="btn btn-filter">Filter</button>
+            <a th:href="@{/manager/upload-tool}" class="btn btn-reset">Reset</a>
+        </form>
+
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tool Name</th>
+                <th>Seller</th>
+                <th>Category</th>
+                <th>Created At</th>
+                <th>Updated At</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="t : ${toolList}">
+                <td th:text="${t.toolId}"></td>
+                <td th:text="${t.toolName}"></td>
+                <td th:text="${t.seller.fullName}"></td>
+                <td th:text="${t.category.categoryName}"></td>
+                <td th:text="${#temporals.format(t.createdAt, 'yyyy-MM-dd')}"></td>
+                <td th:text="${#temporals.format(t.updatedAt, 'yyyy-MM-dd')}"></td>
+                <td><span th:text="${t.status}" th:class="'status ' + ${t.status}"></span></td>
+                <td>
+                    <a th:href="@{'/manager/tool/' + ${t.toolId}}" class="btn btn-view">View Detail</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

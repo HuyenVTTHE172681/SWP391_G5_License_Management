@@ -32,6 +32,7 @@ public class ToolFile {
 
     @ManyToOne
     @JoinColumn(name = "uploaded_by")
+    @JsonBackReference(value = "file-uploader")
     private Account uploadedBy;
 
     private LocalDateTime createdAt;

@@ -12,18 +12,21 @@
     <aside class="sidebar">
         <h2>Moderator Panel</h2>
         <nav class="menu">
-            <a th:href="@{/moderator/}">🏠 Dashboard</a>
-            <a th:href="@{/moderator/uploadRequest}" class="active">📤 Upload Requests</a>
-            <a th:href="@{/moderator/feedback}">💬 Feedback Reports</a>
-            <a th:href="@{/moderator/reports}">📊 Tool Reports</a>
-            <a th:href="@{/moderator/history}">📁 Uploaded Tools</a>
+            <a th:href="@{/moderator/}">Dashboard</a>
+            <a th:href="@{/moderator/uploadRequest}" class="active">Upload Requests</a>
+            <a th:href="@{/moderator/feedback}">Feedback Reports</a>
+            <a th:href="@{/moderator/tool/report}">Tool Reports</a>
+            <a th:href="@{/moderator/history}">Uploaded Tools</a>
+            <a th:href="@{/profile}">Profile</a>
+            <a th:href="@{/profile/reset-password}">Change Password</a>
+            <a th:href="@{/logout}" class="text-danger">Logout</a>
         </nav>
     </aside>
 
     <!-- 📄 Nội dung chính -->
     <main class="main-content">
         <header class="header">
-            <h1>📋 Upload Requests</h1>
+            <h1>Upload Requests</h1>
             <p class="subtitle">Danh sách tool đang chờ phê duyệt</p>
         </header>
 
@@ -110,7 +113,7 @@
         const from = new Date(document.getElementById("uploadFrom").value);
         const to = new Date(document.getElementById("uploadTo").value);
         if (from && to && from > to) {
-            alert("⚠️ Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
+            alert("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
             return false;
         }
         return true;

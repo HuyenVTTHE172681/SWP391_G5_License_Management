@@ -31,7 +31,7 @@ public class PaymentPackageService {
     private String hashSecret;
     @Value("${vnpay.baseUrl}")
     private String baseUrl;
-    @Value("${vnpay.returnUrl}")
+    @Value("${vnpay.returnUrlSeller}")
     private String returnUrl;
 
     // Tạo link thanh toán cho Seller

@@ -1,58 +1,89 @@
+// src/main/java/swp391/fa25/lms/controller/common/FeedbackController.java
 package swp391.fa25.lms.controller.common;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Feedback;
-import swp391.fa25.lms.repository.FeedbackRepository;
-import swp391.fa25.lms.repository.ToolRepository;
+import swp391.fa25.lms.service.customer.FeedbackRepositoryImpl;
 
-import java.util.Optional;
+import java.security.Principal;
 
 @Controller
-@RequestMapping("/feedback")
+@Validated
 public class FeedbackController {
+     @Autowired
+     @Qualifier("customerFeedBack")
+    private FeedbackRepositoryImpl feedbackService;
 
-    private final ToolRepository toolRepo;
-    private final FeedbackRepository feedbackRepo;
-
-    public FeedbackController(ToolRepository toolRepo, FeedbackRepository feedbackRepo) {
-        this.toolRepo = toolRepo;
-        this.feedbackRepo = feedbackRepo;
+    public FeedbackController(FeedbackRepositoryImpl feedbackService) {
+        this.feedbackService = feedbackService;
     }
-    @GetMapping("/tool/{toolId}")
-    public String viewToolFeedback(@PathVariable Long toolId,
-                                   @RequestParam(defaultValue = "0") int page,
-                                   @RequestParam(defaultValue = "10") int size,
-                                   Model model, RedirectAttributes ra) {
-        var toolOpt = toolRepo.findById(toolId);
-        if (toolOpt.isEmpty()) {
-            ra.addFlashAttribute("msg", "Tool không tồn tại");
-            return "redirect:/";
-        }
-        page = Math.max(page, 0);
-        size = Math.min(Math.max(size, 1), 50);
 
-        var tool = toolOpt.get();
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Feedback> fbPage = feedbackRepo.findByTool(tool, pageable);
+    // ================== CREATE (theo đơn hàng) ==================
 
-        double avg = Optional.ofNullable(feedbackRepo.findAverageRatingByTool(toolId)).orElse(0.0);
-        long total = feedbackRepo.countByTool(tool);
+    /** Hiển thị form feedback cho 1 đơn */
+    @GetMapping("/orders/{orderId}/feedback")
+    public String showFeedbackForm(@PathVariable Long orderId, Model model) {
+        var order = feedbackService.getOrderForFeedback(orderId);
+        model.addAttribute("order", order);
+        model.addAttribute("tool", order.getTool());
+        return "customer/feedback-form";
+    }
 
-        model.addAttribute("tool", tool);
-        model.addAttribute("fbPage", fbPage);
-        model.addAttribute("avgRating", avg);
-        model.addAttribute("totalReviews", total);
-        model.addAttribute("pageSize", size);
-        model.addAttribute("currentPage", page);
+    /** Tạo feedback mới */
+    @PostMapping("/orders/{orderId}/feedback")
+    public String submitFeedback(@PathVariable Long orderId,
+                                 @RequestParam @Min(1) @Max(5) Integer rating,
+                                 @RequestParam(required = false) @Size(max = 100) String comment,
+                                 RedirectAttributes ra) {
+        Long toolId = feedbackService.submitFeedback(orderId, rating, comment);
+        ra.addFlashAttribute("ok", "Cảm ơn bạn! Đánh giá đã được ghi nhận.");
+        return "redirect:/tools/" + toolId + "#review";
+    }
 
-        return "common/feedback";
+    // ================== EDIT ==================
+
+    /** Form sửa feedback (GET) */
+    @GetMapping("/feedback/{feedbackId}/edit")
+    public String editFeedbackForm(@PathVariable Long feedbackId,
+                                   Model model,
+                                   Principal principal) {
+        var view = feedbackService.getFeedbackForEdit(feedbackId, principal);
+        model.addAttribute("tool", view.feedback().getTool());
+        model.addAttribute("fb", view.feedback());
+        model.addAttribute("fbComment", view.normalizedComment());
+        return "customer/feedback-edit-form";
+    }
+
+    @PostMapping("/feedback/{feedbackId}/edit")
+    public String updateFeedback(@PathVariable Long feedbackId,
+                                 @RequestParam @Min(1) @Max(5) Integer rating,
+                                 @RequestParam(required = false) @Size(max = 100) String comment,
+                                 @RequestParam(required = false, name = "status") Feedback.Status status,
+                                 RedirectAttributes ra,
+                                 Principal principal) {
+        Long toolId = feedbackService.updateFeedback(feedbackId, rating, comment, status, principal);
+        ra.addFlashAttribute("ok", "Đã cập nhật đánh giá.");
+        return "redirect:/tools/" + toolId + "#review";
+    }
+
+    // ================== DELETE ==================
+
+    /** “Xoá” feedback => đánh dấu SUSPECT (soft-delete) */
+    @PostMapping("/feedback/{feedbackId}/delete")
+    public String deleteFeedback(@PathVariable Long feedbackId,
+                                 RedirectAttributes ra,
+                                 Principal principal) {
+        Long toolId = feedbackService.deleteFeedback(feedbackId, principal);
+        ra.addFlashAttribute("ok", "Đã ẩn đánh giá."); // đổi thông điệp cho đúng hành vi soft-delete
+        return "redirect:/tools/" + toolId + "#review";
     }
 }
-

@@ -184,7 +184,8 @@ body {
 }
 
 thead {
-    background-color: #f1f5f9;
+    background-color: #0078d7;
+    color: white;
 }
 
 th, td {

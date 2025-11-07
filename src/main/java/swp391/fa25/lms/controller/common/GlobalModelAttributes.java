@@ -19,4 +19,5 @@ public class GlobalModelAttributes {
             model.addAttribute("account", account);
         }
     }
+
 }

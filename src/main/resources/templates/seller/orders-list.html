@@ -2,74 +2,34 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Seller Orders</title>
+    <title>Orders Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .dashboard-header {
-            background: linear-gradient(to right, #0d6efd, #6610f2);
-            color: white;
-            text-align: center;
-            padding: 60px 0 40px;
-            margin-bottom: 30px;
-        }
-        .dashboard-header h1 {
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-        .filter-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        .revenue-box {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .table thead {
-            background-color: #212529;
-            color: white;
-        }
-        .badge {
-            font-size: 0.9rem;
-        }
-        .btn-primary {
-            background-color: #0d6efd;
-        }
-        .no-orders {
-            text-align: center;
-            color: #888;
-            padding: 40px 0;
-            font-size: 1.1rem;
-        }
-    </style>
+    <link th:href="@{/css/orders-list.css}" rel="stylesheet">
 </head>
 <body>
 
 <!-- 🔹 HEADER -->
-<div class="dashboard-header">
-    <h1>📦 Orders Management</h1>
-    <p class="mb-0">View and filter all orders for your tools</p>
-</div>
+<header class="dashboard-header shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <h1>📦 Orders Management</h1>
+            <p>View and filter all orders for your tools</p>
+        </div>
+        <a th:href="@{/seller/tools}" class="btn btn-outline-light fw-semibold px-4">← Back to Dashboard</a>
+    </div>
+</header>
 
-<div class="container">
+<div class="container mt-4">
 
     <!-- 🔹 Tổng doanh thu -->
     <div class="revenue-box">
         <h5 class="text-secondary mb-1">Total Revenue</h5>
-        <h2 class="text-success fw-bold" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</h2>
+        <h2 class="text-success fw-bold"
+            th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</h2>
     </div>
 
-    <!-- 🔹 Bộ lọc tìm kiếm -->
-    <form class="filter-card" method="get" th:action="@{/seller/orders}">
+    <!-- 🔹 Bộ lọc -->
+    <form id="filterForm" class="filter-card" method="get" th:action="@{/seller/orders}">
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Keyword</label>
@@ -90,13 +50,11 @@
                 <label class="form-label fw-semibold">Status</label>
                 <select name="status" class="form-select">
                     <option th:value="${''}" th:selected="${status == null or status == ''}">All</option>
-                    <option th:value="PAID" th:selected="${status == 'PAID'}">Paid</option>
+                    <option th:value="SUCCESS" th:selected="${status == 'SUCCESS'}">Success</option>
                     <option th:value="PENDING" th:selected="${status == 'PENDING'}">Pending</option>
                     <option th:value="FAILED" th:selected="${status == 'FAILED'}">Failed</option>
-                    <option th:value="CANCELLED" th:selected="${status == 'CANCELLED'}">Cancelled</option>
                 </select>
             </div>
-
 
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Sort by</label>
@@ -108,15 +66,16 @@
                 </select>
             </div>
 
-            <div class="col-md-1">
-                <button type="submit" class="btn btn-primary w-100">Go</button>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-50">Go</button>
+                <button type="button" class="btn btn-outline-secondary w-50" onclick="clearFilters()">Clear Filters</button>
             </div>
         </div>
     </form>
 
-    <!-- 🔹 Bảng danh sách đơn hàng -->
-    <div class="table-responsive shadow-sm">
-        <table class="table table-bordered table-hover align-middle bg-white">
+    <!-- 🔹 Bảng đơn hàng -->
+    <div class="table-responsive shadow-sm bg-white rounded-3">
+        <table class="table table-bordered table-hover align-middle mb-0">
             <thead>
             <tr>
                 <th>#</th>
@@ -127,43 +86,67 @@
                 <th>Payment</th>
                 <th>Status</th>
                 <th>Created At</th>
-                <th>Paid At</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="order, i : ${orders}">
                 <td th:text="${i.index + 1}"></td>
-                <td th:text="${order.tool.name}"></td>
+                <td th:text="${order.tool.toolName}"></td>
                 <td th:text="${order.account.fullName}"></td>
                 <td th:text="${order.license.durationDays + ' days'}"></td>
                 <td th:text="${#numbers.formatDecimal(order.price, 0, 'COMMA', 0, 'POINT')}"></td>
                 <td th:text="${order.paymentMethod}"></td>
                 <td>
-                    <span th:classappend="${
-                        order.paymentStatus == 'PAID' ? 'badge bg-success' :
-                        (order.paymentStatus == 'PENDING' ? 'badge bg-warning text-dark' :
-                        (order.paymentStatus == 'FAILED' ? 'badge bg-danger' : 'badge bg-secondary'))
-                    }"
-                          th:text="${order.paymentStatus}">
+                    <span th:class="${order.orderStatus.name() == 'SUCCESS' ? 'badge bg-success text-white' :
+                        (order.orderStatus.name() == 'PENDING' ? 'badge bg-warning text-dark' :
+                        (order.orderStatus.name() == 'FAILED' ? 'badge bg-danger text-white' : 'badge bg-light text-dark'))}"
+                          th:text="${order.orderStatus.name()}">
                     </span>
                 </td>
-                <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
-                <td th:text="${order.paidAt != null ? #temporals.format(order.paidAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
+                <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
             </tr>
+
             <tr th:if="${orders.isEmpty()}">
-                <td colspan="9" class="no-orders">No orders found.</td>
+                <td colspan="8" class="no-orders">No orders found.</td>
             </tr>
             </tbody>
         </table>
     </div>
 
-    <!-- 🔹 Nút quay lại Dashboard -->
-    <div class="text-center mt-4 mb-5">
-        <a th:href="@{/seller/dashboard}" class="btn btn-outline-primary">
-            ← Back to Dashboard
-        </a>
+    <!-- 🔹 Pagination -->
+    <div class="d-flex justify-content-center mt-4" th:if="${totalPages > 1}">
+        <ul class="pagination">
+            <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/seller/orders(page=${currentPage - 1}, keyword=${keyword}, status=${status}, from=${from}, to=${to}, sort=${sort})}">
+                    Previous
+                </a>
+            </li>
+
+            <li th:each="i : ${#numbers.sequence(1, totalPages)}"
+                th:classappend="${i == currentPage} ? 'active' : ''"
+                class="page-item">
+                <a class="page-link"
+                   th:href="@{/seller/orders(page=${i}, keyword=${keyword}, status=${status}, from=${from}, to=${to}, sort=${sort})}"
+                   th:text="${i}"></a>
+            </li>
+
+            <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/seller/orders(page=${currentPage + 1}, keyword=${keyword}, status=${status}, from=${from}, to=${to}, sort=${sort})}">
+                    Next
+                </a>
+            </li>
+        </ul>
     </div>
 </div>
+
+<script>
+    function clearFilters() {
+        document.querySelectorAll('#filterForm input, #filterForm select').forEach(e => e.value = '');
+        document.getElementById('filterForm').submit();
+    }
+</script>
 
 </body>
 </html>
