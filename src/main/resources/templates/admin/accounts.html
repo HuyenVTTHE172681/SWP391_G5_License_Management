@@ -122,6 +122,7 @@
     <div class="tabs">
         <a class="tab" th:classappend="${page}=='home' ? 'active'" th:href="@{/admin/adminhome}">Home</a>
         <a class="tab" th:classappend="${page}=='accounts' ? 'active'" th:href="@{/admin/accounts}">Accounts</a>
+        <a class="tab" th:href="@{/profile}">View Profile</a>
     </div>
 
     <p th:if="${msg}" class="flash" th:text="${msg}">Message</p>
