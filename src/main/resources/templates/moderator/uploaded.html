@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Uploaded Tools</title>
@@ -24,13 +24,13 @@
         </nav>
     </aside>
 
-    <!-- 📄 Nội dung chính -->
+    <!-- 🌐 Main content -->
     <main class="main-content">
         <h1>Reviewed Tools</h1>
 
-        <!-- Bộ lọc -->
+        <!-- 🔍 Filter form -->
         <form class="filter-form" th:action="@{/moderator/history}" method="get" onsubmit="return validateDateRanges()">
-            <div class="filter-group three-col">
+            <div class="filter-grid">
                 <div>
                     <label>Seller ID:</label>
                     <input type="number" name="sellerId" th:value="${sellerId}">
@@ -38,7 +38,7 @@
                 <div>
                     <label>Category:</label>
                     <select name="categoryId">
-                        <option value="">-- Tất cả danh mục --</option>
+                        <option value="">-- All Category --</option>
                         <option th:each="c : ${categories}"
                                 th:value="${c.categoryId}"
                                 th:text="${c.categoryName}"
@@ -47,7 +47,7 @@
                     </select>
                 </div>
                 <div>
-                    <label>Trạng thái:</label>
+                    <label>Status:</label>
                     <select name="status">
                         <option value="">-- Tất cả --</option>
                         <option value="APPROVED" th:selected="${status == 'APPROVED'}">Approved</option>
@@ -55,50 +55,46 @@
                         <option value="PUBLISHED" th:selected="${status == 'PUBLISHED'}">Published</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="filter-group two-col">
                 <div>
-                    <label>Upload từ:</label>
+                    <label>Upload from:</label>
                     <input type="datetime-local" id="uploadFrom" name="uploadFrom"
                            th:value="${uploadFrom != null ? #temporals.format(uploadFrom, 'yyyy-MM-dd''T''HH:mm') : ''}"
                            onchange="setMinUploadTo()">
                 </div>
                 <div>
-                    <label>Upload đến:</label>
+                    <label>Upload to:</label>
                     <input type="datetime-local" id="uploadTo" name="uploadTo"
                            th:value="${uploadTo != null ? #temporals.format(uploadTo, 'yyyy-MM-dd''T''HH:mm') : ''}">
                 </div>
-            </div>
-
-            <div class="filter-group two-col">
                 <div>
-                    <label>Ngày duyệt từ:</label>
+                    <label>Review from:</label>
                     <input type="datetime-local" id="approvedFrom" name="approvedFrom"
                            th:value="${approvedFrom != null ? #temporals.format(approvedFrom, 'yyyy-MM-dd''T''HH:mm') : ''}"
                            onchange="setMinApprovedTo()">
                 </div>
                 <div>
-                    <label>Ngày duyệt đến:</label>
+                    <label>Review to:</label>
                     <input type="datetime-local" id="approvedTo" name="approvedTo"
                            th:value="${approvedTo != null ? #temporals.format(approvedTo, 'yyyy-MM-dd''T''HH:mm') : ''}">
                 </div>
             </div>
 
-            <button type="submit">Lọc kết quả</button>
+            <div class="button-area">
+                <button type="submit" class="btn btn-filter">Filter</button>
+            </div>
         </form>
 
-        <!-- Bảng dữ liệu -->
+        <!-- 📋 Table -->
         <table>
             <thead>
             <tr>
                 <th>ID</th>
-                <th>Tên Tool</th>
-                <th>Người đăng</th>
-                <th>Danh mục</th>
-                <th>Ngày upload</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
+                <th>Tool</th>
+                <th>Seller</th>
+                <th>Category</th>
+                <th>Upload Date</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
             </thead>
             <tbody>
@@ -111,10 +107,12 @@
                 <td class="status" th:classappend="${tool.status}">
                     <span class="status-badge" th:text="${tool.status}"></span>
                 </td>
-                <td><a class="btn-view" th:href="@{'/moderator/tool/' + ${tool.toolId}}">👁 View Detail</a></td>
+                <td>
+                    <a class="btn btn-view" th:href="@{'/moderator/tool/' + ${tool.toolId}}">👁 View Detail</a>
+                </td>
             </tr>
             <tr th:if="${#lists.isEmpty(toolList)}">
-                <td colspan="7" style="text-align:center;">Không có tool nào được tìm thấy.</td>
+                <td colspan="7" class="empty">Không có tool nào được tìm thấy.</td>
             </tr>
             </tbody>
         </table>
@@ -131,15 +129,16 @@
         document.getElementById("approvedTo").min = from;
     }
     function validateDateRanges() {
-        const uploadFrom = new Date(document.getElementById("uploadFrom").value);
-        const uploadTo = new Date(document.getElementById("uploadTo").value);
-        const approvedFrom = new Date(document.getElementById("approvedFrom").value);
-        const approvedTo = new Date(document.getElementById("approvedTo").value);
-        if (uploadFrom && uploadTo && uploadFrom > uploadTo) {
+        const uploadFromVal = document.getElementById("uploadFrom").value;
+        const uploadToVal = document.getElementById("uploadTo").value;
+        const approvedFromVal = document.getElementById("approvedFrom").value;
+        const approvedToVal = document.getElementById("approvedTo").value;
+
+        if (uploadFromVal && uploadToVal && new Date(uploadFromVal) > new Date(uploadToVal)) {
             alert("Upload from date should be before upload to date");
             return false;
         }
-        if (approvedFrom && approvedTo && approvedFrom > approvedTo) {
+        if (approvedFromVal && approvedToVal && new Date(approvedFromVal) > new Date(approvedToVal)) {
             alert("Approve from date should be before approve to date");
             return false;
         }

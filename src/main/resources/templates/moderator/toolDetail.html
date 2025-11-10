@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Tool Detail - Moderator</title>
@@ -7,89 +7,73 @@
 </head>
 <body>
 
-<div class="container">
-    <h1>Tool Detail</h1>
-
+<div class="page">
     <div class="tool-card">
+        <!-- LEFT: image -->
         <div class="tool-image">
-            <img th:src="@{${tool.image}}" alt="Tool Image">
+            <img th:src="@{'/upload/' + ${tool.image}}" alt="Tool Image">
         </div>
 
+        <!-- RIGHT: header + info -->
         <div class="tool-info">
-            <h2 class="tool-name" th:text="${tool.toolName}"></h2>
-            <p class="desc" th:text="${tool.description}"></p>
+            <h1 class="title-pill" th:text="${tool.toolName} + ' - ' + ${tool.toolId}">Tool Name - ID</h1>
 
-            <div class="meta">
-                <p><strong>Tool ID:</strong>
-                    <span th:text="${tool.toolId}"></span>
-                </p>
-                <p><strong>Category:</strong>
-                    <span th:text="${tool.category != null ? tool.category.categoryName : 'N/A'}"></span>
-                </p>
+            <p class="desc" th:text="${tool.description}">description</p>
 
-                <p><strong>Seller:</strong>
-                    <span th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></span>
-                </p>
+            <!-- license chips -->
+            <ul class="license-chips">
+                <li th:each="l : ${tool.licenses}" th:text="${l.name} + ' - ' + ${l.price}">License - price</li>
+            </ul>
 
-                <p><strong>Login Method:</strong>
-                    <span th:text="${tool.loginMethod}"></span>
-                </p>
+            <!-- meta 2 columns -->
+            <div class="meta-grid">
+                <div class="meta-row">
+                    <span class="meta-label">Category:</span>
+                    <span class="meta-value" th:text="${tool.category != null ? tool.category.categoryName : 'N/A'}"></span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Status:</span>
+                    <span class="badge" th:classappend="${tool.status}" th:text="${tool.status}"></span>
+                </div>
 
-                <p><strong>Upload Date:</strong>
-                    <span th:text="${#temporals.format(tool.createdAt, 'dd-MM-yyyy HH:mm')}"></span>
-                </p>
+                <div class="meta-row">
+                    <span class="meta-label">Seller:</span>
+                    <span class="meta-value" th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Reviewed By:</span>
+                    <span class="meta-value" th:text="${tool.reviewedBy != null ? tool.reviewedBy.toString() : '—'}"></span>
+                </div>
 
-                <p><strong>Status:</strong>
-                    <span class="badge"
-                          th:classappend="${tool.status}"
-                          th:text="${tool.status}"></span>
-                </p>
+                <div class="meta-row">
+                    <span class="meta-label">Login method:</span>
+                    <span class="meta-value" th:text="${tool.loginMethod}"></span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Note:</span>
+                    <span class="meta-value" th:text="${tool.note != null ? tool.note : 'none'}"></span>
+                </div>
 
-                <p><strong>Notes:</strong>
-                    <span th:text="${tool.note != null ? tool.note : 'none'}"></span>
-                </p>
+                <div class="meta-row">
+                    <span class="meta-label">Upload Date:</span>
+                    <span class="meta-value" th:text="${#temporals.format(tool.createdAt, 'dd-MM-yyyy HH:mm')}"></span>
+                </div>
             </div>
 
-            <div class="files-section">
-                <h3>File đính kèm</h3>
-
-                <ul class="file-list" th:if="${tool.files != null and !#lists.isEmpty(tool.files)}">
-                    <li th:each="file : ${tool.files}">
-                        <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
-                            <span th:text="${file.filePath}"></span>
-                        </a>
-                        <span class="file-type" th:text="'(' + ${file.fileType} + ')'"></span>
-                    </li>
-
-                    <!-- ✅ Chỉ hiển thị token khi loginMethod = TOKEN -->
-                    <li th:if="${tool.loginMethod?.name() == 'TOKEN' and licenseAccounts != null and !#lists.isEmpty(licenseAccounts)}">
-                        <ul>
-                            <li th:each="l : ${licenseAccounts}">
-                                <span th:text="${l.token != null ? '*****' + #strings.substring(l.token, l.token.length() - 4) : 'No token'}"></span>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <p th:if="${tool.files == null or #lists.isEmpty(tool.files)}" class="no-file">
-                    No file appended
-                </p>
-            </div>
-
-            <!-- Nút hành động -->
+            <!-- actions (centered) -->
             <div class="action-buttons" th:if="${tool.status.name() == 'PENDING'}">
                 <form th:action="@{'/moderator/tool/' + ${tool.toolId} + '/approve'}" method="post">
-                    <button type="submit" class="btn-approve">Approve</button>
+                    <button type="submit" class="btn-approve big-pill">Approve</button>
                 </form>
-
-                <button type="button" class="btn-reject" onclick="toggleReject()">Reject</button>
+                <button type="button" class="btn-reject big-pill" onclick="toggleReject()">Reject</button>
             </div>
 
-            <!-- Form reject -->
+            <!-- reject reason bubble -->
             <form id="rejectForm"
                   th:action="@{'/moderator/tool/' + ${tool.toolId} + '/reject'}"
                   method="post"
                   class="reject-form hidden">
+                <label class="reject-title">Reason:</label>
                 <input type="text" name="reason" placeholder="Reason..." required>
                 <div class="reject-actions">
                     <button type="submit" class="btn-confirm">Submit</button>
@@ -98,6 +82,35 @@
             </form>
         </div>
 
+        <!-- FILES/TOKENS: box at bottom-left -->
+        <section class="files-section">
+            <h3>Tool Files:</h3>
+
+            <ul class="file-list" th:if="${tool.files != null and !#lists.isEmpty(tool.files)}">
+                <li th:each="file : ${tool.files}">
+                    <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
+                        <span th:text="${file.filePath}">tool-file.ext</span>
+                    </a>
+                    <span class="file-type" th:text="'(' + ${file.fileType} + ')'">(type)</span>
+                </li>
+
+                <!-- TOKEN grid (only when loginMethod == TOKEN) -->
+                <li class="token-block"
+                    th:if="${tool.loginMethod?.name() == 'TOKEN' and licenseAccounts != null and !#lists.isEmpty(licenseAccounts)}">
+                    <p class="token-title">Token: (if login method == token)</p>
+                    <div class="token-grid">
+                        <span th:each="l : ${licenseAccounts}"
+                              th:text="${l.token != null ? '*****' + #strings.substring(l.token, l.token.length() - 4) : 'No token'}"></span>
+                    </div>
+                </li>
+            </ul>
+
+            <p th:if="${tool.files == null or #lists.isEmpty(tool.files)}" class="no-file">
+                No file appended
+            </p>
+        </section>
+
+        <!-- back links -->
         <a th:if="${tool.status.name() == 'PENDING'}"
            th:href="@{/moderator/uploadRequest}"
            class="back-link">← Back</a>

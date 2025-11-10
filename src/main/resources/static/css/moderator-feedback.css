@@ -1,77 +1,153 @@
-/* ===== Layout ===== */
+/* Hide duplicate top H1 but keep content intact */
+body > h1:first-of-type { display: none; }
+
+/* ⚙️ Layout */
 body {
     font-family: 'Segoe UI', sans-serif;
-    background-color: #f6f8fa;
+    background-color: #f8fafc;
+    color: #1e293b;
     margin: 0;
 }
 
 .dashboard-container {
     display: flex;
-    min-height: 100vh;
+    width: 100%;
 }
 
-/* ===== Sidebar ===== */
+/* 🧭 Sidebar */
 .sidebar {
     width: 240px;
-    background-color: #1e2a38;
+    background-color: #1e293b;
     color: #fff;
-    padding: 20px;
     display: flex;
     flex-direction: column;
+    padding: 24px 16px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
 }
 
 .sidebar h2 {
-    font-size: 20px;
-    margin-bottom: 30px;
     text-align: center;
-    border-bottom: 2px solid #3a4757;
-    padding-bottom: 10px;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .menu a {
-    display: block;
-    color: #d1d5db;
+    color: #cbd5e1;
     text-decoration: none;
-    padding: 10px 15px;
+    padding: 10px 14px;
     border-radius: 8px;
-    margin-bottom: 10px;
-    transition: background 0.2s, color 0.2s;
+    transition: all 0.2s;
 }
 
-.menu a:hover,
-.menu a.active {
-    background-color: #00bcd4;
-    color: white;
-}
+.menu a:hover { background: #334155; color: #fff; }
+.menu a.active { background: #3b82f6; color: #fff; }
+.menu a.text-danger { color: #ff6b6b; }
 
-.menu a.text-danger {
-    color: #ff6b6b;
-}
-
-/* ===== Main Content ===== */
+/* 🌐 Main content */
 .main-content {
     flex: 1;
-    padding: 30px;
+    padding: 36px;
+    margin-left: 260px;
+    background: #f9fafb;
+    min-height: 100vh;
 }
 
-h1 {
-    color: #333;
-    margin-bottom: 25px;
+.main-content h1 { margin: 0 0 20px 0; }
+
+/* 🔍 Filter form — đều & giống mock */
+.filter-form{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    background:#fff;
+    padding:16px 20px;
+    border-radius:12px;
+    box-shadow:0 2px 4px rgba(0,0,0,.1);
+    margin-bottom:25px;
 }
 
-/* ===== Table ===== */
+/* tự chia cột đều; mỗi item min 220px */
+.filter-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:18px 28px;
+    align-items:end;
+    grid-auto-flow:row dense;          /* dồn item để nút nằm cuối hàng */
+}
+.filter-grid > div{
+    display:flex;
+    flex-direction:column;
+}
+
+/* label nhỏ, đậm */
+.filter-form label{
+    font-size:13px;
+    font-weight:600;
+    color:#1f2a37;
+    margin-bottom:6px;
+    letter-spacing:.2px;
+}
+
+/* input/select bo tròn & viền rõ */
+.filter-form input,
+.filter-form select{
+    height:36px;
+    padding:6px 12px;
+    border-radius:12px;
+    border:2px solid #2b2b2b;
+    background:#fff;
+    outline:none;
+}
+.filter-form input:focus,
+.filter-form select:focus{
+    border-color:#111827;
+    box-shadow:0 0 0 2px rgba(17,24,39,.08);
+}
+
+/* ✅ Cụm nút ở cuối hàng, xếp ngang, dồn phải */
+.button-area{
+    display:flex;
+    gap:12px;
+    justify-self:end;
+    align-self:end;
+    width:max-content;
+}
+
+/* Nút dạng pill (chỉ áp cho form filter) */
+.filter-form .btn{
+    padding:8px 18px;
+    border-radius:999px;
+    border:2px solid transparent;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:.15s;
+    line-height:1;
+    color:#0b2133;
+}
+.filter-form .btn-filter{ background:#2fb4f6; border-color:#0b3350; }
+.filter-form .btn-filter:hover{ filter:brightness(.95); }
+.filter-form .btn-reset{ background:#c4cbd3; border-color:#5c6670; text-decoration:none; }
+.filter-form .btn-reset:hover{ filter:brightness(.95); }
+
+/* 📋 Table */
 table {
     width: 100%;
     border-collapse: collapse;
     background: white;
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-thead {
-    background-color: #00bcd4;
-    color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 th, td {
@@ -80,54 +156,38 @@ th, td {
     border-bottom: 1px solid #eee;
 }
 
-tbody tr:hover {
-    background-color: #f9f9f9;
-}
-
-/* ===== Buttons ===== */
-.btn {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
+th {
+    background-color: #0078d7;
     color: white;
-    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 13px;
 }
 
-.btn-approve {
-    background-color: #28a745;
-}
+tbody tr:hover { background-color: #f1f5f9; }
 
-.btn-approve:hover {
-    background-color: #218838;
-}
+/* 🎛 Buttons in table (Approve/Reject) */
+.btn-approve { background-color: #4CAF50; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; }
+.btn-approve:hover { background-color: #3e8e41; }
+.btn-reject { background-color: #e53935; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; }
+.btn-reject:hover { background-color: #c62828; }
 
-.btn-reject {
-    background-color: #dc3545;
-}
-
-.btn-reject:hover {
-    background-color: #c82333;
-}
-
-/* ===== Status Badges ===== */
+/* 🏷️ Status tags */
 .status {
-    font-weight: bold;
-    padding: 5px 10px;
+    font-weight: 600;
+    padding: 4px 8px;
     border-radius: 6px;
+    display: inline-block;
 }
+.status.PENDING  { background: #fff4e5; color: #b26a00; }
+.status.APPROVED { background: #e6f4ea; color: #137333; }
+.status.REJECTED { background: #fce8e6; color: #a50e0e; }
 
-.status.PENDING {
-    background-color: #ffecb3;
-    color: #856404;
+/* 📱 Responsive */
+@media (max-width:1024px){
+    .filter-grid{ grid-template-columns:repeat(3, 1fr); }
 }
-
-.status.APPROVED {
-    background-color: #c8e6c9;
-    color: #256029;
-}
-
-.status.REJECTED {
-    background-color: #ffcdd2;
-    color: #b71c1c;
+@media (max-width:768px){
+    .sidebar{ display:none; }
+    .main-content{ margin-left:0; padding:24px; }
+    .filter-grid{ grid-template-columns:1fr; }
 }

@@ -18,5 +18,5 @@ public interface ToolReportRepository extends JpaRepository<ToolReport, Long>, J
 
     boolean existsByReporterAndTool(Account reporter, Tool tool);
     List<ToolReport> findByTool_ToolId(Long toolId);
-
+    List<ToolReport> findByStatus(ToolReport.Status status);
 }

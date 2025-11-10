@@ -9,10 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.*;
-import swp391.fa25.lms.service.moderator.LicenseAccountService;
-import swp391.fa25.lms.service.moderator.ToolFileService;
-import swp391.fa25.lms.service.moderator.ToolReportService;
-import swp391.fa25.lms.service.moderator.ToolService;
+import swp391.fa25.lms.service.moderator.*;
 import swp391.fa25.lms.service.customer.CategoryService;
 
 import java.time.LocalDate;
@@ -37,9 +34,16 @@ public class ModeratorToolController {
     @Autowired
     @Qualifier("moderatorLicenseAccountService")
     private LicenseAccountService licenseAccountService;
+    @Autowired
+    @Qualifier("moderator")
+    private FeedbackReportService feedbackReportService;
     @GetMapping({"/", "/dashboard"})
     public String moderatorDashboard(Model model) {
         model.addAttribute("activePage", "dashboard");
+        model.addAttribute("uploadRequest", toolService.filterPendingTools(null,null,null,null).size());
+        model.addAttribute("reviewedTool", toolService.filterNonPendingTools(null,null,null,null, null, null, "MOD", null).size());
+        model.addAttribute("feedbackReport", feedbackReportService.findAllByStatus(FeedbackReport.Status.PENDING).size());
+        model.addAttribute("toolReport",  toolReportService.findByStatus(ToolReport.Status.PENDING).size());
         return "moderator/dashboard";
     }
     // View tool uploaded

@@ -1,31 +1,35 @@
-/* ========== RESET & LAYOUT CHUNG ========== */
+/* ⚙️ Layout */
 body {
     margin: 0;
-    font-family: "Segoe UI", Arial, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     background-color: #f8fafc;
     color: #1e293b;
 }
 
 .dashboard-container {
     display: flex;
-    height: 100vh;
+    width: 100%;
 }
 
-/* ========== SIDEBAR ========== */
+/* 🧭 Sidebar */
 .sidebar {
     width: 240px;
     background-color: #1e293b;
-    color: white;
-    padding: 24px 16px;
+    color: #fff;
     display: flex;
     flex-direction: column;
+    padding: 24px 16px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
 }
 
 .sidebar h2 {
     text-align: center;
     font-size: 20px;
     font-weight: 600;
-    margin-bottom: 25px;
+    margin-bottom: 24px;
 }
 
 .menu {
@@ -38,229 +42,159 @@ body {
     color: #cbd5e1;
     text-decoration: none;
     padding: 10px 14px;
-    border-radius: 6px;
-    transition: all 0.2s ease-in-out;
+    border-radius: 8px;
+    transition: all 0.2s;
 }
 
 .menu a:hover {
-    background-color: #334155;
+    background: #334155;
     color: #fff;
 }
 
 .menu a.active {
-    background-color: #3b82f6;
+    background: #3b82f6;
     color: white;
 }
 
-/* ========== MAIN CONTENT ========== */
+/* 🌐 Main content */
 .main-content {
     flex: 1;
-    padding: 30px 40px;
-    overflow-y: auto;
+    padding: 36px;
+    margin-left: 260px;
+    background: #f9fafb;
+    min-height: 100vh;
 }
 
-.main-content h1 {
-    font-size: 26px;
-    color: #1e293b;
+h1 {
+    margin: 0 0 16px 0;
+}
+
+/* 🔍 Filter form */
+.filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 24px;
 }
 
-/* ========== FILTER FORM ========== */
-.filter-form {
-    background: white;
-    padding: 24px 28px;
-    border-radius: 10px;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
-    margin-bottom: 28px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px; /* giảm khoảng cách giữa các hàng */
-}
-
-/* ===== Cấu trúc từng hàng ===== */
-.filter-group {
+/* Unified grid like sample */
+.filter-grid {
     display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 20px;
     align-items: end;
 }
 
-/* Hàng 1: 3 cột — giãn rộng ngang hơn */
-.filter-group.three-col {
-    grid-template-columns: 1.1fr 1.1fr 0.9fr; /* giãn đều hơn giữa các field */
-    gap: 28px; /* tăng khoảng cách giữa các field cùng hàng */
-}
-
-/* Hàng 2–3: 2 cột */
-.filter-group.two-col,
-.filter-group.approve-two-col {
-    grid-template-columns: 1fr 1fr;
-    gap: 26px;
-}
-
-/* Label & input */
 .filter-form label {
-    display: block;
-    font-weight: 600;
+    font-weight: 500;
     color: #334155;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     font-size: 14px;
 }
 
-/* Giảm chiều dài input để hợp lý và thẩm mỹ hơn */
 .filter-form input,
 .filter-form select {
-    width: 90%; /* thu ngắn còn 90% chiều cột */
-    padding: 7px 9px;
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
     border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    background-color: #f9fafb;
-    font-size: 14px;
-    transition: all 0.2s ease-in-out;
-}
-
-.filter-form input:focus,
-.filter-form select:focus {
-    border-color: #3b82f6;
-    background-color: white;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+    background: #fff;
 }
 
-/* Nút lọc */
-.filter-form button {
-    background-color: #2563eb;
-    color: white;
+.button-area {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+/* 🎛 Buttons */
+.btn {
     border: none;
+    padding: 7px 12px;
     border-radius: 6px;
-    padding: 8px 20px;
-    font-weight: 600;
     cursor: pointer;
-    align-self: flex-end;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    font-size: 13px;
+    transition: 0.2s;
 }
 
-.filter-form button:hover {
-    background-color: #1d4ed8;
-    transform: translateY(-1px);
+.btn-filter,
+.btn-view {
+    background-color: #0078d7;
+    color: white;
+    text-decoration: none;
+    display: inline-block;
 }
 
-.filter-form button:active {
-    transform: translateY(0);
+.btn-filter:hover,
+.btn-view:hover {
+    background-color: #005fa3;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-    .filter-group.three-col {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-    .filter-group.three-col,
-    .filter-group.two-col,
-    .filter-group.approve-two-col {
-        grid-template-columns: 1fr;
-    }
-
-    .filter-form input,
-    .filter-form select {
-        width: 100%;
-    }
-
-    .filter-form button {
-        width: 100%;
-    }
-}
-
-/* ========== TABLE ========== */
+/* 📋 Table */
 table {
     width: 100%;
     border-collapse: collapse;
     background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     border-radius: 10px;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.08);
     overflow: hidden;
 }
 
-thead {
-    background-color: #f1f5f9;
-}
-
 th, td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 15px;
     text-align: left;
+    border-bottom: 1px solid #eee;
 }
 
 th {
-    font-weight: 600;
-    color: #334155;
-}
-
-td {
-    color: #475569;
-    font-size: 14px;
-}
-
-tr:hover td {
-    background-color: #f9fafb;
-}
-
-
-/* ========== STATUS BADGE ========== */
-.status-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 999px;
+    background-color: #0078d7;
+    color: white;
+    text-transform: uppercase;
     font-size: 13px;
-    font-weight: 600;
+}
+
+a {
+    color: #2563eb;
+    text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+/* 🏷️ Status badge aligned with sample palette */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    display: inline-block;
 }
 
 .status-badge.APPROVED {
-    background-color: #dcfce7;
-    color: #166534;
+    background: #e6f4ea;
+    color: #137333;
 }
-
 .status-badge.REJECTED {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background: #fce8e6;
+    color: #a50e0e;
 }
-
 .status-badge.PUBLISHED {
-    background-color: #e0f2fe;
+    background: #e0f2fe;
     color: #075985;
 }
 
-/* ========== BUTTON ========== */
-.btn-view {
-    background-color: #2563eb;
-    color: white;
-    text-decoration: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
-}
+/* 🎨 Row hover */
+tr:hover { background-color: #f1f5f9; }
 
-.btn-view:hover {
-    background-color: #1d4ed8;
+/* 📱 Responsive */
+@media (max-width: 1024px) {
+    .filter-grid { grid-template-columns: repeat(2, 1fr); }
 }
-
-/* ========== EMPTY STATE ========== */
-.empty {
-    text-align: center;
-    color: #94a3b8;
-    font-style: italic;
-    padding: 14px;
-}
-
-/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
-    .sidebar {
-        display: none;
-    }
-    .main-content {
-        padding: 20px;
-    }
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; padding: 24px; }
+    .filter-grid { grid-template-columns: 1fr; }
 }

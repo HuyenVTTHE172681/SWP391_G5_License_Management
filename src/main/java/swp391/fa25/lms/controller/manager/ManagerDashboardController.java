@@ -95,7 +95,7 @@ public class ManagerDashboardController {
             }
         }
 
-        return "moderator/toolDetail";
+        return "manager/tool-detail";
     }
 
     @PostMapping("/tool/{id}/publish")
