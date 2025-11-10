@@ -8,16 +8,19 @@
 <body class="text-center mt-5">
 <div class="container">
     <h3 th:if="${success}" class="text-success">🎉 Thanh toán thành công!</h3>
-    <h3 th:if="${!success}" class="text-danger">❌ Thanh toán thất bại hoặc bị hủy.</h3>
 
-    <!-- Nếu có orderId -> quay lại trang chi tiết my-tool -->
+    <div th:if="${!success}" class="text-danger">
+        <h3>❌ Thanh toán thất bại hoặc bị hủy.</h3>
+        <p class="mt-3" th:if="${reason}">
+            Lý do: <span th:text="${reason}"></span>
+        </p>
+    </div>
+
     <a class="btn btn-primary mt-3"
        th:if="${orderId != null}"
        th:href="@{|/my-tools/${orderId}|}">
         Quay lại My Tool
     </a>
-
-    <!-- Fallback: nếu chưa có orderId -> quay về danh sách đơn -->
     <a class="btn btn-outline-secondary mt-3"
        th:if="${orderId == null}"
        href="/orders">
