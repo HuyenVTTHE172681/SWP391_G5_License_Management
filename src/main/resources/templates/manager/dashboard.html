@@ -95,67 +95,87 @@
         </div>
     </main>
 </div>
-
-<!-- ✅ FIXED Google Charts -->
 <script th:inline="javascript">
-    google.charts.load('current', {packages: ['corechart']});
-    google.charts.setOnLoadCallback(function() {
-        // Delay 100ms để Thymeleaf render xong dữ liệu
-        setTimeout(drawCharts, 150);
-    });
+    google.charts.load('current', { packages: ['corechart'] });
+    google.charts.setOnLoadCallback(() => setTimeout(drawCharts, 100));
+
+    // Helper: normalize label coming from Thymeleaf (remove accidental quotes)
+    function labelOf(raw) {
+        return String(raw).replace(/^"+|"+$/g, '').trim();
+    }
 
     function drawCharts() {
-        /* --- 1️⃣ Seller Packages --- */
-        var packages = [
-            /*[# th:each="item : ${sellerPackageChart}"]*/
-            ['[[${item.period}]]', [[${item.count}]]],
+        /* 1) Seller Packages — STRING X axis */
+        const packagesRows = [
+            /*[# th:each="it : ${sellerPackageChart}"]*/
+            [ labelOf('[[${it.period}]]'), [[${it.count}]] ],
             /*[/]*/
         ];
-        var pkgData = google.visualization.arrayToDataTable([
-            ['Period', 'Packages Purchased'],
-            ...packages
-        ]);
+
+        const pkgData = new google.visualization.DataTable();
+        pkgData.addColumn('string', 'Period');
+        pkgData.addColumn('number', 'Packages Purchased');
+        pkgData.addRows(packagesRows);
+
         new google.visualization.LineChart(document.getElementById('packageChart'))
             .draw(pkgData, {
-                title: '📦 Seller Packages Purchased',
                 legend: { position: 'bottom' },
-                colors: ['#2563eb']
+                colors: ['#2563eb'],
+                hAxis: {
+                    textStyle: { fontSize: 12, color: '#333' },
+                    slantedText: false
+                },
+                vAxis: { minValue: 0 },
+                chartArea: { width: '80%', height: '70%' }
             });
 
-        /* --- 2️⃣ Tool Reports --- */
-        var reports = [
-            /*[# th:each="item : ${toolReportChart}"]*/
-            ['[[${item.period}]]', [[${item.count}]]],
+        /* 2) Tool Reports — STRING X axis */
+        const reportRows = [
+            /*[# th:each="it : ${toolReportChart}"]*/
+            [ labelOf('[[${it.period}]]'), [[${it.count}]] ],
             /*[/]*/
         ];
-        var rptData = google.visualization.arrayToDataTable([
-            ['Period', 'Reports'],
-            ...reports
-        ]);
+
+        const rptData = new google.visualization.DataTable();
+        rptData.addColumn('string', 'Period');
+        rptData.addColumn('number', 'Reports');
+        rptData.addRows(reportRows);
+
         new google.visualization.ColumnChart(document.getElementById('toolReportChart'))
             .draw(rptData, {
-                title: '⚠️ Tool Reports Submitted',
                 colors: ['#dc3545'],
-                legend: { position: 'none' }
+                legend: { position: 'none' },
+                hAxis: {
+                    textStyle: { fontSize: 12, color: '#333' },
+                    slantedText: false
+                },
+                vAxis: { title: 'Reports', minValue: 0 },
+                chartArea: { width: '80%', height: '70%' }
             });
 
-        /* --- 3️⃣ Seller Status --- */
-        var sellers = [
-            /*[# th:each="item : ${sellerStatusChart}"]*/
-            ['[[${item.status}]]', [[${item.count}]]],
+        /* 3) Seller Status — keep as-is */
+        const sellerRows = [
+            /*[# th:each="it : ${sellerStatusChart}"]*/
+            [ labelOf('[[${it.status}]]'), [[${it.count}]] ],
             /*[/]*/
         ];
-        var sellerData = google.visualization.arrayToDataTable([
-            ['Status', 'Count'],
-            ...sellers
-        ]);
+
+        const sellerData = new google.visualization.DataTable();
+        sellerData.addColumn('string', 'Status');
+        sellerData.addColumn('number', 'Count');
+        sellerData.addRows(sellerRows);
+
         new google.visualization.PieChart(document.getElementById('sellerStatusChart'))
             .draw(sellerData, {
-                title: '👥 Seller Status',
                 pieHole: 0.4,
-                colors: ['#22c55e', '#9ca3af']
+                colors: ['#22c55e', '#9ca3af'],
+                chartArea: { width: '90%', height: '80%' },
+                legend: { position: 'bottom' },
+                pieSliceText: 'percentage',
+                pieSliceTextStyle: { fontSize: 13 }
             });
     }
 </script>
+
 </body>
 </html>

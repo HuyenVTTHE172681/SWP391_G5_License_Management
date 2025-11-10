@@ -119,8 +119,6 @@ public class ManagerDashboardService {
                                                         LocalDate start,
                                                         LocalDate end) {
 
-        System.out.println("\n=======================");
-        System.out.println("⚠️ [DEBUG] getToolReportChart()");
         System.out.println("PeriodType = " + periodType + ", Start = " + start + ", End = " + end);
 
         List<ToolReport> reports = toolReportRepository.findAll();
@@ -168,8 +166,6 @@ public class ManagerDashboardService {
     // 3️⃣ Biểu đồ: Seller Status (Active / Expired)
     // ==========================================================
     public List<Map<String, Object>> getSellerStatusChart() {
-        System.out.println("\n=======================");
-        System.out.println("👥 [DEBUG] getSellerStatusChart()");
 
         List<SellerSubscription> subs = subscriptionRepository.findAll();
         System.out.println("Total subscriptions found: " + (subs == null ? 0 : subs.size()));
