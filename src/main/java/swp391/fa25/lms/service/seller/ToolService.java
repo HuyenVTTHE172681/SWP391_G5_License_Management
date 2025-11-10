@@ -77,6 +77,7 @@ public class ToolService {
         existingTool.setDescription(updatedTool.getDescription());
         existingTool.setNote(updatedTool.getNote());
         existingTool.setUpdatedAt(LocalDateTime.now());
+        existingTool.setStatus(Tool.Status.PENDING);
 
         if (updatedTool.getQuantity() != null)
             existingTool.setQuantity(updatedTool.getQuantity());

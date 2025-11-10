@@ -14,10 +14,12 @@ import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.Category;
 import swp391.fa25.lms.model.LicenseAccount;
 import swp391.fa25.lms.model.Tool;
+import swp391.fa25.lms.service.manager.ManagerDashboardService;
 import swp391.fa25.lms.service.moderator.CategoryService;
 import swp391.fa25.lms.service.manager.ToolService;
 import swp391.fa25.lms.service.moderator.LicenseAccountService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,14 +33,49 @@ public class ManagerDashboardController {
 
     @Autowired
     private CategoryService categoryService;
+
     @Autowired
     @Qualifier("moderatorLicenseAccountService")
     private LicenseAccountService licenseAccountService;
 
+
+    @Autowired
+    private ManagerDashboardService dashboardService;
     @GetMapping({"", "/"})
-    public String managerDashboard(Model model) {
+    public String managerDashboard(
+            // --- Filter cho biểu đồ Seller Package ---
+            @RequestParam(required = false, defaultValue = "month") String period1,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start1,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end1,
+            // --- Filter cho biểu đồ Tool Report ---
+            @RequestParam(required = false, defaultValue = "month") String period2,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start2,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end2,
+            Model model
+    ) {
+        // --- 1️⃣ Seller Package Purchases ---
+        var sellerPackageChart = dashboardService.getSellerPackageChart(period1, start1, end1);
+        // --- 2️⃣ Tool Reports ---
+        var toolReportChart = dashboardService.getToolReportChart(period2, start2, end2);
+        // --- 3️⃣ Seller Status ---
+        var sellerStatusChart = dashboardService.getSellerStatusChart();
+        // --- Add to model ---
+        model.addAttribute("sellerPackageChart", sellerPackageChart);
+        model.addAttribute("toolReportChart", toolReportChart);
+        model.addAttribute("sellerStatusChart", sellerStatusChart);
+
+        // --- Preserve filter values ---
+        model.addAttribute("period1", period1);
+        model.addAttribute("start1", start1);
+        model.addAttribute("end1", end1);
+
+        model.addAttribute("period2", period2);
+        model.addAttribute("start2", start2);
+        model.addAttribute("end2", end2);
+
         return "manager/dashboard";
     }
+
 
     @GetMapping("/upload-tool")
     public String upload(@RequestParam(required = false) Long sellerId,

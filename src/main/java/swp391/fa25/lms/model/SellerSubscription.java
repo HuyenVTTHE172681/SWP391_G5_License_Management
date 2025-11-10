@@ -16,14 +16,18 @@ public class SellerSubscription {
     private Account account;
 
     @ManyToOne
-    @JoinColumn(name = "package_id", nullable = false)
+    @JoinColumn(name = "seller_package_id", nullable = false)
     private SellerPackage sellerPackage;
 
+    @Column(name = "seller_start_date")
     private LocalDateTime startDate;
+
+    @Column(name = "seller_expiry_date")
     private LocalDateTime endDate;
 
     private double priceAtPurchase;
 
+    @Column(name = "seller_active")
     private boolean active;
 
     public SellerSubscription() {}

@@ -67,7 +67,7 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-semibold">Your Tools</h2>
-            <a th:href="@{/seller/tools/add}" class="btn btn-add">+ Create New Tool</a>
+            <a href="/seller/tools/add" class="btn btn-add">+ Create New Tool</a>
         </div>
 
         <!-- ===== Filter Form ===== -->
@@ -181,7 +181,7 @@
                             <p class="fw-semibold text-primary mb-2">
                                 <span th:if="${#lists.isEmpty(tool.licenses)}">No license yet</span>
                                 <span th:each="lic : ${tool.licenses}">
-                                [[${lic.durationDays != null ? lic.durationDays + 'd: ' + lic.price + '₫' : '∞: ' + lic.price + '₫'}]]<br>
+                                [[${lic.durationDays != null ? lic.durationDays + ' Day: ' + lic.price + '₫' : '∞: ' + lic.price + '₫'}]]<br>
                                 </span>
                             </p>
                         </div>
