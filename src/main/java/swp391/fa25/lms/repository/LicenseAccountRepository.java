@@ -2,6 +2,7 @@ package swp391.fa25.lms.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import swp391.fa25.lms.model.LicenseAccount;
@@ -26,8 +27,16 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
 
     //    Optional<LicenseAccount> findFirstByToolAndUsedFalse(Tool tool);
     Optional<LicenseAccount> findFirstByLicense_ToolAndUsedFalse(Tool tool);
-    @Query("SELECT la FROM LicenseAccount la JOIN la.license l WHERE l.tool.toolId = :toolId AND la.used = false ORDER BY la.licenseAccountId ASC")
-    Optional<LicenseAccount> findFirstByLicense_Tool_ToolIdAndUsedFalse(Long toolId);
+
+    // Custom query cho TOKEN unused (join explicit, order by ID để deterministic)
+    // FIX: Native query SQL Server compatible (TOP 1 thay LIMIT 1 để lấy unique first row)
+    @Query(value = "SELECT TOP 1 la.* FROM License_Account la " +
+            "JOIN License l ON la.license_id = l.license_id " +
+            "JOIN Tool t ON l.tool_id = t.tool_id " +
+            "WHERE t.tool_id = :toolId AND la.used = 0 " +
+            "ORDER BY la.license_account_id ASC",
+            nativeQuery = true)
+    Optional<LicenseAccount> findFirstByLicense_Tool_ToolIdAndUsedFalse(@Param("toolId") Long toolId);
 
     Optional<LicenseAccount> findByOrder_OrderId(Long orderId);
 
@@ -37,3 +46,4 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
     LicenseAccount findByToken(String token);
 
 }
+

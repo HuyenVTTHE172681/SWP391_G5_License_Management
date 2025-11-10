@@ -120,11 +120,12 @@ public class RoleDataInitializer implements CommandLineRunner {
             Role modRole = roleRepository.findByRoleName(RoleName.MOD).get();
             Role managerRole = roleRepository.findByRoleName(RoleName.MANAGER).get();
 
+            // ========== SELLERS ==========
             Account seller1 = new Account();
             seller1.setEmail("seller1@example.com");
             seller1.setPassword(passwordEncoder.encode("123456"));
             seller1.setVerified(true);
-            seller1.setFullName("Nguyễn Văn Seller");
+            seller1.setFullName("Nguyễn Văn Bán 1");  // 16 ký tự
             seller1.setStatus(Account.AccountStatus.ACTIVE);
             seller1.setCreatedAt(LocalDateTime.now().minusDays(30));
             seller1.setRole(sellerRole);
@@ -135,53 +136,111 @@ public class RoleDataInitializer implements CommandLineRunner {
             seller2.setEmail("seller2@example.com");
             seller2.setPassword(passwordEncoder.encode("123456"));
             seller2.setVerified(true);
-            seller2.setFullName("Trần Thị Seller");
+            seller2.setFullName("Trần Thị Bán 2");  // 15 ký tự
             seller2.setStatus(Account.AccountStatus.ACTIVE);
             seller2.setCreatedAt(LocalDateTime.now().minusDays(15));
             seller2.setRole(sellerRole);
             seller2.setSellerActive(true);
             seller2.setSellerExpiryDate(LocalDateTime.of(2025, 11, 2, 22, 55, 0));
 
+            Account seller3 = new Account();
+            seller3.setEmail("seller3@example.com");
+            seller3.setPassword(passwordEncoder.encode("123456"));
+            seller3.setVerified(true);
+            seller3.setFullName("Lê Thị Bán 3");  // 13 ký tự
+            seller3.setStatus(Account.AccountStatus.ACTIVE);
+            seller3.setCreatedAt(LocalDateTime.now().minusDays(20));
+            seller3.setRole(sellerRole);
+            seller3.setSellerActive(true);
+            seller3.setSellerExpiryDate(LocalDateTime.now().plusDays(5));
+
+            Account seller4 = new Account();
+            seller4.setEmail("seller4@example.com");
+            seller4.setPassword(passwordEncoder.encode("123456"));
+            seller4.setVerified(true);
+            seller4.setFullName("Phạm Quang Bán 4");  // 17 ký tự
+            seller4.setStatus(Account.AccountStatus.ACTIVE);
+            seller4.setCreatedAt(LocalDateTime.now().minusDays(25));
+            seller4.setRole(sellerRole);
+            seller4.setSellerActive(true);
+            seller4.setSellerExpiryDate(LocalDateTime.now().plusDays(3));
+
+            // ========== CUSTOMERS ==========
             Account customer1 = new Account();
             customer1.setEmail("customer1@example.com");
             customer1.setPassword(passwordEncoder.encode("123456"));
             customer1.setVerified(true);
-            customer1.setFullName("Phạm Minh Khách");
+            customer1.setFullName("Phạm Minh KH 1");  // 14 ký tự
             customer1.setStatus(Account.AccountStatus.ACTIVE);
             customer1.setCreatedAt(LocalDateTime.now().minusDays(10));
             customer1.setRole(customerRole);
+
+            Account customer2 = new Account();
+            customer2.setEmail("customer2@example.com");
+            customer2.setPassword(passwordEncoder.encode("123456"));
+            customer2.setVerified(true);
+            customer2.setFullName("Trịnh Hồng KH 2");  // 16 ký tự
+            customer2.setStatus(Account.AccountStatus.ACTIVE);
+            customer2.setCreatedAt(LocalDateTime.now().minusDays(12));
+            customer2.setRole(customerRole);
+
+            Account customer3 = new Account();
+            customer3.setEmail("customer3@example.com");
+            customer3.setPassword(passwordEncoder.encode("123456"));
+            customer3.setVerified(true);
+            customer3.setFullName("Nguyễn Văn KH 3");  // 16 ký tự
+            customer3.setStatus(Account.AccountStatus.ACTIVE);
+            customer3.setCreatedAt(LocalDateTime.now().minusDays(5));
+            customer3.setRole(customerRole);
 
             Account customer4 = new Account();
             customer4.setEmail("customer4@example.com");
             customer4.setPassword(passwordEncoder.encode("123456"));
             customer4.setVerified(true);
-            customer4.setFullName("Bùi Duy Ngọc");
+            customer4.setFullName("Bùi Duy KH 4");  // 12 ký tự
             customer4.setStatus(Account.AccountStatus.ACTIVE);
-            customer4.setCreatedAt(LocalDateTime.now().minusDays(10));
+            customer4.setCreatedAt(LocalDateTime.now().minusDays(8));
             customer4.setRole(customerRole);
 
+            // ========== ADMIN ==========
             Account admin = new Account();
             admin.setEmail(FIXED_ADMIN_EMAIL);
             admin.setPassword(passwordEncoder.encode("admin123"));
-            admin.setFullName("System Administrator");
+            admin.setFullName("Nguyễn Văn QTV");  // 14 ký tự
             admin.setStatus(Account.AccountStatus.ACTIVE);
             admin.setCreatedAt(LocalDateTime.now());
             admin.setRole(adminRole);
             admin.setVerified(true);
 
+            // ========== MODERATOR ==========
             Account mod1 = new Account();
             mod1.setEmail("moderator1@example.com");
             mod1.setPassword(passwordEncoder.encode("123456"));
             mod1.setVerified(true);
-            mod1.setFullName("Moderator đây");
+            mod1.setFullName("Trần Hữu KD");  // 12 ký tự
             mod1.setStatus(Account.AccountStatus.ACTIVE);
             mod1.setCreatedAt(LocalDateTime.now().minusDays(10));
             mod1.setRole(modRole);
 
-            accountRepo.saveAll(Arrays.asList(seller1, seller2, customer1, admin, mod1, customer4));
+            // ========== MANAGER ==========
+            Account manager = new Account();
+            manager.setEmail("manager1@example.com");
+            manager.setPassword(passwordEncoder.encode("123456"));
+            manager.setVerified(true);
+            manager.setFullName("Nguyễn Thị QLH");  // 15 ký tự
+            manager.setStatus(Account.AccountStatus.ACTIVE);
+            manager.setCreatedAt(LocalDateTime.now().minusDays(7));
+            manager.setRole(managerRole);
+
+            accountRepo.saveAll(Arrays.asList(
+                    seller1, seller2, seller3, seller4,
+                    customer1, customer2, customer3, customer4,
+                    mod1, manager, admin
+            ));
         } else {
             System.out.println("Account already exist, skipping initialization.");
         }
+
 
 
 

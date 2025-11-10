@@ -48,72 +48,38 @@ public class ToolController {
      * ✅ Trang danh sách Tool của seller
      */
     @GetMapping
-    public String showToolList(Model model, HttpSession session, RedirectAttributes redirectAttrs) {
-        Account seller = (Account) session.getAttribute("loggedInAccount");
-        if (seller == null) {
-            redirectAttrs.addFlashAttribute("error", "Session expired. Please login again.");
-            return "redirect:/login";
-        }
-        if (!accountService.isSellerActive(seller)) {
-            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
-            return "redirect:/seller/renew";
-        }
-
-        // ✅ Kiểm tra hạn sử dụng
-        boolean isActive = accountService.isSellerActive(seller);
-        model.addAttribute("sellerExpired", !isActive);
-
-        // Nếu đã hết hạn, có thể cập nhật trạng thái DB (optional)
-        if (!isActive && Boolean.TRUE.equals(seller.getSellerActive())) {
-            seller.setSellerActive(false);
-        }
-
-        model.addAttribute("categories", toolService.getAllCategories());
-        model.addAttribute("tools", toolService.getToolsBySeller(seller));
-
-        return "seller/tool-list";
-    }
-
-    @PostMapping("/{id}/deactivate")
-    public ResponseEntity<?> deactivateTool(@PathVariable Long id, HttpSession session) {
-        Account seller = (Account) session.getAttribute("loggedInAccount");
-        if (seller == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please login again.");
-        }
-        if (!accountService.isSellerActive(seller)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Your seller package has expired. Please renew before continuing.");
-        }
-        try {
-            toolService.deactivateTool(id);
-            return ResponseEntity.ok("Tool has been deactivated.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
-    }
-
-
-    /**
-     * ✅ API lấy danh sách Tool của Seller (cho JS fetch)
-     */
-    @GetMapping("/api")
-    @ResponseBody
-    public ResponseEntity<?> getToolsApi(
+    public String showToolList(
+            Model model,
+            HttpSession session,
+            RedirectAttributes redirectAttrs,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String loginMethod,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
-            @RequestParam(defaultValue = "newest") String sort,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size,
-            HttpSession session
+            @RequestParam(defaultValue = "newest") String sort
     ) {
+        // ✅ Kiểm tra login
         Account seller = (Account) session.getAttribute("loggedInAccount");
         if (seller == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not logged in");
+            redirectAttrs.addFlashAttribute("error", "Session expired. Please login again.");
+            return "redirect:/login";
         }
+
+        // ✅ Kiểm tra seller package
+        if (!accountService.isSellerActive(seller)) {
+            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
+            return "redirect:/seller/renew";
+        }
+
+        // ✅ Kiểm tra hạn dùng seller
+        boolean isActive = accountService.isSellerActive(seller);
+        model.addAttribute("sellerExpired", !isActive);
+
+        // ✅ Cấu hình sort
         Pageable pageable = switch (sort) {
             case "oldest" -> PageRequest.of(page, size, Sort.by("createdAt").ascending());
             case "price,asc" -> PageRequest.of(page, size, Sort.by("licenses.price").ascending());
@@ -121,6 +87,7 @@ public class ToolController {
             default -> PageRequest.of(page, size, Sort.by("createdAt").descending());
         };
 
+        // ✅ Lấy danh sách tool từ service (repository đã hỗ trợ filter)
         Page<Tool> tools = toolService.searchToolsForSeller(
                 seller.getAccountId(),
                 keyword,
@@ -132,16 +99,41 @@ public class ToolController {
                 pageable
         );
 
-        return ResponseEntity.ok(tools);
+        // ✅ Đưa dữ liệu ra view
+        model.addAttribute("categories", toolService.getAllCategories());
+        model.addAttribute("tools", tools);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("status", status);
+        model.addAttribute("loginMethod", loginMethod);
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
+        model.addAttribute("sort", sort);
+
+        return "seller/tool-list";
     }
 
-    /**
-     * ✅ API lấy danh mục (cho dropdown filter)
-     */
-    @GetMapping("/categories")
-    @ResponseBody
-    public ResponseEntity<?> getCategories() {
-        return ResponseEntity.ok(toolService.getAllCategories());
+    @PostMapping("/{id}/deactivate")
+    public String deactivateTool(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login again.");
+            return "redirect:/login";
+        }
+
+        if (!accountService.isSellerActive(seller)) {
+            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
+            return "redirect:/seller/renew";
+        }
+
+        try {
+            toolService.deactivateTool(id);
+            redirectAttrs.addFlashAttribute("success", "Tool has been deactivated successfully!");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/seller/tools";
     }
 
     // ==========================================================
@@ -179,7 +171,6 @@ public class ToolController {
         model.addAttribute("categories", toolService.getAllCategories());
         return "seller/tool-add";
     }
-
     /**
      * ✅ Xử lý khi seller submit form "Add New Tool"
      */

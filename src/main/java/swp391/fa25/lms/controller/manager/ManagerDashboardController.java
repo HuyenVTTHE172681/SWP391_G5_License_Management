@@ -101,9 +101,11 @@ public class ManagerDashboardController {
     @PostMapping("/tool/{id}/publish")
     public String publishTool(@PathVariable Long id, RedirectAttributes redirect, HttpServletRequest request) {
         Tool tool = toolService.findById(id);
+        Account account = (Account) request.getSession().getAttribute("loggedInAccount");
+
         if (tool != null) {
             tool.setStatus(Tool.Status.PUBLISHED);
-            tool.setReviewedBy(request.getSession().getAttribute("loggedInAccount").toString());
+            tool.setReviewedBy(account.getRole().getRoleName().toString());
             tool.setUpdatedAt(LocalDateTime.now());
             toolService.save(tool);
             redirect.addFlashAttribute("success", "Tool has been published successfully!");

@@ -4,79 +4,42 @@
     <meta charset="UTF-8">
     <title>Edit Profile</title>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f9f9f9;
-            margin: 0;
-            padding: 40px;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            text-align: center;
-            color: #222;
-            margin-bottom: 20px;
-        }
-        label {
-            font-weight: 600;
-            color: #333;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9f9; margin: 0; padding: 40px; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #222; margin-bottom: 20px; }
+        label { font-weight: 600; color: #333; }
         input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0 20px 0;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 15px;
-            background-color: #fafafa;
+            width: 100%; padding: 12px; margin: 10px 0 20px 0;
+            border-radius: 8px; border: 1px solid #ccc; font-size: 15px; background-color: #fafafa;
         }
-        input:focus, textarea:focus {
-            border-color: #4CAF50;
-            background-color: #fff;
-            outline: none;
-        }
-        .btn-group {
-            display: flex;
-            justify-content: space-between;
-        }
-        button {
-            background-color: #4CAF50;
-            color: #fff;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        button:hover {
-            background-color: #43a047;
-        }
-        .btn-cancel {
-            background-color: #aaa;
-        }
-        .btn-cancel:hover {
-            background-color: #888;
-        }
+        input:focus, textarea:focus { border-color: #4CAF50; background-color: #fff; outline: none; }
+        .btn-group { display: flex; justify-content: space-between; }
+        button { background-color: #4CAF50; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        button:hover { background-color: #43a047; }
+        .btn-cancel { background-color: #aaa; }
+        .btn-cancel:hover { background-color: #888; }
+        .alert { padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .alert-error { background-color: #ffe6e6; color: #d32f2f; }
+        .alert-success { background-color: #e8f5e9; color: #388e3c; }
     </style>
 </head>
 <body>
 <div class="container">
     <h2>Sửa hồ sơ</h2>
+
+    <!-- ✅ Hiển thị thông báo lỗi/thành công -->
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
     <form th:action="@{/profile/edit}" th:object="${account}" method="post">
-        <label>Tên đăng nhập</label>
+        <label>Họ tên</label>
         <input type="text" th:field="*{fullName}" required placeholder="Vui lòng nhập tên">
 
         <label>Số điện thoại</label>
         <input type="text" th:field="*{phone}" placeholder="Vui lòng nhập số điện thoại">
 
         <label>Địa chỉ</label>
-        <textarea th:field="*{address}" rows="3" placeholder="Vui lòng nhập địa chí"></textarea>
+        <textarea th:field="*{address}" rows="3" placeholder="Vui lòng nhập địa chỉ"></textarea>
 
         <div class="btn-group">
             <button type="submit">Lưu</button>

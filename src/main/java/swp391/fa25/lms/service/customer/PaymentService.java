@@ -371,21 +371,46 @@ public class PaymentService {
             licenseAccountRepository.save(acc);
             sendUserPasswordEmail(order, acc);
         } else if ("TOKEN".equals(loginMethod)) {
-            // Tìm token chưa sử dụng đầu tiên của tool (sử dụng toolId để tránh vấn đề object binding)
-            Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByLicense_Tool_ToolIdAndUsedFalse(tool.getToolId());
-            if (unusedToken.isPresent()) {
-                LicenseAccount tokenAcc = unusedToken.get();
-                tokenAcc.setLicense(license); // Gán license cụ thể cho order này (nếu cần override)
-                tokenAcc.setOrder(order);
-                tokenAcc.setUsed(true);
-                tokenAcc.setStatus(LicenseAccount.Status.ACTIVE);
-                tokenAcc.setStartDate(LocalDateTime.now());
-                tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
-                licenseAccountRepository.save(tokenAcc);
-                System.out.println("Assigned token " + tokenAcc.getToken() + " for order " + order.getOrderId() + ", status set to ACTIVE");
-                sendTokenEmail(order, tokenAcc);
-            } else {
-                System.err.println("No unused token for tool " + tool.getToolId());
+            try {
+                // Debug count (giữ nguyên)
+                long unusedCount = licenseAccountRepository.findByLicense_Tool_ToolId(tool.getToolId())
+                        .stream()
+                        .filter(acc -> !acc.getUsed())
+                        .count();
+//                System.out.println("Unused token count for toolId " + tool.getToolId() + ": " + unusedCount);
+
+                if (unusedCount == 0) {
+                    throw new RuntimeException("No unused tokens available for tool " + tool.getToolId());
+                }
+
+//                System.out.println("Searching unused token for toolId: " + tool.getToolId() + " (using SQL Server TOP 1 query)");
+                Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByLicense_Tool_ToolIdAndUsedFalse(tool.getToolId());
+
+                // FIX: Log Optional content để debug
+                if (unusedToken.isPresent()) {
+                    LicenseAccount tokenAcc = unusedToken.get();
+//                    System.out.println("SUCCESS: Found unused token via TOP 1: " + tokenAcc.getToken() + " (ID: " + tokenAcc.getLicenseAccountId() + ", licenseId: " + tokenAcc.getLicense().getLicenseId() + ")");
+
+                    // Assign/save/mail (giữ nguyên)
+                    tokenAcc.setLicense(license);
+                    tokenAcc.setOrder(order);
+                    tokenAcc.setUsed(true);
+                    tokenAcc.setStatus(LicenseAccount.Status.ACTIVE);
+                    tokenAcc.setStartDate(LocalDateTime.now());
+                    tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
+
+                    LicenseAccount savedAcc = licenseAccountRepository.save(tokenAcc);
+
+//                    System.out.println("Assigned & saved token " + savedAcc.getToken() + " for order " + order.getOrderId() + ", status: " + savedAcc.getStatus());
+                    sendTokenEmail(order, savedAcc);
+                } else {
+//                    System.out.println("WARNING: Query returned empty despite count=" + unusedCount + ". Possible data inconsistency or query issue.");
+                    throw new RuntimeException("No unused token returned from query for toolId " + tool.getToolId());
+                }
+            } catch (Exception e) {
+//                System.err.println("Error assigning TOKEN for order " + order.getOrderId() + ": " + e.getMessage());
+                e.printStackTrace();
+                throw e; // Rollback
             }
         }
     }
@@ -453,7 +478,6 @@ public class PaymentService {
 
             helper.setText(body, true);
             mailSender.send(message);
-            System.out.println("Sent TOKEN email for order " + order.getOrderId() + " with token " + tokenAcc.getToken());
 
         } catch (Exception e) {
             System.err.println("Gửi email TOKEN thất bại: " + e.getMessage());

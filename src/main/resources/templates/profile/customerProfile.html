@@ -84,6 +84,10 @@
         <b>Trạng thái:</b> <span th:text="${account.status}"></span>
     </div>
 
+    <div class="profile-item">
+        <b>Vai trò:</b> <span th:text="${account.role.getRoleName()}"></span>
+    </div>
+
     <!-- Thêm phần riêng cho từng role -->
     <div th:if="${account.role == 'SELLER'}">
         <b>Shop Name:</b> <span th:text="${account.shopName}">My Shop</span>
@@ -97,20 +101,18 @@
         <b>Privileges:</b> <span>System Management</span>
     </div>
 
-    <a th:href="@{/profile/edit}" class="btn btn-warning mt-3 w-100">Sửa hồ sơ</a>
-
-    <hr>
-
     <p class="welcome-text">
         Chào mừng bạn đã quay trở lại! Ở đây bạn có thể xem được thông tin tài khoản và cập nhật tài khoản của bạn.
     </p>
 
+    <a th:href="@{/profile/edit}" class="btn btn-warning mt-3 w-100">Sửa hồ sơ</a>
+
     <!-- Nút Back to Home linh động theo role -->
-    <div th:switch="${account.role.roleName}">
+    <div th:switch="${account.role.roleName.toString()}">
         <a th:case="'SELLER'" th:href="@{/seller/tools}" class="back-button">Quay trở lại trang chủ</a>
         <a th:case="'MOD'" th:href="@{/moderator/}" class="back-button">Quay trở lại trang chủ</a>
         <a th:case="'ADMIN'" th:href="@{/admin/accounts}" class="back-button">Quay trở lại trang chủ</a>
-        <a th:case="'MANAGER'" th:href="@{/manager/dashboard}" class="back-button">Quay trở lại trang chủ</a>
+        <a th:case="'MANAGER'" th:href="@{/manager/}" class="back-button">Quay trở lại trang chủ</a>
         <a th:case="*" th:href="@{/home}" class="back-button">Quay trở lại trang chủ</a>
     </div>
 

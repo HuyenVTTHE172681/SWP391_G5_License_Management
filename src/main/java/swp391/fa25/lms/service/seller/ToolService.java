@@ -77,6 +77,7 @@ public class ToolService {
         existingTool.setDescription(updatedTool.getDescription());
         existingTool.setNote(updatedTool.getNote());
         existingTool.setUpdatedAt(LocalDateTime.now());
+
         if (updatedTool.getQuantity() != null)
             existingTool.setQuantity(updatedTool.getQuantity());
 
@@ -207,7 +208,6 @@ public class ToolService {
                 loginEnum = Tool.LoginMethod.valueOf(loginMethod.trim().toUpperCase());
             } catch (IllegalArgumentException ignored) {}
         }
-
         return toolRepository.searchToolsForSeller(
                 sellerId, keyword, categoryId, statusEnum, loginEnum, minPrice, maxPrice, pageable
         );
@@ -223,6 +223,7 @@ public class ToolService {
                 .orElseThrow(() -> new IllegalArgumentException("Tool not found with id: " + toolId));
 
         List<License> existingLicenses = licenseRepository.findByTool_ToolId(toolId);
+
         for (int i = 0; i < newLicenses.size(); i++) {
             License src = newLicenses.get(i);
             License target;

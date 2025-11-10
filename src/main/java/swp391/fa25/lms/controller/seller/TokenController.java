@@ -243,7 +243,6 @@ public class TokenController {
         redirectAttrs.addFlashAttribute("info", "Token edit canceled. Returning to tools.");
         return "redirect:/seller/tools";
     }
-
     @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
     public String handleTokenValidationError(
             jakarta.validation.ConstraintViolationException ex,
@@ -264,4 +263,5 @@ public class TokenController {
             return "redirect:/seller/token-manage";
         }
     }
+
 }
