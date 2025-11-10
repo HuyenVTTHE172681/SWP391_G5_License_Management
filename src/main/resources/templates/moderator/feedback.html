@@ -8,26 +8,84 @@
 <body>
 
 <h1>Feedback Reports</h1>
+
 <div class="dashboard-container">
-    <!-- Sidebar -->
+    <!-- 🧭 Sidebar -->
     <aside class="sidebar">
         <h2>Moderator Panel</h2>
         <nav class="menu">
-            <a th:href="@{/moderator/dashboard}">🏠 Dashboard</a>
-            <a th:href="@{/moderator/uploadRequest}">📤 Upload Requests</a>
-            <a th:href="@{/moderator/feedback}" class="active">💬 Feedback Reports</a>
-            <a th:href="@{/moderator/tool/report}">📊 Tool Reports</a>
-            <a th:href="@{/moderator/history}">📁 Uploaded Tools</a>
-            <a th:href="@{/profile}">👤 Thông tin tài khoản</a>
-            <a th:href="@{/profile/reset-password}">🔒 Đặt lại mật khẩu</a>
-            <a th:href="@{/logout}" class="text-danger">🚪 Thoát</a>
+            <a th:href="@{/moderator/dashboard}">Dashboard</a>
+            <a th:href="@{/moderator/uploadRequest}">Upload Requests</a>
+            <a th:href="@{/moderator/feedback}" class="active">Feedback Reports</a>
+            <a th:href="@{/moderator/tool/report}">Tool Reports</a>
+            <a th:href="@{/moderator/history}">Uploaded Tools</a>
+            <a th:href="@{/profile}">Profile</a>
+            <a th:href="@{/profile/reset-password}">Change Password</a>
+            <a th:href="@{/logout}" class="text-danger">Logout</a>
         </nav>
     </aside>
 
-    <!-- Main content -->
+    <!-- 🌐 Main content -->
     <main class="main-content">
-        <h1>📋 Feedback Reports</h1>
+        <h1>Feedback Reports</h1>
 
+        <!-- 🔍 Filters -->
+        <!-- 🔍 Filters -->
+        <form method="get" class="filter-form" onsubmit="return validateRange()">
+            <div class="filter-grid">
+                <div>
+                    <label>Reason:</label>
+                    <select name="reason">
+                        <option value="">All</option>
+                        <option th:each="r : ${reasons}"
+                                th:value="${r.name()}"
+                                th:text="${r.name()}"
+                                th:selected="${reason != null ? reason.name() == r.name() : false}">
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Reporter ID:</label>
+                    <input type="number" name="reporterId" min="1" step="1"
+                           th:value="${reporterId}" placeholder="Enter Reporter ID">
+                </div>
+
+                <div>
+                    <label>Status:</label>
+                    <select name="status">
+                        <option value="">All</option>
+                        <option th:each="s : ${T(swp391.fa25.lms.model.FeedbackReport.Status).values()}"
+                                th:value="${s.name()}"
+                                th:text="${s.name()}"
+                                th:selected="${status != null ? status.name() == s.name() : false}">
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>From Date:</label>
+                    <input type="date" id="fromDate" name="fromDate"
+                           th:value="${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : ''}"
+                           onchange="syncMin()">
+                </div>
+
+                <div>
+                    <label>To Date:</label>
+                    <input type="date" id="toDate" name="toDate"
+                           th:value="${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : ''}">
+                </div>
+
+                <!-- Nút ở cuối hàng, xếp ngang -->
+                <div class="button-area">
+                    <button type="submit" class="btn btn-filter">Filter</button>
+                    <a th:href="@{/moderator/feedback}" class="btn btn-reset">Reset</a>
+                </div>
+            </div>
+        </form>
+
+
+        <!-- 📋 Table -->
         <table>
             <thead>
             <tr>
@@ -42,30 +100,56 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:if="${feedbackReports == null}">
+            <tr th:if="${feedbackReports == null or #lists.isEmpty(feedbackReports)}">
                 <td colspan="8" style="text-align: center; color: gray;">No feedback reports found.</td>
             </tr>
             <tr th:each="report : ${feedbackReports}">
                 <td th:text="${report.feedbackReportId}">1</td>
-                <td th:text="${report.feedback.comment}">Some feedback...</td>
-                <td th:text="${report.reportedBy.fullName}">John Doe</td>
+                <td th:text="${report.feedback != null ? report.feedback.comment : '—'}">Some feedback...</td>
+                <td th:text="${report.reportedBy != null ? report.reportedBy.fullName : '—'}">John Doe</td>
                 <td th:text="${report.reason}">SPAM</td>
-                <td th:text="${report.comment}">Contains links</td>
-                <td><span th:text="${report.status}" th:class="'status ' + ${report.status}">PENDING</span></td>
+                <td th:text="${report.description}">Contains links</td>
+                <td>
+                    <span th:text="${report.status}"
+                          th:class="'status ' + ${report.status}">PENDING</span>
+                </td>
                 <td th:text="${#temporals.format(report.reportedAt, 'yyyy-MM-dd HH:mm')}">2025-10-29</td>
                 <td>
-                    <form th:action="@{'/moderator/feedback/' + ${report.feedbackReportId} + '/approve'}" method="post" style="display:inline">
-                        <button type="submit" class="btn btn-approve">Approve</button>
-                    </form>
-                    <form th:action="@{'/moderator/feedback/' + ${report.feedbackReportId} + '/reject'}" method="post" style="display:inline">
-                        <button type="submit" class="btn btn-reject">Reject</button>
-                    </form>
+                    <div th:if="${report.status?.name() == 'PENDING'}">
+                        <form th:action="@{'/moderator/feedback/' + ${report.feedbackReportId} + '/approve'}"
+                              method="post" style="display:inline">
+                            <button type="submit" class="btn btn-approve">Approve</button>
+                        </form>
+                        <form th:action="@{'/moderator/feedback/' + ${report.feedbackReportId} + '/reject'}"
+                              method="post" style="display:inline">
+                            <button type="submit" class="btn btn-reject">Reject</button>
+                        </form>
+                    </div>
+                    <span th:if="${report.status?.name() != 'PENDING'}" style="color:#94a3b8">—</span>
                 </td>
             </tr>
             </tbody>
         </table>
     </main>
 </div>
+
+<script>
+    function syncMin() {
+        const f = document.getElementById('fromDate');
+        const t = document.getElementById('toDate');
+        if (f && t) t.min = f.value || "";
+    }
+
+    function validateRange() {
+        const f = document.getElementById('fromDate')?.value;
+        const t = document.getElementById('toDate')?.value;
+        if (f && t && new Date(f) > new Date(t)) {
+            alert("From date should be before or equal to To date");
+            return false;
+        }
+        return true;
+    }
+</script>
 
 </body>
 </html>

@@ -135,4 +135,5 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     long countByToolAndStatus(Tool tool, Feedback.Status status);
 
+    Feedback findByFeedbackId(Long feedbackId);
 }
