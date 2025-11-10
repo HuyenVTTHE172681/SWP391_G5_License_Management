@@ -40,23 +40,17 @@ public class SellerReportService {
 
         List<CustomerOrder> filtered = new ArrayList<>();
         for (CustomerOrder order : orders) {
-            // ❌ Bỏ qua đơn chưa có transaction hoặc chưa thành công
             if (order.getTransaction() == null ||
                     order.getTransaction().getStatus() != WalletTransaction.TransactionStatus.SUCCESS) {
                 continue;
             }
-
             Tool tool = order.getTool();
             if (tool == null || tool.getLoginMethod() == null) continue;
-
-            // 🔹 Lọc theo phương thức đăng nhập
             if (!"all".equalsIgnoreCase(method)) {
                 if (!tool.getLoginMethod().name().equalsIgnoreCase(method)) {
                     continue;
                 }
             }
-
-            // 🔹 Lọc theo khoảng thời gian (nếu có)
             LocalDate created = order.getCreatedAt().toLocalDate();
             if (start != null && created.isBefore(start)) continue;
             if (end != null && created.isAfter(end)) continue;
@@ -66,7 +60,6 @@ public class SellerReportService {
 
         return filtered;
     }
-
     /* =====================================================
      * 2️⃣ BÁO CÁO TỔNG QUAN: Doanh thu / Lượt mua / Feedback
      * ===================================================== */
@@ -79,8 +72,6 @@ public class SellerReportService {
         double totalRevenue = orders.stream()
                 .mapToDouble(o -> Optional.ofNullable(o.getPrice()).orElse(0.0))
                 .sum();
-
-        // 🔹 Lấy feedback count, có thể sau này sẽ tách riêng theo method
         long totalFeedbacks;
         if (toolId == null) {
             if ("all".equalsIgnoreCase(method)) {
@@ -140,6 +131,7 @@ public class SellerReportService {
                     "amount", entry.getValue()
             ));
         }
+
         return chartData;
     }
 

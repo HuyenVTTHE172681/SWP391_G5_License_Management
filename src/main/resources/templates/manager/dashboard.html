@@ -2,36 +2,160 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Manager Panel</title>
+    <title>Manager Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Layout -->
     <link rel="stylesheet" th:href="@{/css/manager-layout.css}">
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
 <body>
-
 <div class="layout">
-    <!-- SIDEBAR -->
+
+    <!-- 🧭 SIDEBAR -->
     <aside class="sidebar">
         <h2 class="sidebar-title">Manager Panel</h2>
         <nav>
-            <a th:href="@{/manager/}" class="nav-link" th:classappend="'active'">Dashboard</a>
-            <a th:href="@{/manager/tool/list}" class="nav-link" th:classappend="${active == 'tools'} ? 'active' : ''">Tools</a>
-            <a th:href="@{/manager/category/list}" class="nav-link" th:classappend="${active == 'categories'} ? 'active' : ''">Categories</a>
-            <a th:href="@{/manager/package/list}" class="nav-link" th:classappend="${active == 'packages'} ? 'active' : ''">Packages</a>
-            <a th:href="@{/manager/upload-tool}" class="nav-link" th:classappend="${active == 'upload'} ? 'active' : ''">Upload Tools</a>
+            <a th:href="@{/manager}" class="nav-link active">Dashboard</a>
+            <a th:href="@{/manager/tool/list}" class="nav-link">Tools</a>
+            <a th:href="@{/manager/category/list}" class="nav-link">Categories</a>
+            <a th:href="@{/manager/package/list}" class="nav-link">Packages</a>
+            <a th:href="@{/manager/upload-tool}" class="nav-link">Upload Tools</a>
             <a th:href="@{/logout}" class="nav-link logout">Logout</a>
         </nav>
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <main class="content">
-        <header class="page-header">
-            <h1>Manager Panel</h1>
-        </header>
+    <!-- 📊 MAIN CONTENT -->
+    <main class="content bootstrap-scope">
+        <div class="container">
+            <h1>📊 Manager Dashboard</h1>
 
-        <section class="content-body">
-            <p>Welcome to the Manager Panel! Select a function from the left menu.</p>
-        </section>
+            <!-- ================= SELLER PACKAGE ================= -->
+            <div class="chart-card">
+                <h4>📦 Seller Packages Purchased</h4>
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Time Range</label>
+                        <select name="period1" class="form-select">
+                            <option value="day" th:selected="${period1 == 'day'}">Day</option>
+                            <option value="week" th:selected="${period1 == 'week'}">Week</option>
+                            <option value="month" th:selected="${period1 == 'month'}">Month</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">From</label>
+                        <input type="date" name="start1" class="form-control" th:value="${start1}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">To</label>
+                        <input type="date" name="end1" class="form-control" th:value="${end1}">
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-50">Go</button>
+                        <a th:href="@{/manager}" class="btn btn-outline-secondary w-50">Clear</a>
+                    </div>
+                </form>
+                <div id="packageChart" style="height:400px;"></div>
+            </div>
+
+            <!-- ================= TOOL REPORTS ================= -->
+            <div class="chart-card">
+                <h4>⚠️ Tool Reports Submitted</h4>
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Time Range</label>
+                        <select name="period2" class="form-select">
+                            <option value="day" th:selected="${period2 == 'day'}">Day</option>
+                            <option value="week" th:selected="${period2 == 'week'}">Week</option>
+                            <option value="month" th:selected="${period2 == 'month'}">Month</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">From</label>
+                        <input type="date" name="start2" class="form-control" th:value="${start2}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">To</label>
+                        <input type="date" name="end2" class="form-control" th:value="${end2}">
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-50">Go</button>
+                        <a th:href="@{/manager}" class="btn btn-outline-secondary w-50">Clear</a>
+                    </div>
+                </form>
+                <div id="toolReportChart" style="height:400px;"></div>
+            </div>
+
+            <!-- ================= SELLER STATUS ================= -->
+            <div class="chart-card">
+                <h4>👥 Seller Account Status</h4>
+                <div id="sellerStatusChart" style="height:400px;"></div>
+            </div>
+        </div>
     </main>
 </div>
 
+<!-- ✅ FIXED Google Charts -->
+<script th:inline="javascript">
+    google.charts.load('current', {packages: ['corechart']});
+    google.charts.setOnLoadCallback(function() {
+        // Delay 100ms để Thymeleaf render xong dữ liệu
+        setTimeout(drawCharts, 150);
+    });
+
+    function drawCharts() {
+        /* --- 1️⃣ Seller Packages --- */
+        var packages = [
+            /*[# th:each="item : ${sellerPackageChart}"]*/
+            ['[[${item.period}]]', [[${item.count}]]],
+            /*[/]*/
+        ];
+        var pkgData = google.visualization.arrayToDataTable([
+            ['Period', 'Packages Purchased'],
+            ...packages
+        ]);
+        new google.visualization.LineChart(document.getElementById('packageChart'))
+            .draw(pkgData, {
+                title: '📦 Seller Packages Purchased',
+                legend: { position: 'bottom' },
+                colors: ['#2563eb']
+            });
+
+        /* --- 2️⃣ Tool Reports --- */
+        var reports = [
+            /*[# th:each="item : ${toolReportChart}"]*/
+            ['[[${item.period}]]', [[${item.count}]]],
+            /*[/]*/
+        ];
+        var rptData = google.visualization.arrayToDataTable([
+            ['Period', 'Reports'],
+            ...reports
+        ]);
+        new google.visualization.ColumnChart(document.getElementById('toolReportChart'))
+            .draw(rptData, {
+                title: '⚠️ Tool Reports Submitted',
+                colors: ['#dc3545'],
+                legend: { position: 'none' }
+            });
+
+        /* --- 3️⃣ Seller Status --- */
+        var sellers = [
+            /*[# th:each="item : ${sellerStatusChart}"]*/
+            ['[[${item.status}]]', [[${item.count}]]],
+            /*[/]*/
+        ];
+        var sellerData = google.visualization.arrayToDataTable([
+            ['Status', 'Count'],
+            ...sellers
+        ]);
+        new google.visualization.PieChart(document.getElementById('sellerStatusChart'))
+            .draw(sellerData, {
+                title: '👥 Seller Status',
+                pieHole: 0.4,
+                colors: ['#22c55e', '#9ca3af']
+            });
+    }
+</script>
 </body>
 </html>
