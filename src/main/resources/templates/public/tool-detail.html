@@ -16,6 +16,19 @@
 <div th:replace="common/header :: header"></div>
 
 <main class="container my-5">
+
+    <!-- ======= FLASH MESSAGE: OK / ERROR ======= -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}">Có lỗi xảy ra.</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${ok}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${ok}">Thao tác thành công.</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <!-- ======= END FLASH MESSAGE ======= -->
+
     <div class="row g-4">
         <div class="col-md-5">
             <div class="product-image">
@@ -125,7 +138,7 @@
 
                                 <!-- Fix buttons: Wrap all actions in one d-flex gap-1 div for side-by-side display -->
                                 <div th:if="${account != null}" class="d-flex gap-1 align-items-center">
-                                    <!-- Edit and Delete: Only if owner -->
+                                    <!-- Edit : Only if owner -->
                                     <div th:if="${fb.account.accountId == account.accountId}" class="d-flex gap-1">
                                         <a class="btn btn-sm btn-outline-primary"
                                            th:href="@{/feedback/{fid}/edit(fid=${fb.feedbackId})}">

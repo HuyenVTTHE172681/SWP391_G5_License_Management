@@ -120,9 +120,9 @@ public class PaymentRenewService {
             Tool tool = order.getTool();
             Account seller = tool.getSeller();
             if (seller == null) throw new IllegalStateException("Tool chưa gắn seller");
-            Wallet sellerWallet = walletRepo.findByAccount(seller)
-                    .orElseThrow(() -> new IllegalStateException("Seller chưa có ví"));
-
+//            Wallet sellerWallet = walletRepo.findByAccount(seller)
+//                    .orElseThrow(() -> new IllegalStateException("Seller chưa có ví"));
+            Wallet sellerWallet = getOrCreateWallet(seller);
             boolean success = "00".equals(responseCode);
 
             // Ghi transaction RENEW
@@ -197,6 +197,16 @@ public class PaymentRenewService {
         } catch (Exception e) {
             throw new RuntimeException("Error generating HMAC", e);
         }
+    }
+    private Wallet getOrCreateWallet(Account seller) {
+        return walletRepo.findByAccount(seller).orElseGet(() -> {
+            Wallet w = new Wallet();
+            w.setAccount(seller);
+            w.setBalance(BigDecimal.ZERO);
+            w.setCurrency("VND");
+            w.setUpdatedAt(LocalDateTime.now());
+            return walletRepo.save(w);
+        });
     }
 
 }
