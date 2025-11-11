@@ -157,4 +157,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     // Check xem 1 account đã feedback cho 1 tool hay chưa
     boolean existsByAccount_AccountIdAndTool_ToolId(Long accountId, Long toolId);
+
+    Feedback findByFeedbackId(Long feedbackId);
 }

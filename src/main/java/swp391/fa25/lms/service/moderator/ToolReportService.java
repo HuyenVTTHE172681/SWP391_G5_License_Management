@@ -77,4 +77,7 @@ public class ToolReportService {
         }
 
     }
+    public List<ToolReport> findByStatus(ToolReport.Status status) {
+        return toolReportRepository.findByStatus(status);
+    }
 }

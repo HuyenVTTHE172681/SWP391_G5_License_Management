@@ -159,6 +159,16 @@ button.btn:hover {
 .status.SUSPECT { color: orange; font-weight: bold; }
 .status.VIOLATED { color: darkred; font-weight: bold; }
 .status.DEACTIVATED { color: gray; font-weight: bold; }
+.btn {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+}
+.btn-view { background-color: #16a34a; }
+.btn-view:hover { background-color: #15803d; }
 
 .no-data {
     color: #999;
