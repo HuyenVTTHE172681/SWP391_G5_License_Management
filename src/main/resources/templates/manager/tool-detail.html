@@ -12,7 +12,12 @@
     <div class="tool-card">
         <!-- LEFT: Image -->
         <div class="tool-image">
-            <img th:src="@{'/upload/' + ${tool.image}}" alt="Tool image">
+<!--            <img th:src="@{'/upload/' + ${tool.image}}" alt="Tool image">-->
+            <img id="imgPreview"
+                 class="preview-img"
+                 th:if="${tool.image != null}"
+                 th:src="@{'/' + ${tool.image}}"
+                 alt="Current tool image">
         </div>
 
         <!-- RIGHT: Header + info -->
