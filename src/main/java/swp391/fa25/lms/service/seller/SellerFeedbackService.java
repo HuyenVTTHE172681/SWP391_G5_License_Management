@@ -30,12 +30,13 @@ import java.util.stream.Collectors;
 public class SellerFeedbackService {
 
     public record ReplyVM(Long feedbackId, Long replyId, String sellerName, String content, String updatedAt) {}
-     @Autowired
-    private  FeedbackRepository feedbackRepo;
+
+    @Autowired
+    private FeedbackRepository feedbackRepo;
     @Autowired
     private FeedBackReplyRepository replyRepo;
     @Autowired
-    private  ToolService toolService;
+    private ToolService toolService;
     @Autowired
     private AccountRepository accountRepo;
 
@@ -87,6 +88,17 @@ public class SellerFeedbackService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền.");
         }
 
+        // ✅ CHẶN REPLY nếu feedback không ở trạng thái PUBLISHED
+        if (fb.getStatus() != null) {
+            String st = fb.getStatus().toString();
+            if (!"PUBLISHED".equalsIgnoreCase(st)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Feedback này không ở trạng thái hiển thị, bạn không thể trả lời."
+                );
+            }
+        }
+
         String body = content == null ? "" : content.trim();
         if (body.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nội dung phản hồi không được rỗng.");
@@ -134,6 +146,17 @@ public class SellerFeedbackService {
                 || fb.getTool().getSeller() == null
                 || !fb.getTool().getSeller().getAccountId().equals(seller.getAccountId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        // ✅ CHẶN XOÁ REPLY nếu feedback không ở trạng thái PUBLISHED
+        if (fb.getStatus() != null) {
+            String st = fb.getStatus().toString();
+            if (!"PUBLISHED".equalsIgnoreCase(st)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Feedback này không ở trạng thái hiển thị, bạn không thể xoá phản hồi."
+                );
+            }
         }
 
         replyRepo.deleteByFeedback_FeedbackId(feedbackId);
@@ -223,7 +246,8 @@ public class SellerFeedbackService {
             String sort,        // "createdAt" | "rating"
             String dir,         // "asc" | "desc"
             int page,
-            int size
+            int size,
+            String status       // ✅ filter theo status
     ) {}
 
     public record FeedbackPageVM(Page<Feedback> page, Map<Long, List<FeedbackReply>> repliesMap) {}
@@ -259,11 +283,28 @@ public class SellerFeedbackService {
         LocalDate to = f.to();
         Boolean hasReply = f.hasReply();
 
+        // ✅ chuẩn hoá status filter về UPPERCASE và để vào biến final
+        String rawStatus = f.status();
+        final String statusFilter;
+        if (rawStatus == null) {
+            statusFilter = null;
+        } else {
+            String t = rawStatus.trim();
+            statusFilter = t.isEmpty() ? null : t.toUpperCase();
+        }
+
         List<Feedback> filtered = base.stream().filter(fb -> {
             // hasReply
             if (hasReply != null) {
                 boolean ok = idsWithReply.contains(fb.getFeedbackId());
                 if (hasReply != ok) return false;
+            }
+
+            // status
+            if (statusFilter != null) {
+                if (fb.getStatus() == null) return false;
+                String fbStatus = fb.getStatus().toString().toUpperCase();
+                if (!fbStatus.equals(statusFilter)) return false;
             }
 
             // rating

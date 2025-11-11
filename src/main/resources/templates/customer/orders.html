@@ -8,17 +8,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link th:href="@{/css/home.css}" rel="stylesheet">
     <style>
-        /* Căn tất cả nút hành động trên cùng 1 dòng */
-        td.text-center > .btn {
-            display: inline-flex;      /* cho phép icon và text nằm gọn gàng */
-            align-items: center;       /* căn giữa icon và text theo chiều dọc */
-            margin: 0 2px;             /* khoảng cách giữa các nút */
-            white-space: nowrap;       /* không cho xuống dòng */
+        td.text-start.align-middle {
+            white-space: nowrap !important;  /* Không cho phép xuống dòng trong ô */
         }
 
-        /* Tùy chọn: làm hàng nút gọn hơn trong cột */
-        td.text-center {
-            white-space: nowrap;       /* toàn bộ ô không bị wrap */
+        td.text-start.align-middle .btn,
+        td.text-start.align-middle a,
+        td.text-start.align-middle button {
+            display: inline-flex;       /* icon + text nằm cùng dòng */
+            align-items: center;
+            margin-right: 4px;          /* tạo khoảng cách giữa các nút */
+            vertical-align: middle;
+        }
+
+        td.text-start.align-middle i {
+            margin-right: 2px;
         }
 
         /* Nếu icon → chữ, cho khoảng cách nhỏ giữa icon và chữ */

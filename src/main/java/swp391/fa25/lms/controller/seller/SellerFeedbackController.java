@@ -29,11 +29,12 @@ public class SellerFeedbackController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Integer ratingMin,
             @RequestParam(required = false) Integer ratingMax,
-            @RequestParam(required = false) Boolean hasReply,     // true/false/null
-            @RequestParam(required = false) String from,          // yyyy-MM-dd
-            @RequestParam(required = false) String to,            // yyyy-MM-dd
-            @RequestParam(defaultValue = "createdAt") String sort, // createdAt|rating
-            @RequestParam(defaultValue = "desc") String dir,       // asc|desc
+            @RequestParam(required = false) Boolean hasReply,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(defaultValue = "desc") String dir,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model,
@@ -44,17 +45,17 @@ public class SellerFeedbackController {
 
         var filters = new SellerFeedbackService.Filters(
                 toolId, q, ratingMin, ratingMax, hasReply,
-                fromDate, toDate, sort, dir, page, size
+                fromDate, toDate, sort, dir, page, size,
+                status    // ✅ truyền status vào filter
         );
 
         var vm = sellerFeedbackService.searchFeedbacks(filters, principal);
 
-        // Data cho view
-        model.addAttribute("page", vm.page());                      // Page<Feedback>
-        model.addAttribute("feedbacks", vm.page().getContent());    // tiện nếu view đang dùng 'feedbacks'
-        model.addAttribute("repliesMap", vm.repliesMap());          // Map<Long, List<FeedbackReply>>
+        model.addAttribute("page", vm.page());
+        model.addAttribute("feedbacks", vm.page().getContent());
+        model.addAttribute("repliesMap", vm.repliesMap());
 
-        // Giữ lại filter values để fill form & build paging links
+        // giữ lại filter
         model.addAttribute("toolId", toolId);
         model.addAttribute("q", q);
         model.addAttribute("ratingMin", ratingMin);
@@ -65,6 +66,7 @@ public class SellerFeedbackController {
         model.addAttribute("sort", sort);
         model.addAttribute("dir", dir);
         model.addAttribute("size", size);
+        model.addAttribute("status", status);   // ✅ giữ trạng thái filter
 
         return "seller/feedback-list";
     }

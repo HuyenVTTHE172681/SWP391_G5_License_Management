@@ -242,7 +242,9 @@ public class ToolFlowService {
 
         int newQuantity = tokens.size();
         tool.setQuantity(newQuantity);
+        tool.setStatus(Tool.Status.PENDING);
         toolService.updateQuantityAndLicenses(tool.getToolId(), newQuantity, pending.getLicenses());
+
 
         session.removeAttribute(SESSION_PENDING_EDIT);
     }

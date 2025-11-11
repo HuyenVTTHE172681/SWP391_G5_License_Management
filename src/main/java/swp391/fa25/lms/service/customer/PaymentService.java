@@ -339,7 +339,6 @@ public class PaymentService {
 
             order.setUpdatedAt(LocalDateTime.now());
             orderRepository.save(order);
-
             System.out.println("Updated order " + order.getOrderId() + " to status: " + order.getOrderStatus());
             return success;
         } catch (Exception e) {

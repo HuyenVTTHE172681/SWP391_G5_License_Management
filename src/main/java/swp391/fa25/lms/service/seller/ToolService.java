@@ -77,6 +77,7 @@ public class ToolService {
         existingTool.setDescription(updatedTool.getDescription());
         existingTool.setNote(updatedTool.getNote());
         existingTool.setUpdatedAt(LocalDateTime.now());
+        existingTool.setStatus(Tool.Status.PENDING);
 
         if (updatedTool.getQuantity() != null)
             existingTool.setQuantity(updatedTool.getQuantity());
@@ -208,6 +209,7 @@ public class ToolService {
                 loginEnum = Tool.LoginMethod.valueOf(loginMethod.trim().toUpperCase());
             } catch (IllegalArgumentException ignored) {}
         }
+
         return toolRepository.searchToolsForSeller(
                 sellerId, keyword, categoryId, statusEnum, loginEnum, minPrice, maxPrice, pageable
         );
