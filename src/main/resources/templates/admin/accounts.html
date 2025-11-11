@@ -46,7 +46,6 @@
         <div class="tabs">
             <a class="tab" th:classappend="${page}=='home' ? 'active'" th:href="@{/admin/adminhome}">Home</a>
             <a class="tab" th:classappend="${page}=='accounts' ? 'active'" th:href="@{/admin/accounts}">Accounts</a>
-            <a class="tab" th:href="@{/profile}">View Profile</a>
         </div>
 
         <p th:if="${msg != null and !#strings.isEmpty(#strings.trim(msg))}"
@@ -60,7 +59,7 @@
             <div class="card-head">
                 <h3 class="card-title">Account List</h3>
 
-                <!-- Filters: GET /admin/accounts  (KHÔNG lồng form khác ở trong) -->
+                <!-- Filters: GET /admin/accounts -->
                 <form class="filters" th:action="@{/admin/accounts}" method="get">
                     <input type="text" name="q" placeholder="Search email or name…" th:value="${q}">
 

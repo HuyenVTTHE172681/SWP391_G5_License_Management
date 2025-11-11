@@ -3,107 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <title>Manager - Tool Detail</title>
+    <!-- Use the SAME css as moderator detail to share styles -->
     <link rel="stylesheet" th:href="@{/css/manager-tool-detail.css}">
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1 th:text="${tool.toolName}">Tool Detail</h1>
-        <a th:href="@{/manager/upload-tool}" class="btn back">← Back</a>
-    </header>
+<div class="page">
+    <div class="tool-card">
+        <!-- LEFT: Image -->
+        <div class="tool-image">
+<!--            <img th:src="@{'/upload/' + ${tool.image}}" alt="Tool image">-->
+            <img id="imgPreview"
+                 class="preview-img"
+                 th:if="${tool.image != null}"
+                 th:src="@{'/' + ${tool.image}}"
+                 alt="Current tool image">
+        </div>
 
-    <section class="info">
-        <img th:if="${tool.image != null}" th:src="@{'/' + ${tool.image}}" alt="Tool image" class="tool-img">
+        <!-- RIGHT: Header + info -->
+        <div class="tool-info">
+            <h1 class="title-pill" th:text="${tool.toolName} + ' - ' + ${tool.toolId}">Tool Name - ID</h1>
 
-        <p><strong>Seller:</strong> <span th:text="${tool.seller.fullName}"></span></p>
-        <p><strong>Category:</strong> <span th:text="${tool.category.categoryName}"></span></p>
-        <p><strong>Login Method:</strong> <span th:text="${tool.loginMethod}"></span></p>
+            <p class="desc" th:text="${tool.description}">description</p>
 
-        <p><strong>Status:</strong>
-            <span th:text="${tool.status}" th:class="'status ' + ${tool.status}"></span>
-        </p>
-
-        <p><strong>Reviewed By:</strong>
-            <span th:text="${tool.reviewedBy != null ? tool.reviewedBy : '-'}"></span>
-        </p>
-
-        <p><strong>Created At:</strong>
-            <span th:text="${#temporals.format(tool.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
-        </p>
-
-        <p><strong>Updated Status At:</strong>
-            <span th:text="${#temporals.format(tool.updatedAt, 'yyyy-MM-dd HH:mm')}"></span>
-        </p>
-
-        <p><strong>Description:</strong></p>
-        <p class="desc" th:text="${tool.description}"></p>
-
-        <!-- FILES + TOKEN SECTION -->
-        <div class="files-section">
-            <h3>File đính kèm</h3>
-
-            <!-- Khi có file -->
-            <ul class="file-list" th:if="${tool.files != null and !#lists.isEmpty(tool.files)}">
-                <li th:each="f : ${tool.files}">
-                    <a th:href="@{'/uploads/' + ${f.filePath}}"
-                       th:text="${f.fileType}"
-                       download>Download</a>
-                </li>
-
-                <!-- ✅ Nếu loginMethod = TOKEN, hiển thị token -->
-                <li th:if="${tool.loginMethod?.name() == 'TOKEN' and licenseAccount != null and !#lists.isEmpty(licenseAccount)}">
-                    <h4>License Tokens</h4>
-                    <ul>
-                        <li th:each="l : ${licenseAccount}">
-                            <span th:text="${l.token != null ? '*****' + #strings.substring(l.token, l.token.length() - 4) : 'No token'}"></span>
-                        </li>
-                    </ul>
-                </li>
+            <!-- (Optional) license chips if manager page also needs them -->
+            <ul class="license-chips" th:if="${tool.licenses != null}">
+                <li th:each="l : ${tool.licenses}" th:text="${l.name} + ' - ' + ${l.price}">License - price</li>
             </ul>
 
-            <!-- Khi không có file -->
-            <p th:if="${tool.files == null or #lists.isEmpty(tool.files)}" class="no-file">
-                No file appended
-            </p>
-        </div>
+            <!-- Meta grid (2 columns) -->
+            <div class="meta-grid">
+                <div class="meta-row">
+                    <span class="meta-label">Seller:</span>
+                    <span class="meta-value" th:text="${tool.seller.fullName}">Seller Name</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Category:</span>
+                    <span class="meta-value" th:text="${tool.category.categoryName}">Category</span>
+                </div>
 
-        <!-- NOTE -->
-        <div th:if="${tool.note != null}">
-            <p><strong>Last Manager Note:</strong></p>
-            <p class="note-box" th:text="${tool.note}"></p>
-        </div>
-    </section>
+                <div class="meta-row">
+                    <span class="meta-label">Login Method:</span>
+                    <span class="meta-value" th:text="${tool.loginMethod}">METHOD</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Status:</span>
+                    <span class="badge" th:classappend="${tool.status}" th:text="${tool.status}">APPROVED</span>
+                </div>
 
-    <!-- ⚙️ ACTIONS -->
-    <section class="actions" th:if="${tool.status?.name() == 'APPROVED'}">
-        <h3>Manager Actions</h3>
+                <div class="meta-row">
+                    <span class="meta-label">Reviewed By:</span>
+                    <span class="meta-value" th:text="${tool.reviewedBy != null ? tool.reviewedBy : '-'}">-</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Created At:</span>
+                    <span class="meta-value" th:text="${#temporals.format(tool.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-01</span>
+                </div>
 
-        <div class="action-buttons">
+                <div class="meta-row">
+                    <span class="meta-label">Updated Status At:</span>
+                    <span class="meta-value" th:text="${#temporals.format(tool.updatedAt, 'yyyy-MM-dd HH:mm')}">2025-01-01</span>
+                </div>
+            </div>
 
-            <!-- 🟢 Publish -->
-            <form th:action="@{'/manager/tool/' + ${tool.toolId} + '/publish'}" method="post">
-                <button type="submit" class="btn btn-publish">Publish</button>
-            </form>
+            <!-- FILES + TOKEN SECTION -->
+            <section class="files-section">
+                <h3>Tool Files:</h3>
 
-            <!-- 🟡 Set Pending -->
-            <form th:action="@{'/manager/tool/' + ${tool.toolId} + '/pending'}" method="post" class="note-form">
+                <!-- When has files -->
+                <ul class="file-list" th:if="${tool.files != null and !#lists.isEmpty(tool.files)}">
+                    <li th:each="file : ${tool.files}">
+                        <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
+                            <span th:text="${file.filePath}">tool-file.ext</span>
+                        </a>
+                        <span class="file-type" th:text="'(' + ${file.fileType} + ')'">(type)</span>
+                    </li>
+
+                    <!-- If loginMethod = TOKEN, show token list -->
+                    <li class="token-block"
+                        th:if="${tool.loginMethod?.name() == 'TOKEN' and licenseAccounts != null and !#lists.isEmpty(licenseAccounts)}">
+                        <p class="token-title">Token:</p>
+                        <div class="token-grid">
+                            <span th:each="l : ${licenseAccounts}"
+                                  th:text="${l.token != null ? '*****' + #strings.substring(l.token, l.token.length() - 4) : 'No token'}">
+                                *****1234
+                            </span>
+                        </div>
+                    </li>
+                </ul>
+
+                <!-- When no file -->
+                <p th:if="${tool.files == null or #lists.isEmpty(tool.files)}" class="no-file">No file appended</p>
+            </section>
+
+            <!-- Manager latest note -->
+            <div th:if="${tool.note != null}" class="note-box">
+                <strong>Last Manager Note:</strong>
+                <div th:text="${tool.note}"></div>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="action-buttons" th:if="${tool.status?.name() == 'APPROVED'}">
+                <!-- Publish submits immediately -->
+                <form th:action="@{'/manager/tool/' + ${tool.toolId} + '/publish'}" method="post">
+                    <button type="submit" class="big-pill btn-publish">Publish</button>
+                </form>
+
+                <!-- Show Pending form on click (same UX as moderator reject) -->
+                <button type="button" class="big-pill btn-pending" onclick="toggleBox('pendingForm')">Set Pending</button>
+
+                <!-- Show Reject form on click (same UX as moderator reject) -->
+                <button type="button" class="big-pill btn-reject" onclick="toggleBox('rejectForm')">Reject</button>
+            </div>
+
+            <!-- Pending form (hidden until button clicked) -->
+            <form id="pendingForm"
+                  th:action="@{'/manager/tool/' + ${tool.toolId} + '/pending'}"
+                  method="post"
+                  class="reason-form hidden">
+                <label class="reason-title">Reason for Pending</label>
                 <textarea name="note" placeholder="Enter note for pending..." required></textarea>
-                <button type="submit" class="btn btn-pending">Set Pending</button>
+                <div class="reason-actions">
+                    <button type="submit" class="btn-confirm">Submit</button>
+                    <button type="button" class="btn-cancel" onclick="toggleBox('pendingForm')">Cancel</button>
+                </div>
             </form>
 
-            <!-- 🔴 Reject -->
-            <form th:action="@{'/manager/tool/' + ${tool.toolId} + '/reject'}" method="post" class="note-form">
+            <!-- Reject form (hidden until button clicked) -->
+            <form id="rejectForm"
+                  th:action="@{'/manager/tool/' + ${tool.toolId} + '/reject'}"
+                  method="post"
+                  class="reason-form hidden">
+                <label class="reason-title">Reason for Reject</label>
                 <textarea name="note" placeholder="Enter rejection reason..." required></textarea>
-                <button type="submit" class="btn btn-reject">Reject</button>
+                <div class="reason-actions">
+                    <button type="submit" class="btn-confirm">Submit</button>
+                    <button type="button" class="btn-cancel" onclick="toggleBox('rejectForm')">Cancel</button>
+                </div>
             </form>
-        </div>
-    </section>
 
-    <section th:if="${tool.status?.name() != 'APPROVED'}" class="no-action">
-        <p>No actions available for this tool status.</p>
-    </section>
+            <!-- When not APPROVED -->
+            <section th:if="${tool.status?.name() != 'APPROVED'}" class="no-action">
+                <p>No actions available for this tool status.</p>
+            </section>
+        </div>
+
+        <!-- Back -->
+        <a th:if="${tool.status?.name() == 'APPROVED'}" th:href="@{/manager/upload-tool}" class="back-link">← Back</a>
+        <a th:unless="${tool.status?.name() == 'APPROVED'}" th:href="@{/manager/tool/list}" class="back-link">← Back</a>
+
+    </div>
 </div>
+
+<script>
+    function toggleBox(id){
+        document.getElementById(id).classList.toggle('hidden');
+    }
+</script>
 
 </body>
 </html>

@@ -21,4 +21,5 @@ public interface ToolReportRepository extends JpaRepository<ToolReport, Long>, J
     List<ToolReport> findByTool_ToolId(Long toolId);
     @Query("SELECT tr FROM ToolReport tr ORDER BY tr.reportedAt ASC")
     List<ToolReport> findAllForStatistics();
+    List<ToolReport> findByStatus(ToolReport.Status status);
 }

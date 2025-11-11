@@ -176,11 +176,11 @@ a.btn.btn-link:hover{
     margin-bottom: 10px;
     background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.95));
 }
-@media (prefers-color-scheme: dark){
-    .list-group-item{
-        background: linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.95));
-    }
-}
+/*@media (prefers-color-scheme: dark){*/
+/*    .list-group-item{*/
+/*        background: linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.95));*/
+/*    }*/
+/*}*/
 .list-group-item .fw-semibold{
     font-size: 1.02rem;
 }

@@ -1,206 +1,279 @@
-/* 🌐 RESET & BASE */
-body {
-    font-family: "Segoe UI", sans-serif;
-    background-color: #f5f7fa;
-    margin: 0;
-    padding: 20px;
-    color: #333;
+/* =========================================================
+   Shared detail page styles (Moderator & Manager)
+   File: manager-tool-detail.css
+   ========================================================= */
+
+/* ---- Base / Frame ---- */
+:root{
+    --ink:#0f172a;
+    --muted:#475569;
+    --line:#cbd5e1;
+    --chip:#e6f2ff;
+    --pill:#cfe9ff;
+    --shadow:0 6px 18px rgba(0,0,0,.08);
 }
 
-.container {
-    max-width: 1000px;
-    margin: auto;
-    background: #fff;
-    border-radius: 12px;
-    padding: 25px 30px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:"Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    background:#f5f7fa;
+    color:var(--ink);
 }
 
-/* 🧭 HEADER */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
+.page{padding:24px}
+
+/* Card container that matches the sketch */
+.tool-card{
+    max-width:1100px;
+    margin:0 auto;
+    background:#fff;
+    border-radius:28px;
+    padding:28px;
+    box-shadow:var(--shadow);
+    border:6px solid #222; /* thick rounded border vibe */
+    position:relative;
+
+    display:grid;
+    grid-template-columns:280px 1fr; /* image | content */
+    gap:24px 28px;
 }
 
-h1 {
-    color: #0078d4;
-    margin: 0;
+/* ---- Image block ---- */
+.tool-image img{
+    /*width:100%;*/
+    width: 200px;
+    height: 195px;
+    aspect-ratio:3/5;
+    object-fit:cover;
+    background:#111;
+    border-radius:24px;
 }
 
-.btn.back {
-    background-color: #64748b;
-    color: #fff;
-    padding: 8px 14px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 14px;
-    transition: 0.3s;
-}
-.btn.back:hover {
-    background-color: #475569;
-}
-
-/* 📘 TOOL INFO SECTION */
-.info {
-    line-height: 1.6;
+/* ---- Title + Description ---- */
+.title-pill{
+    grid-column:2;
+    margin:0;
+    font-size:28px;
+    line-height:1.25;
+    color:var(--ink);
+    background:var(--pill);
+    padding:10px 18px;
+    border-radius:16px;
+    display:inline-block;
 }
 
-.tool-img {
-    width: 180px;
-    height: 180px;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    margin-bottom: 15px;
-    display: block;
+.desc{
+    grid-column:2;
+    margin:10px 0 8px;
+    font-size:13px;
+    color:var(--muted);
 }
 
-.desc {
-    background-color: #f9fafb;
-    border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 15px;
+/* ---- License chips ---- */
+.license-chips{
+    grid-column:2;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(220px,1fr));
+    gap:10px 18px;
+    list-style:none;
+    padding:0;
+    margin:8px 0 6px;
+}
+.license-chips li{
+    background:var(--chip);
+    border-radius:999px;
+    padding:8px 14px;
+    font-weight:600;
+    font-size:13px;
+    width:max-content;
 }
 
-/* 📂 FILES SECTION */
-.files-section {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #e2e8f0;
+/* ---- Meta grid (labels + values) ---- */
+.meta-grid{
+    grid-column:2;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(240px,1fr));
+    gap:10px 24px;
+    margin-top:6px;
+}
+.meta-row{display:flex; gap:8px; align-items:center;}
+.meta-label{font-weight:700;}
+.meta-value{color:var(--ink);}
+
+/* Status badge palette (reused everywhere) */
+.badge{
+    padding:4px 10px;
+    border-radius:8px;
+    font-weight:700;
+}
+.badge.PUBLISHED   { background:#e6f4ea; color:#137333; }
+.badge.APPROVED    { background:#e0f2fe; color:#0369a1; }
+.badge.REJECTED    { background:#fdecea; color:#b91c1c; }
+.badge.PENDING     { background:#fff4e5; color:#b26a00; }
+.badge.SUSPECT     { background:#fff3cd; color:#856404; }
+.badge.VIOLATED    { background:#fde2e1; color:#b91c1c; }
+.badge.DEACTIVATED { background:#f1f1f1; color:#666; }
+
+/* ---- Files / Tokens box (bottom-left dashed) ---- */
+.files-section{
+    grid-column:1;
+    align-self:start;
+    background:#fff;
+    border:2px dashed #94a3b8;
+    border-radius:14px;
+    padding:14px 16px;
+    margin-top:8px;
+}
+.files-section h3{
+    margin:0 0 8px;
+    font-size:16px;
+}
+.file-list{
+    list-style:none;
+    padding:0;
+    margin:0 0 6px;
+}
+.file-list li{padding:4px 0}
+.file-list a{
+    color:#0078d4;
+    text-decoration:none;
+    font-weight:600;
+}
+.file-list a:hover{text-decoration:underline}
+.file-type{margin-left:6px; color:#64748b; font-size:12px}
+.no-file{color:#94a3b8; font-style:italic}
+
+/* Tokens grid */
+.token-block{margin-top:8px}
+.token-title{font-weight:700; margin:8px 0 6px}
+.token-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:6px 10px;
+}
+.token-grid span{
+    display:inline-block;
+    background:#eef2f6;
+    border-radius:16px;
+    padding:6px 10px;
+    font-size:12px;
+    font-weight:600;
 }
 
-.file-list {
-    list-style-type: none;
-    padding-left: 0;
-    margin-top: 8px;
+/* ---- Notes ---- */
+.note-box{
+    grid-column:2;
+    background:#f1f5f9;
+    padding:10px 12px;
+    border-left:4px solid #0078d4;
+    border-radius:10px;
+    margin-top:8px;
 }
 
-.file-list li {
-    padding: 6px 0;
+/* ---- Action buttons (Approve/Reject/Publish/Pending) ---- */
+.action-buttons{
+    grid-column:2;
+    display:flex;
+    gap:18px;
+    align-items:center;
+    justify-content:flex-start;
+    margin:6px 0 10px;
 }
 
-.file-list a {
-    color: #0078d4;
-    text-decoration: none;
-    font-weight: 500;
-}
-.file-list a:hover {
-    text-decoration: underline;
-}
-
-.no-file {
-    color: #999;
-    font-style: italic;
+.big-pill{
+    border-radius:999px;
+    padding:10px 22px;
+    font-weight:700;
+    font-size:14px;
+    border:none;
+    cursor:pointer;
+    color:#fff;
 }
 
-/* 🪙 TOKEN LIST */
-.file-list ul {
-    list-style-type: none;
-    margin-top: 10px;
-    padding-left: 20px;
-}
-.file-list ul li {
-    display: inline-block;
-    background-color: #eef2f6;
-    color: #333;
-    padding: 6px 10px;
-    margin: 4px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-}
+.btn-approve{ background:#28a745; } .btn-approve:hover{ background:#1e7e34; }
+.btn-reject { background:#dc3545; } .btn-reject:hover { background:#b02a37; }
+.btn-publish{ background:#28a745; } .btn-publish:hover{ background:#1e7e34; }
+.btn-pending{ background:#ffb400; } .btn-pending:hover{ background:#e0a106; }
 
-/* 🧾 NOTE */
-.note-box {
-    background-color: #f1f5f9;
-    padding: 10px;
-    border-left: 4px solid #0078d4;
-    border-radius: 6px;
-    margin-top: 8px;
+/* ---- Reason / Reject forms (toggleable) ---- */
+.reason-form,
+.reject-form{
+    grid-column:2;
+    background:#fff;
+    border:2px solid #0f172a22;
+    border-radius:16px;
+    padding:14px;
+    box-shadow:0 4px 10px rgba(0,0,0,.06);
+}
+.reason-title,
+.reject-title{
+    display:block;
+    font-weight:700;
+    margin-bottom:6px;
 }
 
-/* 🟢 STATUS */
-.status {
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-weight: bold;
-}
-.status.PUBLISHED { background-color: #e6f4ea; color: #137333; }
-.status.APPROVED { background-color: #e0f2fe; color: #0369a1; }
-.status.REJECTED { background-color: #fdecea; color: #b91c1c; }
-.status.PENDING { background-color: #fff4e5; color: #b26a00; }
-.status.SUSPECT { background-color: #fff3cd; color: #856404; }
-.status.VIOLATED { background-color: #fde2e1; color: #b91c1c; }
-.status.DEACTIVATED { background-color: #f1f1f1; color: #666; }
-
-/* ⚙️ ACTION SECTION */
-.actions {
-    margin-top: 25px;
-    padding-top: 15px;
-    border-top: 1px solid #e2e8f0;
+.reason-form textarea,
+.reject-form input[type="text"]{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin-bottom:10px;
+    font-size:14px;
+    resize:vertical;
 }
 
-.actions h3 {
-    color: #0078d4;
-    margin-bottom: 10px;
+.reason-actions,
+.reject-actions{
+    display:flex;
+    gap:10px;
 }
 
-.action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+.btn-confirm{
+    background:#0ea5e9;
+    color:#fff;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+}
+.btn-cancel{
+    background:#94a3b8;
+    color:#fff;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-/* 🎛️ BUTTON STYLES */
-.btn {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    color: #fff;
-    font-size: 14px;
-    transition: 0.3s;
+.hidden{display:none}
+
+/* ---- Back link ---- */
+.back-link{
+    position:absolute;
+    right:28px;
+    bottom:22px;
+    color:var(--ink);
+    text-decoration:none;
+    font-weight:700;
 }
-.btn-publish { background-color: #28a745; }
-.btn-publish:hover { background-color: #1e7e34; }
+.back-link:hover{text-decoration:underline}
 
-.btn-pending { background-color: #ffb400; }
-.btn-pending:hover { background-color: #e0a106; }
-
-.btn-reject { background-color: #dc3545; }
-.btn-reject:hover { background-color: #b02a37; }
-
-.note-form textarea {
-    width: 100%;
-    height: 70px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 8px;
-    font-size: 14px;
-    margin-bottom: 6px;
-    resize: none;
+/* ---- No-action notice ---- */
+.no-action{
+    grid-column:2;
+    text-align:center;
+    color:#666;
+    font-style:italic;
+    padding:15px;
 }
 
-/* ⚠️ NO ACTION */
-.no-action {
-    text-align: center;
-    color: #666;
-    font-style: italic;
-    padding: 15px;
-}
-
-/* 📱 RESPONSIVE */
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
-    .tool-img {
-        width: 100%;
-        height: auto;
-    }
-    .action-buttons {
-        flex-direction: column;
-    }
+/* ---- Responsive ---- */
+@media (max-width:900px){
+    .tool-card{grid-template-columns:1fr; padding:22px}
+    .files-section{grid-column:1}
+    .license-chips{grid-template-columns:1fr}
+    .token-grid{grid-template-columns:repeat(2,1fr)}
 }

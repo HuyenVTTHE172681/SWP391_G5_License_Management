@@ -19,7 +19,7 @@
             <a th:href="@{/moderator/history}">Uploaded Tools</a>
             <a th:href="@{/profile}">Profile</a>
             <a th:href="@{/profile/reset-password}">Change Password</a>
-            <a th:href="@{/logout}" class="text-danger">Logout</a>
+            <a th:href="@{/logout}" class="text-danger">Logout</a>x
         </nav>
     </aside>
 
@@ -30,22 +30,22 @@
         <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
             <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
                 <h3>Upload Requests</h3>
-                <p>Xem các tool đang chờ phê duyệt.</p>
+                <p th:text="${uploadRequest} + ' upload request is pending'"></p>
                 <a th:href="@{/moderator/uploadRequest}" class="btn-view">Go</a>
             </div>
             <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
                 <h3>Feedback Reports</h3>
-                <p>Quản lý các phản hồi từ người dùng.</p>
+                <p th:text="${feedbackReport} + ' feedback report is pending'"></p>
                 <a th:href="@{/moderator/feedback}" class="btn-view">Go</a>
             </div>
             <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
                 <h3>Tool Reports</h3>
-                <p>Xem các báo cáo công cụ vi phạm.</p>
+                <p th:text="${toolReport} + ' tool report is pending'"></p>
                 <a th:href="@{/moderator/reports}" class="btn-view">Go</a>
             </div>
             <div style="background: #fff; padding: 20px; border-radius: 10px; text-align: center;">
                 <h3>Uploaded Tools</h3>
-                <p>Theo dõi lịch sử duyệt hoặc từ chối tool.</p>
+                <p th:text="${reviewedTool} + ' request was reviewed'"></p>
                 <a th:href="@{/moderator/history}" class="btn-view">Go</a>
             </div>
         </div>
