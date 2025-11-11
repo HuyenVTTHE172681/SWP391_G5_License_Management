@@ -157,4 +157,10 @@ public class FeedbackRepositoryImpl {
     }
 
     // ====================== Helpers (nếu cần dùng sau) ======================
+    @Transactional(readOnly = true)
+    public Long getToolIdForFeedback(Long feedbackId) {
+        return feedbackRepo.findById(feedbackId)
+                .map(f -> f.getTool().getToolId())
+                .orElse(null);
+    }
 }

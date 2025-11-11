@@ -29,10 +29,6 @@ public class FeedbackController {
 
     @Autowired
     private FeedbackRepository feedbackRepo;
-
-    @Autowired
-    private AccountRepository accountRepo;
-
     public FeedbackController(FeedbackRepositoryImpl feedbackService) {
         this.feedbackService = feedbackService;
     }
@@ -89,12 +85,37 @@ public class FeedbackController {
     @GetMapping("/feedback/{feedbackId}/edit")
     public String editFeedbackForm(@PathVariable Long feedbackId,
                                    Model model,
-                                   Principal principal) {
-        var view = feedbackService.getFeedbackForEdit(feedbackId, principal);
-        model.addAttribute("tool", view.feedback().getTool());
-        model.addAttribute("fb", view.feedback());
-        model.addAttribute("fbComment", view.normalizedComment());
-        return "customer/feedback-edit-form";
+                                   Principal principal,
+                                   RedirectAttributes ra) {
+        try {
+            var view = feedbackService.getFeedbackForEdit(feedbackId, principal);
+
+            model.addAttribute("tool", view.feedback().getTool());
+            model.addAttribute("fb", view.feedback());
+            model.addAttribute("fbComment", view.normalizedComment());
+            return "customer/feedback-edit-form";
+
+        } catch (ResponseStatusException ex) {
+            // Chỉ xử lý case FORBIDDEN (hết thời gian/không có quyền)
+            if (ex.getStatusCode().value() == HttpStatus.FORBIDDEN.value()) {
+
+                Long toolId = feedbackService.getToolIdForFeedback(feedbackId);
+
+                ra.addFlashAttribute("error",
+                        ex.getReason() != null
+                                ? ex.getReason()
+                                : "Bạn không thể chỉnh sửa đánh giá này.");
+
+                if (toolId != null) {
+                    return "redirect:/tools/" + toolId + "#review";
+                } else {
+                    return "redirect:/tools";
+                }
+            }
+
+            // Các lỗi khác để Spring xử lý như cũ
+            throw ex;
+        }
     }
 
     /** Update feedback (POST) */
@@ -106,10 +127,30 @@ public class FeedbackController {
                                  RedirectAttributes ra,
                                  Principal principal) {
 
-        Long toolId = feedbackService.updateFeedback(feedbackId, rating, comment, status, principal);
-        ra.addFlashAttribute("ok", "Đã cập nhật đánh giá.");
-        return "redirect:/tools/" + toolId + "#review";
+        try {
+            Long toolId = feedbackService.updateFeedback(feedbackId, rating, comment, status, principal);
+            ra.addFlashAttribute("ok", "Đã cập nhật đánh giá.");
+            return "redirect:/tools/" + toolId + "#review";
+
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode().value() == HttpStatus.FORBIDDEN.value()) {
+                Long toolId = feedbackService.getToolIdForFeedback(feedbackId);
+
+                ra.addFlashAttribute("error",
+                        ex.getReason() != null
+                                ? ex.getReason()
+                                : "Bạn không thể chỉnh sửa đánh giá này.");
+
+                if (toolId != null) {
+                    return "redirect:/tools/" + toolId + "#review";
+                } else {
+                    return "redirect:/tools";
+                }
+            }
+            throw ex;
+        }
     }
+
 
 //    // ================== DELETE ==================
 //
