@@ -163,6 +163,9 @@ public class MyToolService {
         CustomerOrder order = loadOrderOr404(orderId);
         ensureOrderSuccess(order);
 
+        Tool tool = order.getTool();
+        ensureRenewAllowed(tool);   // CHẶN RENEW NẾU TOOL DEACTIVATED
+
         LicenseAccount acc = order.getLicenseAccount();
         if (acc == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn chưa được cấp license.");
@@ -257,6 +260,9 @@ public class MyToolService {
         CustomerOrder order = loadOrderOr404(orderId);
         ensureOrderSuccess(order);
 
+        Tool tool = order.getTool();
+        ensureRenewAllowed(tool);   // 🔥 CHẶN LUÔN CẢ LUỒNG THANH TOÁN
+
         LicenseAccount acc = order.getLicenseAccount();
         if (acc == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn chưa được cấp license.");
@@ -285,17 +291,24 @@ public class MyToolService {
         log.setRenewDate(now);
         log.setNewEndDate(newEnd);
 
-        // Ưu tiên số tiền từ transaction, nếu null thì fallback về price của license
         BigDecimal amountPaid =
                 (tx != null && tx.getAmount() != null)
                         ? tx.getAmount()
                         : (lic.getPrice() != null ? BigDecimal.valueOf(lic.getPrice()) : BigDecimal.ZERO);
         log.setAmountPaid(amountPaid);
 
-        // Nếu trong LicenseRenewLog bạn có field tham chiếu transaction thì set luôn ở đây
-        // ví dụ:
+        // Nếu có field transaction thì set thêm:
         // log.setTransaction(tx);
 
         renewRepo.save(log);
+    }
+    public void ensureRenewAllowed(Tool tool) {
+        if (tool.getLoginMethod() == Tool.LoginMethod.USER_PASSWORD
+                && tool.getStatus() == Tool.Status.DEACTIVATED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Tool đã bị seller vô hiệu hóa (DEACTIVATED), không thể gia hạn nữa."
+            );
+        }
     }
 }

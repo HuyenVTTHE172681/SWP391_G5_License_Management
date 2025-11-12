@@ -26,15 +26,49 @@
             </small>
         </div>
 
-        <div class="d-flex gap-2">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editModal">Edit</button>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#renewModal">Renew</button>
-            <a class="btn btn-outline-secondary" th:href="@{|/my-tools/${order.orderId}/history|}">History</a>
+        <div class="d-flex flex-column align-items-end gap-1">
+            <div class="d-flex gap-2">
+                <!-- Edit chỉ có ý nghĩa khi USER_PASSWORD -->
+                <button class="btn btn-primary"
+                        th:if="${tool.loginMethod != null && tool.loginMethod.name() == 'USER_PASSWORD'}"
+                        data-bs-toggle="modal" data-bs-target="#editModal">
+                    Edit
+                </button>
+
+                <!-- Nút Renew: chỉ enable nếu tool không DEACTIVATED -->
+                <button class="btn btn-success"
+                        th:if="${tool.loginMethod != null && tool.loginMethod.name() == 'USER_PASSWORD'
+                               && tool.status != null && tool.status.name() != 'DEACTIVATED'}"
+                        data-bs-toggle="modal" data-bs-target="#renewModal">
+                    Renew
+                </button>
+
+                <!-- Nếu DEACTIVATED thì disable nút -->
+                <button class="btn btn-success" type="button" disabled
+                        th:if="${tool.loginMethod != null && tool.loginMethod.name() == 'USER_PASSWORD'
+                               && tool.status != null && tool.status.name() == 'DEACTIVATED'}">
+                    Renew (tool đã bị vô hiệu hóa)
+                </button>
+
+                <a class="btn btn-outline-secondary"
+                   th:href="@{|/my-tools/${order.orderId}/history|}">
+                    History
+                </a>
+            </div>
+
+            <!-- Thông báo tool bị disable -->
+            <small class="text-danger"
+                   th:if="${tool.status != null && tool.status.name() == 'DEACTIVATED'}">
+            </small>
         </div>
     </div>
 
-    <!-- Chỉ hiển thị thông báo thành công ngoài trang -->
+    <!-- Flash message: success -->
     <div th:if="${ok}" class="alert alert-success" th:text="${ok}"></div>
+
+    <!-- Flash message: error từ các controller (RenewPaymentController, vv.) -->
+    <div th:if="${err}" class="alert alert-danger" th:text="${err}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
     <!-- THÔNG TIN TÀI KHOẢN -->
     <div class="table-responsive">
@@ -61,7 +95,8 @@
                 <th>Username</th>
                 <td class="d-flex align-items-center gap-2">
                     <span id="uVal" th:text="*{username}">user</span>
-                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="copyText('uVal')">Copy
+                    <button class="btn btn-sm btn-outline-secondary" type="button"
+                            onclick="copyText('uVal')">Copy
                     </button>
                 </td>
             </tr>
@@ -70,9 +105,11 @@
                 <th>Password</th>
                 <td class="d-flex align-items-center gap-2">
                     <code id="pVal" th:text="*{password}">******</code>
-                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="togglePwd()">Hiện/Ẩn
+                    <button class="btn btn-sm btn-outline-secondary" type="button"
+                            onclick="togglePwd()">Hiện/Ẩn
                     </button>
-                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="copyText('pVal')">Copy
+                    <button class="btn btn-sm btn-outline-primary" type="button"
+                            onclick="copyText('pVal')">Copy
                     </button>
                 </td>
             </tr>
@@ -193,7 +230,6 @@
 <!-- MODAL: RENEW -->
 <div class="modal fade" id="renewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <!-- đổi action: /renew-payment/vnpay -->
         <form class="modal-content" method="post" th:action="@{/renew-payment/vnpay}">
             <div class="modal-header">
                 <h5 class="modal-title">Chọn gói gia hạn</h5>
@@ -210,8 +246,8 @@
 
                 <div class="list-group" th:if="${!#lists.isEmpty(licenses)}">
                     <label class="list-group-item d-flex align-items-center" th:each="l : ${licenses}">
-                        <input class="form-check-input me-2" type="radio" name="licenseId" th:value="${l.licenseId}"
-                               required>
+                        <input class="form-check-input me-2" type="radio"
+                               name="licenseId" th:value="${l.licenseId}" required>
                         <div class="flex-grow-1">
                             <div class="fw-semibold" th:text="${l.name}">Gói</div>
                             <small class="text-muted">
@@ -233,7 +269,8 @@
 
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Đóng</button>
-                <button class="btn btn-success" type="submit" th:disabled="${#lists.isEmpty(licenses)}">
+                <button class="btn btn-success" type="submit"
+                        th:disabled="${#lists.isEmpty(licenses)}">
                     Thanh toán VNPay
                 </button>
             </div>
@@ -245,11 +282,56 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script th:inline="javascript">
-    document.addEventListener('DOMContentLoaded', function () {
-        // setup text password ở bảng
+    function copyText(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const text = (el.textContent || el.value || '').trim();
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text);
+        } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+    }
+
+    function togglePwd() {
         const el = document.getElementById('pVal');
-        if (el && !el.dataset.orig) el.dataset.orig = el.textContent;
-        if (el) el.dataset.real = '1';
+        if (!el) return;
+
+        if (!el.dataset.orig) {
+            el.dataset.orig = el.textContent;
+        }
+
+        if (el.dataset.hidden === '1') {
+            // đang ẩn -> hiện
+            el.textContent = el.dataset.orig;
+            el.dataset.hidden = '0';
+        } else {
+            // đang hiện -> ẩn
+            el.textContent = '******';
+            el.dataset.hidden = '1';
+        }
+    }
+
+    function togglePwdEdit() {
+        const input = document.getElementById('pwdInput');
+        if (!input) return;
+        input.type = (input.type === 'password') ? 'text' : 'password';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // setup text password ở bảng: mặc định ẩn
+        const el = document.getElementById('pVal');
+        if (el && !el.dataset.orig) {
+            el.dataset.orig = el.textContent;
+            el.textContent = '******';
+            el.dataset.hidden = '1';
+        }
 
         // Nếu BE set showEditModal = true thì tự mở lại modal Edit
         var showEditModal = /*[[${showEditModal}]]*/ false;
@@ -265,10 +347,11 @@
         const form = document.getElementById('editForm');
         if (!form) return;
 
-        form.querySelectorAll('input[required]').forEach(inp => {
-            const refresh = () => {
+        form.querySelectorAll('input[required]').forEach(function (inp) {
+            const refresh = function () {
                 if (!inp.value) {
-                    inp.classList.remove('is-invalid', 'is-valid');
+                    inp.classList.remove('is-invalid');
+                    inp.classList.remove('is-valid');
                     return;
                 }
                 if (inp.checkValidity()) {
@@ -285,4 +368,13 @@
 
         form.addEventListener('submit', function (e) {
             if (!form.checkValidity()) {
-                e.preventDefaul
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+</script>
+
+</body>
+</html>

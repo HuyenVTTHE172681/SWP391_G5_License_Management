@@ -3,15 +3,16 @@ package swp391.fa25.lms.controller.common;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Account;
 import swp391.fa25.lms.model.License;
 import swp391.fa25.lms.service.customer.MyToolService;
 import swp391.fa25.lms.service.customer.PaymentRenewService;
-import swp391.fa25.lms.service.customer.PaymentService;
 
 import java.util.Map;
 
@@ -48,6 +49,7 @@ public class RenewPaymentController {
                 ra.addFlashAttribute("err", "Bạn không có quyền truy cập đơn hàng này.");
                 return "redirect:/orders";
             }
+            myToolService.ensureRenewAllowed(vd.tool());
 
             License lic = vd.licenses().stream()
                     .filter(l -> l.getLicenseId().equals(licenseId))
@@ -61,6 +63,14 @@ public class RenewPaymentController {
             model.addAttribute("orderId", orderId);
             model.addAttribute("licenseId", licenseId);
             return "public/payment-sandbox";
+        } catch (ResponseStatusException ex) {
+
+            if (ex.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                ra.addFlashAttribute("err", ex.getReason());
+            } else {
+                ra.addFlashAttribute("err", "Không thể tải thông tin gia hạn: " + ex.getReason());
+            }
+            return "redirect:/my-tools/" + orderId;
         } catch (Exception ex) {
             ra.addFlashAttribute("err", "Không thể tải thông tin gia hạn: " + ex.getMessage());
             return "redirect:/orders";
@@ -87,8 +97,18 @@ public class RenewPaymentController {
                 return "redirect:/orders";
             }
 
+            // 🔥 Check tool có được phép renew không (DEACTIVATED sẽ ném 400)
+            myToolService.ensureRenewAllowed(vd.tool());
+
             String url = paymentService.createRenewPaymentUrl(orderId, licenseId, login, request);
             return "redirect:" + url;
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                // VD: "Tool đã bị seller vô hiệu hóa (DEACTIVATED), không thể gia hạn nữa."
+                ra.addFlashAttribute("err", ex.getReason());
+                return "redirect:/my-tools/" + orderId;
+            }
+            throw ex; // các lỗi khác để Spring xử lý (404, 500,...)
         } catch (Exception ex) {
             ra.addFlashAttribute("err", "Không thể tạo thanh toán VNPay: " + ex.getMessage());
             return "redirect:/renew-payment?orderId=" + orderId + "&licenseId=" + licenseId;
