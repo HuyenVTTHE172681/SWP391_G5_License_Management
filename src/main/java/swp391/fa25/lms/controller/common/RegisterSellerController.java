@@ -5,6 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -73,7 +74,7 @@ public class RegisterSellerController {
             return "public/registerGuestToSeller";
         }
 
-        if(!email.contains("@gmail.com")){
+        if(!email.contains("@")){
             model.addAttribute("error", "Vui lòng nhập lại Email");
             return "public/registerGuestToSeller";
         }
@@ -117,7 +118,6 @@ public class RegisterSellerController {
             model.addAttribute("error", "Mật khẩu không được có dấu cách");
             return "public/registerGuestToSeller";
         }
-
         Optional<Account> existingOpt = accountRepo.findByEmail(email);
         Account account = existingOpt.orElse(new Account());
 
