@@ -16,6 +16,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     // --- Tra cứu cơ bản ---
     Optional<Account> findByEmail(String email);
 
+    boolean findAccountByEmail(String email);
+
     boolean existsByEmail(String email);
 
     Page<Account> findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
