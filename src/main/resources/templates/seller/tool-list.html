@@ -49,7 +49,6 @@
 </section>
 
 <!-- ===== Flash Messages ===== -->
-<div th:if="${success}" class="alert alert-success text-center" th:text="${success}"></div>
 <div th:if="${error}" class="alert alert-danger text-center" th:text="${error}"></div>
 
 <!-- ===== Seller Expired Notice ===== -->
@@ -181,11 +180,11 @@
                             <p class="fw-semibold text-primary mb-2">
                                 <span th:if="${#lists.isEmpty(tool.licenses)}">No license yet</span>
                                 <span th:each="lic : ${tool.licenses}">
-                                [[${lic.durationDays != null ? lic.durationDays + ' Day: ' + lic.price + '₫' : '∞: ' + lic.price + '₫'}]]<br>
+                                <span th:if="${lic.durationDays != null}">[[${lic.durationDays}]] Day:</span>
+                                    [[${#numbers.formatDecimal(lic.price, 0, 'POINT', 0, 'COMMA')}]] VNĐ
+                                    <br>
                                 </span>
                             </p>
-                        </div>
-
                         <!-- Footer: Buttons & Status -->
                         <div class="mt-auto d-flex justify-content-between align-items-center">
                             <a th:href="@{/seller/tools/edit/{id}(id=${tool.toolId})}"
@@ -193,16 +192,16 @@
                                 <i class="bi bi-pencil"></i> Edit
                             </a>
 
-                            <!-- ✅ Hiển thị badge theo status luôn, không cần unless -->
+                            <!-- ✅ Hiển thị badge theo status luôn-->
                             <span th:switch="${tool.status?.name()}">
                                 <span th:case="'PENDING'" class="badge bg-warning text-dark">Pending</span>
                                 <span th:case="'APPROVED'" class="badge bg-success">Approved</span>
-                            <span th:case="'REJECTED'" class="badge bg-danger">Rejected</span>
-                            <span th:case="'PUBLISHED'" class="badge bg-primary">Published</span>
-                            <span th:case="'DEACTIVATED'" class="badge bg-secondary">Deactivated</span>
-                            <span th:case="'SUSPECT'" class="badge bg-dark">Suspect</span>
-                            <span th:case="'VIOLATED'" class="badge bg-danger">Violated</span>
-                            <span th:case="*" class="badge bg-light text-dark">Unknown</span>
+                                <span th:case="'REJECTED'" class="badge bg-danger">Rejected</span>
+                                <span th:case="'PUBLISHED'" class="badge bg-primary">Published</span>
+                                <span th:case="'DEACTIVATED'" class="badge bg-secondary">Deactivated</span>
+                                <span th:case="'SUSPECT'" class="badge bg-dark">Suspect</span>
+                                <span th:case="'VIOLATED'" class="badge bg-danger">Violated</span>
+                                <span th:case="*" class="badge bg-light text-dark">Unknown</span>
                             </span>
 
                             <!-- ✅ Nếu là published thì thêm nút deactivate -->
@@ -231,8 +230,8 @@
             <a th:if="${tools.hasNext()}"
                th:href="@{/seller/tools(page=${tools.number + 1}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, loginMethod=${loginMethod}, sort=${sort})}"
                class="btn btn-outline-secondary btn-sm">Next →</a>
+            </div>
         </div>
-
     </div>
 </section>
 

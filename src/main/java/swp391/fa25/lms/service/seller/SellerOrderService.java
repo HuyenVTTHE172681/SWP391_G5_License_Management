@@ -6,6 +6,7 @@ import swp391.fa25.lms.model.CustomerOrder;
 import swp391.fa25.lms.repository.CustomerOrderRepository;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -27,50 +28,77 @@ public class SellerOrderService {
             String sort
     ) {
         List<CustomerOrder> orders = orderRepo.findByToolSeller(seller);
+        List<CustomerOrder> result = new ArrayList<>(orders);
 
-        // 🔍 Lọc theo keyword
+// ================== FILTER KEYWORD ==================
         if (keyword != null && !keyword.isBlank()) {
             String kw = keyword.toLowerCase();
-            orders = orders.stream()
-                    .filter(o -> o.getTool().getToolName().toLowerCase().contains(kw)
-                            || o.getAccount().getFullName().toLowerCase().contains(kw))
-                    .toList();
-        }
+            List<CustomerOrder> temp = new ArrayList<>();
 
-        // 🔍 Lọc theo trạng thái
+            for (CustomerOrder o : result) {
+                String toolName = o.getTool().getToolName().toLowerCase();
+                String buyerName = o.getAccount().getFullName().toLowerCase();
+
+                if (toolName.contains(kw) || buyerName.contains(kw)) {
+                    temp.add(o);
+                }
+            }
+            result = temp;
+        }
         if (status != null && !status.isBlank()) {
-            orders = orders.stream()
-                    .filter(o -> o.getOrderStatus().name().equalsIgnoreCase(status))
-                    .toList();
+            List<CustomerOrder> temp = new ArrayList<>();
+            for (CustomerOrder o : result) {
+                if (o.getOrderStatus().name().equalsIgnoreCase(status)) {
+                    temp.add(o);
+                }
+            }
+            result = temp;
         }
-
-        // 🔍 Lọc theo ngày tạo
         if (from != null) {
-            orders = orders.stream()
-                    .filter(o -> !o.getCreatedAt().toLocalDate().isBefore(from))
-                    .toList();
-        }
-        if (to != null) {
-            orders = orders.stream()
-                    .filter(o -> !o.getCreatedAt().toLocalDate().isAfter(to))
-                    .toList();
+            List<CustomerOrder> temp = new ArrayList<>();
+
+            for (CustomerOrder o : result) {
+                LocalDate created = o.getCreatedAt().toLocalDate();
+
+                if (!created.isBefore(from)) {
+                    temp.add(o);
+                }
+            }
+
+            result = temp;
         }
 
-        // 🔃 Sắp xếp
+        if (to != null) {
+            List<CustomerOrder> temp = new ArrayList<>();
+
+            for (CustomerOrder o : result) {
+                LocalDate created = o.getCreatedAt().toLocalDate();
+
+                if (!created.isAfter(to)) {
+                    temp.add(o);
+                }
+            }
+            result = temp;
+        }
+
+        orders = result;
         Comparator<CustomerOrder> cmp = switch (sort) {
             case "oldest" -> Comparator.comparing(CustomerOrder::getCreatedAt);
             case "highest" -> Comparator.comparing(CustomerOrder::getPrice).reversed();
             case "lowest" -> Comparator.comparing(CustomerOrder::getPrice);
-            default -> Comparator.comparing(CustomerOrder::getCreatedAt).reversed(); // newest
+            default -> Comparator.comparing(CustomerOrder::getCreatedAt).reversed();
         };
         return orders.stream().sorted(cmp).toList();
     }
 
     public double calculateTotalRevenue(List<CustomerOrder> orders) {
-        return orders.stream()
-                .filter(o -> o.getOrderStatus() == CustomerOrder.OrderStatus.SUCCESS)
-                .mapToDouble(CustomerOrder::getPrice)
-                .sum();
+        double total = 0;
+        for (CustomerOrder order : orders) {
+            if (order.getOrderStatus() == CustomerOrder.OrderStatus.SUCCESS) {
+                total += order.getPrice();
+            }
+        }
+        return total;
     }
 
     public List<CustomerOrder> paginate(List<CustomerOrder> orders, int page, int size) {

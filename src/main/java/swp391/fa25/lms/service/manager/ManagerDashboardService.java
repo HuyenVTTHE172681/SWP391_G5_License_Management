@@ -59,14 +59,11 @@ public class ManagerDashboardService {
     }
 
     // ==========================================================
-    // 1️⃣ Biểu đồ: Seller Package Purchases
+    // Biểu đồ: Seller Package Purchases
     // ==========================================================
     public List<Map<String, Object>> getSellerPackageChart(String periodType,
                                                            LocalDate start,
                                                            LocalDate end) {
-
-        System.out.println("\n=======================");
-        System.out.println("📦 [DEBUG] getSellerPackageChart()");
         System.out.println("PeriodType = " + periodType + ", Start = " + start + ", End = " + end);
 
         List<SellerSubscription> subscriptions = subscriptionRepository.findAll();

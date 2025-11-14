@@ -43,10 +43,6 @@ public class ToolController {
     // ==========================================================
     // 🔹 FLOW 1: TOOL LIST + MANAGEMENT
     // ==========================================================
-
-    /**
-     * ✅ Trang danh sách Tool của seller
-     */
     @GetMapping
     public String showToolList(
             Model model,
@@ -62,19 +58,11 @@ public class ToolController {
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(defaultValue = "newest") String sort
     ) {
-        // ✅ Kiểm tra login
         Account seller = (Account) session.getAttribute("loggedInAccount");
         if (seller == null) {
             redirectAttrs.addFlashAttribute("error", "Session expired. Please login again.");
             return "redirect:/login";
         }
-
-        // ✅ Kiểm tra seller package
-        if (!accountService.isSellerActive(seller)) {
-            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
-            return "redirect:/seller/renew";
-        }
-
         // ✅ Kiểm tra hạn dùng seller
         boolean isActive = accountService.isSellerActive(seller);
         model.addAttribute("sellerExpired", !isActive);
@@ -87,7 +75,6 @@ public class ToolController {
             default -> PageRequest.of(page, size, Sort.by("createdAt").descending());
         };
 
-        // ✅ Lấy danh sách tool từ service (repository đã hỗ trợ filter)
         Page<Tool> tools = toolService.searchToolsForSeller(
                 seller.getAccountId(),
                 keyword,
@@ -98,7 +85,6 @@ public class ToolController {
                 maxPrice,
                 pageable
         );
-
         // ✅ Đưa dữ liệu ra view
         model.addAttribute("categories", toolService.getAllCategories());
         model.addAttribute("tools", tools);
@@ -140,9 +126,6 @@ public class ToolController {
     // 🔹 FLOW 2: TOOL CREATION
     // ==========================================================
 
-    /**
-     * ✅ Hiển thị form Add Tool
-     */
     @GetMapping("/add")
     public String showAddToolForm(Model model, HttpSession session,RedirectAttributes redirectAttrs) {
 

@@ -65,8 +65,6 @@ public class FileStorageService {
         if (originalName == null || originalName.isBlank()) {
             throw new IllegalArgumentException("File name is invalid.");
         }
-
-        // Lấy phần mở rộng của file
         String lowerName = originalName.toLowerCase();
         boolean valid = allowedExtensions.stream().anyMatch(lowerName::endsWith);
 
@@ -83,10 +81,12 @@ public class FileStorageService {
         Files.createDirectories(uploadDir);
 
         String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : "";
+        String extension = "";
 
+        if (originalFilename != null && originalFilename.contains(".")) {
+            int lastDotIndex = originalFilename.lastIndexOf(".");
+            extension = originalFilename.substring(lastDotIndex);
+        }
         String newFilename = UUID.randomUUID() + extension;
         Path targetPath = uploadDir.resolve(newFilename);
         Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);

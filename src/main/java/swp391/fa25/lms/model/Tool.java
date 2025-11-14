@@ -30,10 +30,10 @@ public class Tool {
     @NotBlank(message = "Tool name cannot be blank")
     @Size(max = 100, message = "Tool name must be less than 100 characters")
     @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
-//    @Pattern(
-//            regexp = "^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$",
-//            message = "Tool name can only contain letters and numbers, separated by a single space"
-//    )
+    @Pattern(
+            regexp = "^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$",
+            message = "Tool name can only contain letters and numbers, separated by a single space"
+    )
     private String toolName;
 
     private String reviewedBy;
@@ -49,7 +49,6 @@ public class Tool {
     @ManyToOne
     @JoinColumn(name = "seller_id")
     @com.fasterxml.jackson.annotation.JsonBackReference(value = "tool-seller")
-//    @JsonManagedReference(value = "tool-seller")
     private Account seller;
 
     @Enumerated(EnumType.STRING)

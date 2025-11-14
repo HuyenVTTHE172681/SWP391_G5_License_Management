@@ -31,12 +31,6 @@ public class TokenController {
     // ==========================================================
     // 🔹 FLOW 1: TOKEN FINALIZATION (KHI TẠO TOOL MỚI)
     // ==========================================================
-
-    /**
-     * ✅ Hiển thị trang nhập token sau khi seller chọn loginMethod = TOKEN.
-     * - Dùng session "pendingTool"
-     * - Nếu session không tồn tại → quay lại trang Add Tool
-     */
     @GetMapping
     public String showTokenManage(HttpSession session, RedirectAttributes redirectAttrs) {
         Account seller = (Account) session.getAttribute("loggedInAccount");
@@ -44,7 +38,6 @@ public class TokenController {
             redirectAttrs.addFlashAttribute("error", "Please login first.");
             return "redirect:/login";
         }
-
         var pendingTool = session.getAttribute("pendingTool");
         if (pendingTool == null) {
             redirectAttrs.addFlashAttribute("error", "No pending tool found. Please create a tool first.");
@@ -52,12 +45,6 @@ public class TokenController {
         }
         return "seller/token-manage";
     }
-
-    /**
-     * ✅ Khi seller nhập danh sách token và bấm “Finalize Tool”
-     * - Validate token format (6 số)
-     * - Gọi ToolFlowService để finalize và lưu vào DB
-     */
     @PostMapping("/submit")
     public String finalizeNewToolTokens(
             @RequestParam("tokens")
@@ -91,9 +78,6 @@ public class TokenController {
         return "redirect:/seller/token-manage";
     }
 
-    /**
-     * ✅ Khi seller bấm “Cancel” → xóa tool tạm trong session & quay lại form add tool
-     */
     @PostMapping("/back")
     public String cancelNewToolCreation(HttpSession session, RedirectAttributes redirectAttrs) {
            Account seller = (Account) session.getAttribute("loggedInAccount");

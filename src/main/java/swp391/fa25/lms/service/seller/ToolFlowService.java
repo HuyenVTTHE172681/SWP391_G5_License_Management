@@ -49,6 +49,17 @@ public class ToolFlowService {
             throw new IllegalArgumentException("Tool name already exists.");
 
         Category category = toolService.getCategoryById(categoryId);
+        for (Double price : licensePrices) {
+            if (price == null) {
+                throw new IllegalArgumentException("License price cannot be null.");
+            }
+            if (price < 10000) {
+                throw new IllegalArgumentException("License price must be greater than or equal to 10,000 VND.");
+            }
+            if (price > 100_000_000) {
+                throw new IllegalArgumentException("License price cannot exceed 100,000,000 VND because VNPAY sandbox will error when paying.");
+            }
+        }
 
         // ✅ Upload file ảnh + tool
         String imagePath = fileStorageService.uploadImage(imageFile);
@@ -153,11 +164,25 @@ public class ToolFlowService {
             HttpSession session
     ) throws IOException {
 
-        // ✅ Upload ảnh nếu có
         if (imageFile != null && !imageFile.isEmpty()) {
             updatedTool.setImage(fileStorageService.uploadImage(imageFile));
         } else {
             updatedTool.setImage(existingTool.getImage());
+        }
+        if (licensePrices != null) {
+            for (Double price : licensePrices) {
+                if (price == null) {
+                    throw new IllegalArgumentException("License cannot have null value.");
+                }
+                if (price < 10000) {
+                    throw new IllegalArgumentException("License price must be greater than or equal to 10,000 VND.");
+                }
+                if (price > 100_000_000) {
+                    throw new IllegalArgumentException(
+                            "License price cannot exceed 100,000,000 VND because VNPAY sandbox will error when paying."
+                    );
+                }
+            }
         }
 
         // ✅ Upload file tool nếu có

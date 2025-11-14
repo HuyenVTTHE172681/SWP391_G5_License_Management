@@ -106,6 +106,17 @@ public class ToolService {
 
         // 🔹 Cập nhật License (chỉ update nội dung, không clear list để tránh mất dữ liệu)
         if (licenseDays != null && licensePrices != null && licenseDays.size() == licensePrices.size()) {
+            for (Double price : licensePrices) {
+                if (price == null) {
+                    throw new IllegalArgumentException("License price cannot be null.");
+                }
+                if (price < 10000) {
+                    throw new IllegalArgumentException("License price must be greater than or equal to 10,000 VND.");
+                }
+                if (price > 100_000_000) {
+                    throw new IllegalArgumentException("License price cannot exceed 100,000,000 VND because VNPAY sandbox will error when paying.");
+                }
+            }
             List<License> existingLicenses = licenseRepository.findByTool_ToolId(existingTool.getToolId());
 
             for (int i = 0; i < licenseDays.size(); i++) {
