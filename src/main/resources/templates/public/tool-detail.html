@@ -65,7 +65,7 @@
 
             <div class="mb-2 sellerName">
                 <p>Người bán: <b th:text="${tool.seller.fullName}">Seller</b></p>
-                <p>Kho: <b th:text="${tool.quantity}">0</b></p>
+                <p>Kho: <b th:text="${tool.availableQuantity}">0</b></p>
 
                 <div class="price">
                     <span id="license-price"
@@ -100,8 +100,8 @@
                            th:value="${tool.licenses.size() > 0 ? tool.licenses[0].licenseId : 0}">
                     <button type="button"
                             class="btn btn-success px-4"
-                            th:disabled="${tool.quantity == 0}"
-                            th:text="${tool.quantity == 0 ? 'Hết hàng' : 'Mua hàng'}"
+                            th:disabled="${tool.availableQuantity == 0}"
+                            th:text="${tool.availableQuantity == 0 ? 'Hết hàng' : 'Mua hàng'}"
                             onclick="buyNow()">
                     </button>
                 </form>
@@ -329,8 +329,8 @@
 
     function buyNow(){
         const selected = document.querySelector('.license-item.active');
-        const quantity = /*[[${tool.quantity}]]*/ 0;
-        if (quantity <= 0) return alert("Sản phẩm này hiện đã hết hàng, vui lòng quay lại sau!");
+        const availableQuantity = /*[[${tool.availableQuantity}]]*/ 0;
+        if (availableQuantity <= 0) return alert("Sản phẩm này hiện đã hết hàng, vui lòng quay lại sau!");
         if (!selected) return alert('Vui lòng chọn gói license trước khi mua hàng!');
         if (!isLoggedIn) { new bootstrap.Modal(document.getElementById('loginModal')).show(); return; }
         document.getElementById('buyForm').submit();

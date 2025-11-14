@@ -65,7 +65,7 @@ public class MyToolService {
         }
 
         Tool tool = order.getTool();
-
+        tool.setAvailableQuantity(tool.getQuantity() - accRepo.findByStatusAndLicense_Tool_ToolId(LicenseAccount.Status.ACTIVE, tool.getToolId()).size());
         // Lấy loginMethod, nếu null thì default USER_PASSWORD
         Tool.LoginMethod method = tool.getLoginMethod() != null
                 ? tool.getLoginMethod()

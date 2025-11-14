@@ -9,6 +9,7 @@ import swp391.fa25.lms.repository.LicenseAccountRepository;
 import swp391.fa25.lms.repository.LicenseToolRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -203,5 +204,8 @@ public class LicenseAccountService {
         } catch (Exception e) {
             return true; // tạm cho vào nếu bạn chưa làm trạng thái
         }
+    }
+    public List<LicenseAccount> getActiveLicenses(long toolId) {
+        return accRepo.findByStatusAndLicense_Tool_ToolId(LicenseAccount.Status.ACTIVE, toolId);
     }
 }
