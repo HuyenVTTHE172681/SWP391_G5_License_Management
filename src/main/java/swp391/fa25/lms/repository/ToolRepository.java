@@ -27,7 +27,7 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
 
     List<Tool> findAll(Sort sort);
 
-    List<Tool> findAll(Specification<Tool> spec);
+    Page<Tool> findAll(Specification<Tool> spec, Pageable pageable);
 
     Tool findByToolId(long toolId);
 

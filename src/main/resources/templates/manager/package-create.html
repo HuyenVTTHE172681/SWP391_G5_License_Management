@@ -23,7 +23,7 @@
                 isValid = false;
             }
 
-            if (isNaN(price) || price <= 0 || price > 10000) {
+            if (isNaN(price) || price <= 0 || price > 10000000) {
                 msg += "Price must be greater than 0 and less than or equal to 10,000.\n";
                 isValid = false;
             }
@@ -39,21 +39,21 @@
 <div class="container">
     <a th:href="@{/manager/package/list}" class="btn btn-back">Back</a>
     <h1>Create New Package</h1>
-    <form th:action="@{/manager/package/create}" method="post" class="form-box" onsubmit="validateForm(event)">
+    <form th:action="@{/manager/package/create}" method="post" class="form-box" onsubmit="validateForm(event)" th:object="${sellerPackage}">
         <p style="color: red" th:text="${errMsg}"></p>
 
         <label>Package Name:</label>
-        <input id="packageName" type="text" name="packageName" placeholder="Enter package name">
-
+        <input type="text" th:field="*{packageName}" placeholder="Enter package name">
+        <p th:errors="*{packageName}" style="color: red"></p>
         <label>Duration (months):</label>
-        <input id="durationInMonths" type="number" name="durationInMonths" min="1" max="60" placeholder="e.g. 12">
-
+        <input type="number" th:field="*{durationInMonths}" min="1" max="60" placeholder="e.g. 12">
+        <p th:errors="*{durationInMonths}" style="color: red"></p>
         <label>Price ($):</label>
-        <input id="price" type="number" name="price" step="0.01" min="0.01" max="10000" placeholder="e.g. 99.99">
-
+        <input type="number" th:field="*{price}" step="1000" min="1000" max="10000000" placeholder="e.g. 99.99">
+        <p th:errors="*{price}" style="color: red"></p>
         <label>Description:</label>
-        <textarea id="description" name="description" rows="3" placeholder="Optional description..."></textarea>
-
+        <textarea th:field="*{description}" rows="3" placeholder="Optional description..."></textarea>
+        <p th:errors="*{description}" style="color: red"></p>
         <button type="submit" class="btn btn-save">Save</button>
 
     </form>

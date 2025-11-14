@@ -4,6 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -88,20 +92,28 @@ public class ManagerDashboardController {
                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedFrom,
                          @RequestParam(required = false)
                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedTo,
+                         @RequestParam(defaultValue = "0") int page,
+                         @RequestParam(defaultValue = "10") int size,
                          Model model) {
 
-        List<Tool> toolList = toolService.filterApprovedTools(
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Page<Tool> toolPage = toolService.filterApprovedTools(
                 sellerId,
                 categoryId,
                 uploadFrom,
                 uploadTo,
                 approvedFrom,
-                approvedTo
+                approvedTo,
+                pageable
         );
 
         List<Category> categories = categoryService.getAllCategories();
-
-        model.addAttribute("toolList", toolList);
+        model.addAttribute("toolList", toolPage.getContent());
+        model.addAttribute("toolPage", toolPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", toolPage.getTotalPages());
+        model.addAttribute("pageSize", size);
         model.addAttribute("categories", categories);
         model.addAttribute("sellerId", sellerId);
         model.addAttribute("categoryId", categoryId);
@@ -112,6 +124,7 @@ public class ManagerDashboardController {
 
         return "manager/upload-tool";
     }
+
 
     @GetMapping("/tool/{id}")
     public String viewToolDetail(@PathVariable("id") Long id, Model model) {
@@ -190,22 +203,36 @@ public class ManagerDashboardController {
     public String listTools(
             @RequestParam(required = false) Long sellerId,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedTo,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedFrom,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedTo,
             @RequestParam(required = false) String reviewedBy,
             @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             Model model
     ) {
-        List<Tool> tools = toolService.filterNonPendingTools(
-                sellerId, categoryId, uploadFrom, uploadTo, approvedFrom, approvedTo, reviewedBy, status
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Page<Tool> tools = toolService.filterNonPendingTools(
+                sellerId, categoryId, uploadFrom, uploadTo,
+                approvedFrom, approvedTo, reviewedBy, status, pageable
         );
+
         List<Category> categories = categoryService.getAllCategories();
 
         model.addAttribute("categories", categories);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("tools", tools);
+        model.addAttribute("tools", tools.getContent());
+        model.addAttribute("toolPage", tools);
+        model.addAttribute("currentPage", tools.getNumber());
+        model.addAttribute("totalPages", tools.getTotalPages());
+        model.addAttribute("pageSize", tools.getSize());
         model.addAttribute("selectedSellerId", sellerId);
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("uploadFrom", uploadFrom);

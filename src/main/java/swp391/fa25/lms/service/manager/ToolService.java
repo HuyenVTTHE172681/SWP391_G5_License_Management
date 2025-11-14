@@ -2,6 +2,8 @@ package swp391.fa25.lms.service.manager;
 
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import swp391.fa25.lms.model.Tool;
@@ -22,13 +24,14 @@ public class ToolService {
         return toolRepository.findByToolId(id);
     }
 
-    public List<Tool> filterApprovedTools(
+    public Page<Tool> filterApprovedTools(
             Long sellerId,
             Long categoryId,
             LocalDateTime uploadFrom,
             LocalDateTime uploadTo,
             LocalDateTime approvedFrom,
-            LocalDateTime approvedTo
+            LocalDateTime approvedTo,
+            Pageable pageable
     ) {
         Specification<Tool> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -57,20 +60,20 @@ public class ToolService {
                 predicates.add(cb.lessThanOrEqualTo(root.get("updatedAt"), approvedTo));
             }
 
-
             predicates.add(cb.equal(root.get("status"), Tool.Status.APPROVED));
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return toolRepository.findAll(spec);
+        return toolRepository.findAll(spec, pageable);
     }
+
 
     public void save(Tool tool) {
         toolRepository.save(tool);
     }
 
-    public List<Tool> filterNonPendingTools(
+    public Page<Tool> filterNonPendingTools(
             Long sellerId,
             Long categoryId,
             LocalDateTime uploadFrom,
@@ -78,7 +81,8 @@ public class ToolService {
             LocalDateTime approvedFrom,
             LocalDateTime approvedTo,
             String reviewedBy,
-            String status
+            String status,
+            Pageable pageable
     ) {
         Specification<Tool> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -122,6 +126,6 @@ public class ToolService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return toolRepository.findAll(spec);
+        return toolRepository.findAll(spec, pageable);
     }
 }

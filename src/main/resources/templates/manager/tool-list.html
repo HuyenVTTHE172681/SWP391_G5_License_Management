@@ -33,7 +33,7 @@
             <form method="get" th:action="@{/manager/tool/list}" class="filter-form">
                 <div class="filter-group">
                     <label>Seller ID:</label>
-                    <input type="number" name="sellerId" th:value="${selectedSellerId}">
+                    <input type="number" name="sellerId" th:value="${selectedSellerId}" min="1">
                 </div>
 
                 <div class="filter-group">
@@ -109,7 +109,7 @@
                 <tr th:each="t : ${tools}">
                     <td th:text="${t.toolId}"></td>
                     <td th:text="${t.toolName}"></td>
-                    <td th:text="${t.seller.fullName}"></td>
+                    <td th:text="${t.seller.getAccountId()} + '. ' +${t.seller.fullName}"></td>
                     <td th:text="${t.category.categoryName}"></td>
                     <td><span th:text="${t.status}" th:class="'status ' + ${t.status}"></span></td>
                     <td th:text="${t.reviewedBy}"></td>
@@ -124,6 +124,63 @@
                 </tr>
                 </tbody>
             </table>
+            <!-- 🔢 PAGINATION -->
+            <div class="pagination-wrapper" th:if="${totalPages > 1}">
+                <div class="pagination">
+                    <!-- Nút Prev -->
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/manager/tool/list(
+                            page=${currentPage - 1},
+                            size=${pageSize},
+                            sellerId=${selectedSellerId},
+                            categoryId=${categoryId},
+                            uploadFrom=${uploadFrom},
+                            uploadTo=${uploadTo},
+                            approvedFrom=${approvedFrom},
+                            approvedTo=${approvedTo},
+                            reviewedBy=${reviewedBy},
+                            status=${status}
+                       )}">
+                        « Prev
+                    </a>
+
+                    <!-- Số trang -->
+                    <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:href="@{/manager/tool/list(
+                                page=${i},
+                                size=${pageSize},
+                                sellerId=${selectedSellerId},
+                                categoryId=${categoryId},
+                                uploadFrom=${uploadFrom},
+                                uploadTo=${uploadTo},
+                                approvedFrom=${approvedFrom},
+                                approvedTo=${approvedTo},
+                                reviewedBy=${reviewedBy},
+                                status=${status}
+                            )}"
+                           th:text="${i + 1}"
+                           th:classappend="${i == currentPage} ? 'active' : ''">
+                        </a>
+                    </span>
+
+                    <!-- Nút Next -->
+                    <a th:if="${currentPage + 1 < totalPages}"
+                       th:href="@{/manager/tool/list(
+                            page=${currentPage + 1},
+                            size=${pageSize},
+                            sellerId=${selectedSellerId},
+                            categoryId=${categoryId},
+                            uploadFrom=${uploadFrom},
+                            uploadTo=${uploadTo},
+                            approvedFrom=${approvedFrom},
+                            approvedTo=${approvedTo},
+                            reviewedBy=${reviewedBy},
+                            status=${status}
+                       )}">
+                        Next »
+                    </a>
+                </div>
+            </div>
         </div>
     </main>
 </div>

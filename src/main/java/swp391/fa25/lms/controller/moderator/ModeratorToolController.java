@@ -3,6 +3,10 @@ package swp391.fa25.lms.controller.moderator;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -40,8 +44,8 @@ public class ModeratorToolController {
     @GetMapping({"/", "/dashboard"})
     public String moderatorDashboard(Model model) {
         model.addAttribute("activePage", "dashboard");
-        model.addAttribute("uploadRequest", toolService.filterPendingTools(null,null,null,null).size());
-        model.addAttribute("reviewedTool", toolService.filterNonPendingTools(null,null,null,null, null, null, "MOD", null).size());
+        model.addAttribute("uploadRequest", toolService.filterPendingTools(null,null,null,null, Pageable.unpaged()).getTotalElements());
+        model.addAttribute("reviewedTool", toolService.filterNonPendingTools(null,null,null,null, null, null, "MOD", null, Pageable.unpaged()).getTotalElements());
         model.addAttribute("feedbackReport", feedbackReportService.findAllByStatus(FeedbackReport.Status.PENDING).size());
         model.addAttribute("toolReport",  toolReportService.findByStatus(ToolReport.Status.PENDING).size());
         return "moderator/dashboard";
@@ -60,9 +64,11 @@ public class ModeratorToolController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedFrom,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedTo,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             Model model) {
-
-        List<Tool> toolList = toolService.filterNonPendingTools(
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Tool> toolList = toolService.filterNonPendingTools(
                 sellerId,
                 categoryId,
                 uploadFrom,
@@ -70,7 +76,8 @@ public class ModeratorToolController {
                 approvedFrom,
                 approvedTo,
                 "MOD",
-                status
+                status,
+                pageable
         );
 
         List<Category> categories = categoryService.getAllCategories();
@@ -96,8 +103,11 @@ public class ModeratorToolController {
                                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
                                        @RequestParam(required = false)
                                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
+                                       @RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "10") int size,
                                        Model model) {
-        List<Tool> toolList = toolService.filterPendingTools(sellerId, categoryId, uploadFrom, uploadTo);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Tool> toolList = toolService.filterPendingTools(sellerId, categoryId, uploadFrom, uploadTo, pageable);
         List<Category> categories = categoryService.getAllCategories();
         model.addAttribute("toolList", toolList);
         model.addAttribute("categories", categories);
