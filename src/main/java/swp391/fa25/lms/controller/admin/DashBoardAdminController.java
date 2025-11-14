@@ -350,9 +350,9 @@ public class DashBoardAdminController {
         }
 
         // Validate email
-        if(!email.contains("@gmail.com")){
-            model.addAttribute("error", "Vui lòng nhập lại Email");
-            return "public/registerGuestToSeller";
+        if (!email.contains("@")) {
+            model.addAttribute("error", "Email không hợp lệ! Vui lòng nhập đúng định dạng Gmail.");
+            return "admin/account-create";
         }
 
         // Validate phone
