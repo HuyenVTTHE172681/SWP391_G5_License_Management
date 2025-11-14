@@ -13,13 +13,13 @@
         <p style="color: red" th:text="${errMsg}"></p>
         <label>Name:</label>
         <input type="text" th:field="*{categoryName}" placeholder="Enter category name" required>
-
+        <p th:errors="*{categoryName}" style="color: red"></p>
         <label>Description:</label>
         <input type="text" th:field="*{description}" placeholder="Enter description">
-
+        <p th:errors="*{description}" style="color: red"></p>
         <label>Icon:</label>
         <input type="text" th:field="*{icon}" placeholder="Icon (optional)">
-
+        <p th:errors="*{icon}" style="color: red"></p>
         <button type="submit" class="btn btn-save">Save</button>
     </form>
 </div>

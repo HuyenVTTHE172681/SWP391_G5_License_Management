@@ -1,6 +1,7 @@
 package swp391.fa25.lms.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 
 @Entity
 @Table(name = "seller_package")
@@ -9,17 +10,31 @@ public class SellerPackage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 
     private int id;
-
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
+    @NotBlank(message = "Package name cannot be blank")
+    @Size(min = 3, max = 100, message = "Package name must be between 3 and 100 characters")
+    @Pattern(
+            regexp = "^(?!.* {2,}).+$",
+            message = "Package name must not contain consecutive spaces"
+    )
     private String packageName;
 
     @Column(nullable = false)
+    @Min(value = 1, message = "Duration must be at least 1 month")
+    @Max(value = 36, message = "Duration must not exceed 36 months")
     private int durationInMonths;
 
     @Column(nullable = false)
+    @DecimalMin(value = "0.01", inclusive = true, message = "Price must be at least 0.01")
+    @DecimalMax(value = "100000000", inclusive = true, message = "Price must not exceed 100000000")
     private double price;
 
     @Column(nullable = true, columnDefinition = "NVARCHAR(100)")
+    @Size(max = 100, message = "Description must be at most 100 characters")
+    @Pattern(
+            regexp = "^(?!.* {2,}).*$",
+            message = "Description must not contain consecutive spaces"
+    )
     private String description;
 
     @Enumerated(EnumType.STRING)

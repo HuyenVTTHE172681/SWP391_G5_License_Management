@@ -203,3 +203,28 @@ button.btn:hover {
         width: 100%;
     }
 }
+.pagination-wrapper {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.pagination a {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.pagination a.active {
+    font-weight: bold;
+    border-color: #2563eb;
+}
+

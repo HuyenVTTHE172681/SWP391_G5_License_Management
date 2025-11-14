@@ -15,12 +15,15 @@
         <input type="hidden" th:field="*{status}">
         <label>Name:</label>
         <input type="text" th:field="*{categoryName}" required>
+        <p th:errors="*{categoryName}" style="color: red"></p>
 
         <label>Description:</label>
         <input type="text" th:field="*{description}">
+        <p th:errors="*{description}" style="color: red"></p>
 
         <label>Icon:</label>
         <input type="text" th:field="*{icon}">
+        <p th:errors="*{icon}" style="color: red"></p>
 
         <button type="submit" class="btn btn-save">Update</button>
     </form>
