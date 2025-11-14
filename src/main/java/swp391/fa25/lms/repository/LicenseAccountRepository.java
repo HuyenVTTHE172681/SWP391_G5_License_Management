@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import swp391.fa25.lms.model.CustomerOrder;
 import swp391.fa25.lms.model.LicenseAccount;
 import swp391.fa25.lms.model.Tool;
 
@@ -44,6 +45,6 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
     @Transactional
     void deleteByLicense_Tool_ToolId(Long toolId);
     LicenseAccount findByToken(String token);
-
+    Optional<LicenseAccount> findByOrder(CustomerOrder order);
 }
 
