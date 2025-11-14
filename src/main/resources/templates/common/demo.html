@@ -44,4 +44,14 @@
     <p><strong>Order ID:</strong>
         <span th:text="${license.order != null ? license.order.orderId : 'N/A'}"></span>
     </p>
+
+    <p><strong>Tool Files:</strong></p>
+    <ul>
+        <li th:each="file : ${tool.files}">
+            <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
+                <span th:text="${file.filePath}">tool-file.ext</span>
+            </a>
+            <span class="file-type" th:text="'(' + ${file.fileType} + ')'">(type)</span>
+        </li>
+    </ul>
 </div>
