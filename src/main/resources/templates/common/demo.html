@@ -1,0 +1,47 @@
+<div th:if="${license != null}"
+     style="margin-top:16px;padding:16px 18px;border-radius:10px;
+            border:1px solid #e5e7eb;background:#f9fafb;font-size:14px;">
+
+    <h3 style="margin-top:0;margin-bottom:10px;font-size:16px;">License Account Info</h3>
+
+    <p><strong>ID:</strong>
+        <span th:text="${license.licenseAccountId}"></span>
+    </p>
+
+    <p><strong>Username:</strong>
+        <span th:text="${license.username != null ? license.username : 'N/A'}"></span>
+    </p>
+
+    <p><strong>Status:</strong>
+        <span th:text="${license.status}"></span>
+    </p>
+
+    <p><strong>Start date:</strong>
+        <span th:text="${license.startDate != null ?
+                        #temporals.format(license.startDate, 'yyyy-MM-dd HH:mm') : 'N/A'}"></span>
+    </p>
+
+    <p><strong>End date:</strong>
+        <span th:text="${license.endDate != null ?
+                        #temporals.format(license.endDate, 'yyyy-MM-dd HH:mm') : 'N/A'}"></span>
+    </p>
+
+    <p><strong>Token:</strong>
+        <span th:text="${license.token}"></span>
+    </p>
+
+    <p><strong>Used:</strong>
+        <span th:text="${license.used ? 'Yes' : 'No'}"></span>
+    </p>
+
+    <p><strong>Tool:</strong>
+        <span th:text="${license.license != null ? license.license.tool.toolName : 'N/A'}"></span>
+    </p>
+    <p><strong>License:</strong>
+        <span th:text="${license.license != null ? license.license.name : 'N/A'}"></span>
+    </p>
+
+    <p><strong>Order ID:</strong>
+        <span th:text="${license.order != null ? license.order.orderId : 'N/A'}"></span>
+    </p>
+</div>

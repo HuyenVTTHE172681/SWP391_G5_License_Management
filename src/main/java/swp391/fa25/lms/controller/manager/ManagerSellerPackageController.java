@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.SellerPackage;
 import swp391.fa25.lms.service.manager.SellerPackageService;
 
@@ -49,7 +50,7 @@ public class ManagerSellerPackageController {
 
     @PostMapping("/create")
     public String createPackage(@Valid @ModelAttribute("sellerPackage") SellerPackage sellerPackage,
-                                BindingResult result, Model model) {
+                                BindingResult result, Model model, RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             return "manager/package-create";
         }
@@ -60,6 +61,7 @@ public class ManagerSellerPackageController {
         }
         sellerPackage.setStatus(SellerPackage.Status.ACTIVE);
         service.save(sellerPackage);
+        redirectAttributes.addFlashAttribute("message", "New Package Created");
         return "redirect:/manager/package/list";
     }
 
@@ -73,28 +75,32 @@ public class ManagerSellerPackageController {
     @PostMapping("/edit/{id}")
     public String updatePackage(@PathVariable("id") int id,
                                 @Valid @ModelAttribute("sellerPackage") SellerPackage sellerPackage,
-                                BindingResult result) {
+                                BindingResult result,
+                                RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             return "manager/package-edit";
         }
         sellerPackage.setId(id);
         service.save(sellerPackage);
+        redirectAttributes.addFlashAttribute("message", "Package Updated");
         return "redirect:/manager/package/list";
     }
 
     @GetMapping("/deactivate/{id}")
-    public String deactivate(@PathVariable("id") int id) {
+    public String deactivate(@PathVariable("id") int id, RedirectAttributes redirectAttributes) {
         SellerPackage sp = service.findById(id);
         sp.setStatus(SellerPackage.Status.DEACTIVATED);
         service.save(sp);
+        redirectAttributes.addFlashAttribute("message", "Package Deactivated");
         return "redirect:/manager/package/list";
     }
 
     @GetMapping("/restore/{id}")
-    public String restore(@PathVariable("id") int id) {
+    public String restore(@PathVariable("id") int id,  RedirectAttributes redirectAttributes) {
         SellerPackage sp = service.findById(id);
         sp.setStatus(SellerPackage.Status.ACTIVE);
         service.save(sp);
+        redirectAttributes.addFlashAttribute("message", "Package Restored");
         return "redirect:/manager/package/list";
     }
 }

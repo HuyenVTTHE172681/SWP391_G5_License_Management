@@ -137,4 +137,7 @@ public class ToolService {
 
         return toolRepository.findAll(spec, pageable);
     }
+    public Tool getToolById(Long toolId) {
+        return toolRepository.findById(toolId).orElse(null);
+    }
 }

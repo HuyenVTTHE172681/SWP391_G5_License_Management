@@ -53,7 +53,7 @@ public class ModeratorFeedbackController {
     @PostMapping("/{id}/approve")
     public String approve(@PathVariable Long id, RedirectAttributes ra) {
         feedbackReportService.approve(id);
-        ra.addFlashAttribute("msg", "Approved report #" + id);
+        ra.addFlashAttribute("message", "Approved report #" + id);
         return "redirect:/moderator/feedback";
     }
 
@@ -61,7 +61,7 @@ public class ModeratorFeedbackController {
     @PostMapping("/{id}/reject")
     public String reject(@PathVariable Long id, RedirectAttributes ra) {
         feedbackReportService.reject(id);
-        ra.addFlashAttribute("msg", "Rejected report #" + id);
+        ra.addFlashAttribute("message", "Rejected report #" + id);
         return "redirect:/moderator/feedback";
     }
 }

@@ -61,7 +61,6 @@
     <main class="content">
         <div class="container">
             <h1>Seller Package Management</h1>
-
             <!-- 🔍 Filter -->
             <form method="get" th:action="@{/manager/package/list}" class="filter-form"
                   onsubmit="validateFilter(event)">
@@ -88,7 +87,11 @@
                 <button type="submit" class="btn btn-filter">Filter</button>
                 <a th:href="@{/manager/package/create}" class="btn btn-create">Create</a>
             </form>
-
+            <p th:if="${message != null}" th:text="${message}"
+               style="margin-top:12px;padding:10px 14px;border-radius:8px;
+          font-size:14px;line-height:1.5;
+          background-color:#fef3c7;border:1px solid #facc15;color:#92400e;">
+            </p>
             <!-- 📋 List -->
             <table class="package-table">
                 <thead>

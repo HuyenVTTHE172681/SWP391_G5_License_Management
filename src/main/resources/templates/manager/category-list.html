@@ -25,7 +25,6 @@
     <main class="content">
         <div class="container">
             <h1>Category Management</h1>
-
             <form method="get" th:action="@{/manager/category/list}" class="filter-form">
                 <input type="text"
                        name="name"
@@ -41,7 +40,11 @@
                 <button type="submit" class="btn btn-filter">Filter</button>
                 <a th:href="@{/manager/category/create}" class="btn btn-create">New Category</a>
             </form>
-
+            <p th:if="${message != null}" th:text="${message}"
+               style="margin-top:12px;padding:10px 14px;border-radius:8px;
+          font-size:14px;line-height:1.5;
+          background-color:#fef3c7;border:1px solid #facc15;color:#92400e;">
+            </p>
             <table class="category-table">
                 <thead>
                 <tr>

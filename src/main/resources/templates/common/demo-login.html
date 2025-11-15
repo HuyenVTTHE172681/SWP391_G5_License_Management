@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tool Demo Login</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .demo-container {
+            max-width: 640px;
+            margin: 40px auto;
+            background: #ffffff;
+            padding: 24px 28px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 4px;
+            font-size: 22px;
+        }
+
+        .tool-subtitle {
+            margin: 0 0 20px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .form-row {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: #374151;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            max-width: 280px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary {
+            margin-top: 8px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .license-info {
+            margin-top: 16px;
+            padding: 16px 18px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-size: 14px;
+        }
+
+        .license-info h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="demo-container">
+    <h1>Demo Login</h1>
+    <p class="tool-subtitle"
+       th:if="${tool != null}">
+        Tool:
+        <span th:text="${tool.toolName}">Tool name</span>
+        (<span th:text="${tool.loginMethod}">LOGIN_METHOD</span>)
+    </p>
+
+    <form th:action="@{/demo/{toolId}(toolId=${toolId})}" method="post">
+
+        <div class="form-row"
+             th:if="${tool != null and tool.loginMethod.name() == 'TOKEN'}">
+            <label>Token:</label>
+            <input type="text" name="token" required>
+        </div>
+
+        <div th:if="${tool != null and tool.loginMethod.name() == 'USER_PASSWORD'}">
+            <div class="form-row">
+                <label>Username:</label>
+                <input type="text" name="username" required>
+            </div>
+            <div class="form-row">
+                <label>Password:</label>
+                <input type="password" name="password" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Login demo</button>
+    </form>
+
+    <p th:if="${error}"
+       th:text="${error}"
+       style="margin-top:12px;padding:10px 14px;border-radius:8px;
+              font-size:14px;line-height:1.5;
+              background-color:#fee2e2;border:1px solid #ef4444;color:#991b1b;">
+    </p>
+
+    <p th:if="${expired}"
+       th:text="${message}"
+       style="margin-top:12px;padding:10px 14px;border-radius:8px;
+              font-size:14px;line-height:1.5;
+              background-color:#fef3c7;border:1px solid #facc15;color:#92400e;">
+    </p>
+
+    <!-- Success -->
+    <p th:if="${success}"
+       th:text="${message}"
+       style="margin-top:12px;padding:10px 14px;border-radius:8px;
+              font-size:14px;line-height:1.5;
+              background-color:#dcfce7;border:1px solid #22c55e;color:#166534;">
+    </p>
+
+    <!-- License info -->
+    <div class="license-info" th:if="${success}">
+        <h3>License info</h3>
+        <p>Status:
+            <span th:text="${license.status}"></span>
+        </p>
+        <p>Start:
+            <span th:text="${license.startDate != null ?
+                            #temporals.format(license.startDate, 'yyyy-MM-dd HH:mm') : 'N/A'}"></span>
+        </p>
+        <p>End:
+            <span th:text="${license.endDate != null ?
+                            #temporals.format(license.endDate, 'yyyy-MM-dd HH:mm') : 'N/A'}"></span>
+        </p>
+        <p>Token:
+            <span th:text="${license.token}"></span>
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
