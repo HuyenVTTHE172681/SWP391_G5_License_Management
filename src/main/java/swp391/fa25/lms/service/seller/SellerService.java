@@ -25,7 +25,7 @@ public class SellerService {
     private SellerSubscriptionRepository sellerSubs;
 
     public List<SellerPackage> getAllPackage(){
-        return packageRepo.findAll();
+        return packageRepo.findByStatus(SellerPackage.Status.ACTIVE);
     }
 
     public Account renewSeller(String email, int packageId) {

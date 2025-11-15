@@ -10,7 +10,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import swp391.fa25.lms.controller.auth.CustomAuthenticationSuccessHandler;
 import swp391.fa25.lms.service.customer.CustomUserDetailsService;
@@ -37,59 +39,93 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        http
-//                .csrf(csrf -> csrf.disable())
-//                // Tắt formLogin mặc định
-//                .formLogin(form -> form.disable())
-//                .authorizeHttpRequests(auth -> auth
-//                        // Các đường dẫn public
-//                        .requestMatchers(
-//                                "/",
-//                                "/home",
-//                                "/home/**",
-//                                "/register",
-//                                "/verify-email/**",
-//                                "/forgot-password",
-//                                "/reset-password/**",
-//                                "/css/**",
-//                                "/js/**",
-//                                "/images/**",
-//                                "/assets/**").permitAll()
-//                        // Phân quyền theo role
-//                        .requestMatchers("/admin/**").hasRole("ADMIN")
-//                        .requestMatchers("/seller/**").hasRole("SELLER")
-//                        .requestMatchers("/moderator/**").hasRole("MOD")
-//                        .requestMatchers("/manager/**").hasRole("MANAGER")
-//                        .anyRequest().authenticated()
-//                )
-//                .logout(logout -> logout
-//                        .logoutUrl("/logout")
-//                        .logoutSuccessUrl("/logout")
-//                        .permitAll()
-//                );
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                // Tắt formLogin mặc định
+                .formLogin(form -> form.disable())
+                .authorizeHttpRequests(auth -> auth
+                        // Các đường dẫn public không cần đăng nhập
+                        .requestMatchers(
+                                "/",
+                                "/home",
+                                "/home/**",
+                                "/register",
+                                "/verify-email/**",
+                                "/forgot-password",
+                                "/reset-password/**",
+                                "/tools/**",
+                                "/tools/{id}",
+                                "/tools/{id}/**",
+                                "/login",
+                                "/logout",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/uploads/**",
+                                "/assets/**").permitAll()
+                        // Phân quyền theo role
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/seller/**").hasRole("SELLER")
+                        .requestMatchers("/moderator/**").hasRole("MOD")
+                        .requestMatchers("/manager/**").hasRole("MANAGER")
+                        // Các đường dẫn khác yêu cầu authenticated (đăng nhập)
+                        .anyRequest().authenticated()
+                )
+                // Xử lý exception: 401 (unauthenticated) → redirect login
+                // 403 (unauthorized role) → logout + redirect login
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unauthenticatedHandler())
+                        .accessDeniedHandler(accessDeniedHandler())
+                )
+                // Cấu hình logout
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+                );
+
+        return http.build();
+    }
+
+    // Xử lý 401 (chưa đăng nhập) - redirect /login
+    @Bean
+    public AuthenticationEntryPoint unauthenticatedHandler() {
+        return (request, response, authException) -> {
+            response.sendRedirect("/login?error=unauthenticated");
+        };
+    }
+
+    // Xử lý 403 (đã đăng nhập nhưng sai role) - logout + redirect /login
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            // Logout session hiện tại
+            request.getSession().invalidate();
+            response.sendRedirect("/login?error=accessDenied&message=You do not have permission to access this page. Please log in with the appropriate role.");
+        };
+    }
+
+//@Bean
+//public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//    http
+//            // Tắt xác thực CSRF để tránh lỗi POST form
+//            .csrf(csrf -> csrf.disable())
+//            .formLogin(form -> form.disable())
+//            // Cho phép tất cả request không cần đăng nhập
+//            .authorizeHttpRequests(auth -> auth
+//                    .anyRequest().permitAll()
+//            )
 //
-//        return http.build();
-//    }
-
-@Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-            // Tắt xác thực CSRF để tránh lỗi POST form
-            .csrf(csrf -> csrf.disable())
-            .formLogin(form -> form.disable())
-            // Cho phép tất cả request không cần đăng nhập
-            .authorizeHttpRequests(auth -> auth
-                    .anyRequest().permitAll()
-            )
-
-            // Tắt hoàn toàn form login và logout
-            .formLogin(form -> form.disable())
-            .logout(logout -> logout.disable());
-
-    return http.build();
-}
+//            // Tắt hoàn toàn form login và logout
+//            .formLogin(form -> form.disable())
+//            .logout(logout -> logout.disable());
+//
+//    return http.build();
+//}
 
     private void writeJsonError(HttpServletResponse response, String message, int status) throws IOException {
         response.setContentType("application/json;charset=UTF-8");

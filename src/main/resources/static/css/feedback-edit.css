@@ -161,30 +161,30 @@ hr{
 .kkm-muted{ color: var(--kkm-muted) !important; }
 
 /* ====== Optional: Dark mode (tự động theo hệ thống) ====== */
-@media (prefers-color-scheme: dark){
-    :root{
-        --kkm-bg:#0b0f14;
-        --kkm-card:#0f151d;
-        --kkm-border:#1c2430;
-        --kkm-muted:#9fb0c5;
-        --kkm-star-muted:#6c7785;
-    }
-    body{ color: #e7edf6; }
-    .card-header{
-        background:
-                radial-gradient(1200px 1200px at -10% -50%, rgba(13,110,253,.15), transparent 60%),
-                linear-gradient(180deg, #111722, #0f151d);
-    }
-    .form-control{
-        background-color:#0c121a;
-        color:#e7edf6;
-    }
-    .form-control::placeholder{ color:#71839a; }
-    .btn-outline-secondary{
-        color:#cbd7e6;
-        border-color: var(--kkm-border);
-    }
-    .btn-outline-danger{
-        color:#ffb3bd;
-    }
-}
+/*@media (prefers-color-scheme: dark){*/
+/*    :root{*/
+/*        --kkm-bg:#0b0f14;*/
+/*        --kkm-card:#0f151d;*/
+/*        --kkm-border:#1c2430;*/
+/*        --kkm-muted:#9fb0c5;*/
+/*        --kkm-star-muted:#6c7785;*/
+/*    }*/
+/*    body{ color: #e7edf6; }*/
+/*    .card-header{*/
+/*        background:*/
+/*                radial-gradient(1200px 1200px at -10% -50%, rgba(13,110,253,.15), transparent 60%),*/
+/*                linear-gradient(180deg, #111722, #0f151d);*/
+/*    }*/
+/*    .form-control{*/
+/*        background-color:#0c121a;*/
+/*        color:#e7edf6;*/
+/*    }*/
+/*    .form-control::placeholder{ color:#71839a; }*/
+/*    .btn-outline-secondary{*/
+/*        color:#cbd7e6;*/
+/*        border-color: var(--kkm-border);*/
+/*    }*/
+/*    .btn-outline-danger{*/
+/*        color:#ffb3bd;*/
+/*    }*/
+/*}*/

@@ -91,7 +91,10 @@
             </div>
 
             <div class="actions mt-4 d-flex align-items-center gap-3">
+                    <!--Payment VNPay-->
                 <form id="buyForm" th:action="@{/payment/create}" method="get">
+                <!--Payment PayPal-->
+<!--                <form id="buyForm" th:action="@{/paypal-payment/create}" method="get">-->
                     <input type="hidden" name="toolId" th:value="${tool.toolId}">
                     <input type="hidden" id="selectedLicense" name="licenseId"
                            th:value="${tool.licenses.size() > 0 ? tool.licenses[0].licenseId : 0}">
