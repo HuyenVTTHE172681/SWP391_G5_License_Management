@@ -331,65 +331,43 @@ public class DashBoardAdminController {
             @RequestParam String address,
             @RequestParam String password,
             @RequestParam String role,
-            Model model)
-    {
-        // ====== VALIDATIONS ======
+            Model model) {
 
-        // Kiểm tra empty
+        // ====== VALIDATIONS ======
         if (fullName.isEmpty() || email.isEmpty() || phone.isEmpty() ||
                 address.isEmpty() || password.isEmpty()) {
-
             model.addAttribute("error", "Vui lòng nhập đầy đủ thông tin!");
             return "admin/account-create";
         }
 
-        // Validate fullname
         if (fullName.matches(".*[@$!%*?&^#()_+=-].*")) {
             model.addAttribute("error", "Tên không được chứa ký tự đặc biệt!");
             return "admin/account-create";
         }
 
-        // Validate email
-        if (!email.matches("^[A-Za-z0-9._%+-]+@gmail\\.com$")) {
+        if (!email.contains("@")) {
             model.addAttribute("error", "Email không hợp lệ! Vui lòng nhập đúng định dạng Gmail.");
             return "admin/account-create";
         }
 
-        // Validate phone
         if (!phone.matches("^0\\d{9}$")) {
             model.addAttribute("error", "Số điện thoại phải bắt đầu bằng 0 và đủ 10 số!");
             return "admin/account-create";
         }
 
-        // Validate address
         if (address.matches(".*[@$!%*?&^#()_+=-].*")) {
             model.addAttribute("error", "Địa chỉ không được chứa ký tự đặc biệt!");
             return "admin/account-create";
         }
 
-        // Validate password strength
-        if (password.length() < 8) {
-            model.addAttribute("error", "Mật khẩu phải dài ít nhất 8 ký tự!");
-            return "admin/account-create";
-        }
-        if (!password.matches(".*[a-z].*")) {
-            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 chữ thường!");
-            return "admin/account-create";
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 chữ hoa!");
-            return "admin/account-create";
-        }
-        if (!password.matches(".*\\d.*")) {
-            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 chữ số!");
-            return "admin/account-create";
-        }
-        if (!password.matches(".*[@$!%*?&^#()_+=-].*")) {
-            model.addAttribute("error", "Mật khẩu phải có ít nhất 1 ký tự đặc biệt!");
-            return "admin/account-create";
-        }
-        if (password.contains(" ")) {
-            model.addAttribute("error", "Mật khẩu không được chứa dấu cách!");
+        if (password.length() < 8
+                || !password.matches(".*[a-z].*")
+                || !password.matches(".*[A-Z].*")
+                || !password.matches(".*\\d.*")
+                || !password.matches(".*[@$!%*?&^#()_+=-].*")
+                || password.contains(" ")) {
+
+            model.addAttribute("error", "Mật khẩu phải mạnh (8 ký tự, hoa, thường, số, ký tự đặc biệt)!");
             return "admin/account-create";
         }
 
@@ -399,24 +377,41 @@ public class DashBoardAdminController {
             return "admin/account-create";
         }
 
-        // ====== CREATE ACCOUNT ======
+        // ====== CHỈ ĐƯỢC CÓ 1 ADMIN ======
+        if (role.equals("ADMIN")) {
+            long adminCount = accountRepository.countByRole_RoleName(Role.RoleName.ADMIN);
+            if (adminCount >= 1) {
+                model.addAttribute("error", "Hệ thống chỉ được phép có 1 Admin!");
+                return "admin/account-create";
+            }
+        }
+
+        // ====== CHỈ ĐƯỢC CÓ 1 MANAGER ======
+        if (role.equals("MANAGER")) {
+            long managerCount = accountRepository.countByRole_RoleName(Role.RoleName.MANAGER);
+            if (managerCount >= 1) {
+                model.addAttribute("error", "Hệ thống chỉ được phép có 1 Manager!");
+                return "admin/account-create";
+            }
+        }
+
+        // ====== CREATE ACCOUNT (nằm ngoài 2 nhánh trên) ======
         Account newAcc = new Account();
         newAcc.setFullName(fullName);
         newAcc.setEmail(email);
         newAcc.setPhone(phone);
         newAcc.setAddress(address);
-        newAcc.setPassword(passwordEncoder.encode(password)); // mã hóa mật khẩu
+        newAcc.setPassword(passwordEncoder.encode(password));
         newAcc.setCreatedAt(LocalDateTime.now());
         newAcc.setStatus(Account.AccountStatus.ACTIVE);
         newAcc.setVerified(true);
 
-        // Gán Role
         Role roleObj = roleRepo.findByRoleName(Role.RoleName.valueOf(role))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy role!"));
         newAcc.setRole(roleObj);
+
         accountRepository.save(newAcc);
-        // ====== REDIRECT SAU KHI TẠO THÀNH CÔNG ======
+
         return "redirect:/admin/accounts?msg=created";
     }
-
 }
