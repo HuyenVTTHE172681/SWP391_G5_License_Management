@@ -157,7 +157,7 @@ public class ManagerDashboardController {
             tool.setReviewedBy(account.getRole().getRoleName().toString());
             tool.setUpdatedAt(LocalDateTime.now());
             toolService.save(tool);
-            redirect.addFlashAttribute("success", "Tool has been published successfully!");
+            redirect.addFlashAttribute("message", "Tool has been published successfully!");
         }
         return "redirect:/manager/tool/" + id;
     }
@@ -175,7 +175,7 @@ public class ManagerDashboardController {
             tool.setReviewedBy(account.getRole().getRoleName().toString());
             tool.setUpdatedAt(LocalDateTime.now());
             toolService.save(tool);
-            redirect.addFlashAttribute("info", "Tool has been set to Pending.");
+            redirect.addFlashAttribute("message", "Tool has been set to Pending.");
         }
         return "redirect:/manager/tool/" + id;
     }
@@ -193,7 +193,7 @@ public class ManagerDashboardController {
             tool.setReviewedBy(account.getRole().getRoleName().toString());
             tool.setUpdatedAt(LocalDateTime.now());
             toolService.save(tool);
-            redirect.addFlashAttribute("error", "Tool has been rejected.");
+            redirect.addFlashAttribute("message", "Tool has been rejected.");
         }
         return "redirect:/manager/tool/" + id;
     }

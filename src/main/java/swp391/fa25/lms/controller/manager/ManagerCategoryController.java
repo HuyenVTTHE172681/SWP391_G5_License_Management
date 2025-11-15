@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Category;
 import swp391.fa25.lms.service.moderator.CategoryService;
 
@@ -38,7 +39,8 @@ public class ManagerCategoryController {
     @PostMapping("/create")
     public String createCategory(@Valid @ModelAttribute("newCategory") Category category,
                                  BindingResult result,
-                                 Model model) {
+                                 Model model,
+                                 RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             model.addAttribute("categories", categoryService.getAllCategories());
             return "manager/category-create";
@@ -50,6 +52,7 @@ public class ManagerCategoryController {
         }
         category.setStatus(Category.Status.ACTIVE);
         categoryService.save(category);
+        redirectAttributes.addFlashAttribute("message", "Category has been created successfully!");
         return "redirect:/manager/category/list";
     }
 
@@ -63,28 +66,32 @@ public class ManagerCategoryController {
     @PostMapping("/edit/{id}")
     public String updateCategory(@PathVariable("id") Long id,
                                  @Valid @ModelAttribute("category") Category category,
-                                 BindingResult result) {
+                                 BindingResult result,
+                                 RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             return "manager/category-edit";
         }
         category.setCategoryId(id);
         categoryService.save(category);
+        redirectAttributes.addFlashAttribute("message", "Category has been updated successfully!");
         return "redirect:/manager/category/list";
     }
 
     @GetMapping("/delete/{id}")
-    public String deactivateCategory(@PathVariable("id") Long id) {
+    public String deactivateCategory(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         Category category = categoryService.findById(id);
         category.setStatus(Category.Status.DEACTIVATED);
         categoryService.save(category);
+        redirectAttributes.addFlashAttribute("message", "Category has been deleted successfully!");
         return "redirect:/manager/category/list";
     }
 
     @GetMapping("/restore/{id}")
-    public String restoreCategory(@PathVariable("id") Long id) {
+    public String restoreCategory(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         Category category = categoryService.findById(id);
         category.setStatus(Category.Status.ACTIVE);
         categoryService.save(category);
+        redirectAttributes.addFlashAttribute("message", "Category has been restored successfully!");
         return "redirect:/manager/category/list";
     }
 }

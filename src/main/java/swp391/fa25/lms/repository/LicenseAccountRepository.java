@@ -19,6 +19,7 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
 
     // Kiểm tra token đã tồn tại trong 1 tool chưa (chống trùng trong DB mode)
     boolean existsByLicense_Tool_ToolIdAndToken(Long toolId, String token);
+
     boolean existsByToken(String token);
 
     // Lấy tất cả license còn hoạt động nhưng đã hết hạn
@@ -41,9 +42,20 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
     Optional<LicenseAccount> findByOrder_OrderId(Long orderId);
 
     boolean existsByOrder_OrderId(Long orderId);
+
     @Transactional
     void deleteByLicense_Tool_ToolId(Long toolId);
+
     LicenseAccount findByToken(String token);
 
+    Optional<LicenseAccount> findByTokenAndLicense_Tool_ToolId(String token, Long toolId);
+
+    Optional<LicenseAccount> findByUsernameAndPasswordAndLicense_Tool_ToolId(
+            String username,
+            String password,
+            Long toolId
+    );
 }
+
+
 
