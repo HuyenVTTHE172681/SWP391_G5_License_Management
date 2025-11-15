@@ -14,7 +14,6 @@ import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import swp391.fa25.lms.repository.AccountRepository;
 import swp391.fa25.lms.repository.RoleRepository;
-import swp391.fa25.lms.util.JwtService;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -28,7 +27,6 @@ public class AccountService {
     private final AccountRepository accountRepo;
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
     private final RoleRepository roleRepository;
     private static Scanner sc = new Scanner(System.in);
 
@@ -53,11 +51,10 @@ public class AccountService {
     private static final String DIGITS = "0123456789";
 
     public AccountService(AccountRepository accountRepo, PasswordEncoder passwordEncoder,
-                          JavaMailSender mailSender, JwtService jwtService, RoleRepository roleRepository) {
+                          JavaMailSender mailSender, RoleRepository roleRepository) {
         this.accountRepo = accountRepo;
         this.passwordEncoder = passwordEncoder;
         this.mailSender = mailSender;
-        this.jwtService = jwtService;
         this.roleRepository = roleRepository;
     }
 
