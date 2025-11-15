@@ -11,6 +11,7 @@ import swp391.fa25.lms.model.Feedback;
 import swp391.fa25.lms.model.Tool;
 import swp391.fa25.lms.service.customer.CategoryService;
 import swp391.fa25.lms.service.customer.FeedbackReadService;
+import swp391.fa25.lms.service.customer.LicenseAccountService;
 import swp391.fa25.lms.service.customer.ToolService;
 
 import java.util.Optional;
@@ -29,6 +30,8 @@ public class ToolCommonController {
 
     @Autowired
     private FeedbackReadService feedbackReadService;
+    @Autowired
+    private LicenseAccountService licenseAccountService;
 
     /**
      * Hiển thị trang detail tool
@@ -47,7 +50,8 @@ public class ToolCommonController {
 
         Tool tool = maybeTool.get();
         System.out.println("Detail Tool ID: " + tool.getToolId() + ", Image path: '" + tool.getImage() + "'");
-
+        System.out.println("đã mua : " + licenseAccountService.getActiveLicenses(tool.getToolId()).size());
+        tool.setAvailableQuantity(tool.getQuantity() - licenseAccountService.getActiveLicenses(tool.getToolId()).size());
         // Lấy danh sách feedback
         Page<Feedback> feedbackPage = toolService.getFeedbackPageForTool(tool, reviewPage, 5);
 

@@ -168,7 +168,7 @@
                                 <!-- Tool Name + Hết hàng -->
                                 <h3 class="product-name fs-5 fw-bold">
                                     <span th:text="${tool.toolName}"></span>
-                                    <span th:if="${tool.quantity == 0}" class="text-danger fw-bold ms-2 fs-6">(Hết hàng)</span>
+                                    <span th:if="${tool.availableQuantity == 0}" class="text-danger fw-bold ms-2 fs-6">(Hết hàng)</span>
                                 </h3>
 
                                 <span th:text="'👤 ' + ${tool.seller.fullName}"></span>

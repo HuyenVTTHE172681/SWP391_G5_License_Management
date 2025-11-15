@@ -95,6 +95,7 @@ public class Tool {
 
     @Column(nullable = false)
     private Integer quantity = 0;
+    private Integer availableQuantity;
 
     public String getNote() {
         return note;
@@ -119,6 +120,14 @@ public class Tool {
         this.licenses = licenses;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getAvailableQuantity() {
+        return availableQuantity;
+    }
+
+    public void setAvailableQuantity(Integer availableQuantity) {
+        this.availableQuantity = availableQuantity;
     }
 
     public Long getToolId() {
