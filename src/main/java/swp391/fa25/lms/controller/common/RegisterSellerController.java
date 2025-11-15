@@ -138,8 +138,8 @@ public class RegisterSellerController {
         account.setPassword(passwordEncoder.encode(password));
         account.setVerificationCode(otp);
         account.setCodeExpiry(LocalDateTime.now().plusMinutes(10));
-        account.setVerified(false);
-        account.setStatus(Account.AccountStatus.DEACTIVATED);
+        account.setVerified(true);
+        account.setStatus(Account.AccountStatus.ACTIVE);
 
         // ✅ Luôn gán role SELLER (dù là account cũ hay mới)
         account.setRole(roleRepo.findByRoleName(Role.RoleName.SELLER)

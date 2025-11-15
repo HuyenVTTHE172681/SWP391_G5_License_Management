@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/tools/{id}",
                                 "/tools/{id}/**",
                                 "/login",
+                                "/register-guest-seller",
                                 "/logout",
                                 "/css/**",
                                 "/js/**",
