@@ -217,10 +217,21 @@
                         <i class="bi bi-arrow-right"></i> Dùng dịch vụ
                     </a>
                     <!-- PENDING: Thanh toán lại -->
-                    <a th:if="${order.orderStatus.name() == 'PENDING'}"
-                       th:href="@{'/payment/create?toolId=' + ${order.tool.toolId} + '&licenseId=' + ${order.license.licenseId} + '&orderId=' + ${order.orderId}}"
+<!--                    <a th:if="${order.orderStatus.name() == 'PENDING'}"-->
+<!--                       th:href="@{'/payment/create?toolId=' + ${order.tool.toolId} + '&licenseId=' + ${order.license.licenseId} + '&orderId=' + ${order.orderId}}"-->
+<!--                       class="btn btn-sm btn-info">-->
+<!--                        <i class="bi bi-credit-card"></i> Thanh toán lại-->
+<!--                    </a>-->
+                    <!-- PENDING: Thanh toán lại (hỗ trợ VNPay/BANK và PayPal) -->
+                    <a th:if="${order.orderStatus.name() == 'PENDING' and order.paymentMethod.name() == 'BANK'}"
+                       th:href="@{/payment/create(toolId=${order.tool.toolId}, licenseId=${order.license.licenseId}, orderId=${order.orderId})}"
                        class="btn btn-sm btn-info">
                         <i class="bi bi-credit-card"></i> Thanh toán lại
+                    </a>
+                    <a th:if="${order.orderStatus.name() == 'PENDING' and order.paymentMethod.name() == 'PAYPAL'}"
+                       th:href="@{/paypal-payment/create(toolId=${order.tool.toolId}, licenseId=${order.license.licenseId}, orderId=${order.orderId})}"
+                       class="btn btn-sm btn-info">
+                        <i class="bi bi-credit-card"></i> Thanh toán lại (PayPal)
                     </a>
                 </td>
             </tr>
@@ -414,7 +425,7 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Mô tả thêm</label>
-                        <textarea name="description" class="form-control" rows="3"
+                        <textarea name="description" class="form-control" rows="3" required
                                   placeholder="Hãy mô tả chi tiết lý do bạn báo cáo..."></textarea>
                     </div>
                 </div>

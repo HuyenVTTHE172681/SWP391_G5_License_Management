@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -15,11 +16,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriUtils;
 import swp391.fa25.lms.model.Account;
+import swp391.fa25.lms.model.Role;
 import swp391.fa25.lms.model.Role.RoleName;
+import swp391.fa25.lms.repository.AccountRepository;
+import swp391.fa25.lms.repository.RoleRepository;
 import swp391.fa25.lms.service.admin.AdminAccountService;
 import swp391.fa25.lms.service.admin.AdminHomeService;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 
 @Controller
 @RequestMapping("/admin")
@@ -33,6 +38,14 @@ public class DashBoardAdminController {
     @Autowired
     @Qualifier("adminAccountService")
     private AdminAccountService adminAccountService;
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private RoleRepository roleRepo;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public DashBoardAdminController(AdminHomeService adminHomeService,
                                     AdminAccountService adminAccountService) {
@@ -303,4 +316,102 @@ public class DashBoardAdminController {
                 + "&sort=" + UriUtils.encode(sort, StandardCharsets.UTF_8);
     }
 
+    @GetMapping("/accounts/create")
+    public String showCreateAccountForm(Model model) {
+        model.addAttribute("account", new Account());
+        model.addAttribute("roles", Role.RoleName.values());
+        return "admin/account-create";
+    }
+
+    @PostMapping("/accounts/create")
+    public String createAccount(
+            @RequestParam String fullName,
+            @RequestParam String email,
+            @RequestParam String phone,
+            @RequestParam String address,
+            @RequestParam String password,
+            @RequestParam String role,
+            Model model) {
+
+        // ====== VALIDATIONS ======
+        if (fullName.isEmpty() || email.isEmpty() || phone.isEmpty() ||
+                address.isEmpty() || password.isEmpty()) {
+            model.addAttribute("error", "Vui lòng nhập đầy đủ thông tin!");
+            return "admin/account-create";
+        }
+
+        if (fullName.matches(".*[@$!%*?&^#()_+=-].*")) {
+            model.addAttribute("error", "Tên không được chứa ký tự đặc biệt!");
+            return "admin/account-create";
+        }
+
+        if (!email.contains("@")) {
+            model.addAttribute("error", "Email không hợp lệ! Vui lòng nhập đúng định dạng Gmail.");
+            return "admin/account-create";
+        }
+
+        if (!phone.matches("^0\\d{9}$")) {
+            model.addAttribute("error", "Số điện thoại phải bắt đầu bằng 0 và đủ 10 số!");
+            return "admin/account-create";
+        }
+
+        if (address.matches(".*[@$!%*?&^#()_+=-].*")) {
+            model.addAttribute("error", "Địa chỉ không được chứa ký tự đặc biệt!");
+            return "admin/account-create";
+        }
+
+        if (password.length() < 8
+                || !password.matches(".*[a-z].*")
+                || !password.matches(".*[A-Z].*")
+                || !password.matches(".*\\d.*")
+                || !password.matches(".*[@$!%*?&^#()_+=-].*")
+                || password.contains(" ")) {
+
+            model.addAttribute("error", "Mật khẩu phải mạnh (8 ký tự, hoa, thường, số, ký tự đặc biệt)!");
+            return "admin/account-create";
+        }
+
+        // ====== CHECK EMAIL ĐÃ TỒN TẠI ======
+        if (accountRepository.findByEmail(email).isPresent()) {
+            model.addAttribute("error", "Email đã tồn tại trong hệ thống!");
+            return "admin/account-create";
+        }
+
+        // ====== CHỈ ĐƯỢC CÓ 1 ADMIN ======
+        if (role.equals("ADMIN")) {
+            long adminCount = accountRepository.countByRole_RoleName(Role.RoleName.ADMIN);
+            if (adminCount >= 1) {
+                model.addAttribute("error", "Hệ thống chỉ được phép có 1 Admin!");
+                return "admin/account-create";
+            }
+        }
+
+        // ====== CHỈ ĐƯỢC CÓ 1 MANAGER ======
+        if (role.equals("MANAGER")) {
+            long managerCount = accountRepository.countByRole_RoleName(Role.RoleName.MANAGER);
+            if (managerCount >= 1) {
+                model.addAttribute("error", "Hệ thống chỉ được phép có 1 Manager!");
+                return "admin/account-create";
+            }
+        }
+
+        // ====== CREATE ACCOUNT (nằm ngoài 2 nhánh trên) ======
+        Account newAcc = new Account();
+        newAcc.setFullName(fullName);
+        newAcc.setEmail(email);
+        newAcc.setPhone(phone);
+        newAcc.setAddress(address);
+        newAcc.setPassword(passwordEncoder.encode(password));
+        newAcc.setCreatedAt(LocalDateTime.now());
+        newAcc.setStatus(Account.AccountStatus.ACTIVE);
+        newAcc.setVerified(true);
+
+        Role roleObj = roleRepo.findByRoleName(Role.RoleName.valueOf(role))
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy role!"));
+        newAcc.setRole(roleObj);
+
+        accountRepository.save(newAcc);
+
+        return "redirect:/admin/accounts?msg=created";
+    }
 }

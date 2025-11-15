@@ -10,7 +10,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import swp391.fa25.lms.controller.auth.CustomAuthenticationSuccessHandler;
 import swp391.fa25.lms.service.customer.CustomUserDetailsService;
@@ -44,7 +46,7 @@ public class SecurityConfig {
 //                // Tắt formLogin mặc định
 //                .formLogin(form -> form.disable())
 //                .authorizeHttpRequests(auth -> auth
-//                        // Các đường dẫn public
+//                        // Các đường dẫn public không cần đăng nhập
 //                        .requestMatchers(
 //                                "/",
 //                                "/home",
@@ -53,25 +55,61 @@ public class SecurityConfig {
 //                                "/verify-email/**",
 //                                "/forgot-password",
 //                                "/reset-password/**",
+//                                "/register-guest-seller",
+//                                "/verify-code-seller",
+//                                "/tools/**",
+//                                "/tools/{id}",
+//                                "/tools/{id}/**",
+//                                "/login",
+//                                "/logout",
 //                                "/css/**",
 //                                "/js/**",
 //                                "/images/**",
+//                                "/uploads/**",
 //                                "/assets/**").permitAll()
 //                        // Phân quyền theo role
 //                        .requestMatchers("/admin/**").hasRole("ADMIN")
 //                        .requestMatchers("/seller/**").hasRole("SELLER")
 //                        .requestMatchers("/moderator/**").hasRole("MOD")
 //                        .requestMatchers("/manager/**").hasRole("MANAGER")
+//                        // Các đường dẫn khác yêu cầu authenticated (đăng nhập)
 //                        .anyRequest().authenticated()
 //                )
+//                // Xử lý exception: 401 (unauthenticated) → redirect login
+//                // 403 (unauthorized role) → logout + redirect login
+//                .exceptionHandling(ex -> ex
+//                        .authenticationEntryPoint(unauthenticatedHandler())
+//                        .accessDeniedHandler(accessDeniedHandler())
+//                )
+//                // Cấu hình logout
 //                .logout(logout -> logout
 //                        .logoutUrl("/logout")
-//                        .logoutSuccessUrl("/logout")
+//                        .logoutSuccessUrl("/login?logout")
+//                        .invalidateHttpSession(true)
+//                        .deleteCookies("JSESSIONID")
 //                        .permitAll()
 //                );
 //
 //        return http.build();
 //    }
+
+    // Xử lý 401 (chưa đăng nhập) - redirect /login
+    @Bean
+    public AuthenticationEntryPoint unauthenticatedHandler() {
+        return (request, response, authException) -> {
+            response.sendRedirect("/login?error=unauthenticated");
+        };
+    }
+
+    // Xử lý 403 (đã đăng nhập nhưng sai role) - logout + redirect /login
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            // Logout session hiện tại
+            request.getSession().invalidate();
+            response.sendRedirect("/login?error=accessDenied&message=You do not have permission to access this page. Please log in with the appropriate role.");
+        };
+    }
 
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

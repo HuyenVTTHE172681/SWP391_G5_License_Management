@@ -83,35 +83,6 @@ public class RoleDataInitializer implements CommandLineRunner {
             System.out.println("Roles already exist, skipping initialization.");
         }
 
-        // ============ CATEGORY ============
-        if (categoryRepo.count() == 0) {
-            Category email = new Category();
-            email.setCategoryName("Email");
-            email.setDescription("Gmail, Yahoo, Hotmail,... và nhiều hơn thế nữa");
-            email.setIcon("far fa-envelope");
-
-            Category software = new Category();
-            software.setCategoryName("Phần mềm");
-            software.setDescription("Dịch vụ code tool, đồ họa, video,... và các dịch vụ liên quan");
-            software.setIcon("fas fa-terminal");
-
-            Category interaction = new Category();
-            interaction.setCategoryName("Tăng tương tác");
-            interaction.setDescription("Tăng like, share, comment,... cho sản phẩm của bạn");
-            interaction.setIcon("as fa-layer-group");
-
-            Category seo = new Category();
-            seo.setCategoryName("SEO & Marketing");
-            seo.setDescription("Tối ưu hóa công cụ tìm kiếm và chiến dịch quảng cáo");
-            seo.setIcon("fas fa-user");
-
-            categoryRepo.saveAll(Arrays.asList(email, software, interaction, seo));
-
-            System.out.println("Default categories have been initialized.");
-        } else {
-            System.out.println("Categories already exist, skipping initialization.");
-        }
-
         // ============ ACCOUNT ============
         if (accountRepo.count() == 0) {
             Role sellerRole = roleRepository.findByRoleName(RoleName.SELLER).get();
@@ -123,7 +94,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             // ========== SELLERS ==========
             Account seller1 = new Account();
             seller1.setEmail("seller1@example.com");
-            seller1.setPassword(passwordEncoder.encode("123456"));
+            seller1.setPassword(passwordEncoder.encode("Huyen@123456"));
             seller1.setVerified(true);
             seller1.setFullName("Nguyễn Văn Bán 1");  // 16 ký tự
             seller1.setStatus(Account.AccountStatus.ACTIVE);
@@ -134,7 +105,7 @@ public class RoleDataInitializer implements CommandLineRunner {
 
             Account seller2 = new Account();
             seller2.setEmail("seller2@example.com");
-            seller2.setPassword(passwordEncoder.encode("123456"));
+            seller2.setPassword(passwordEncoder.encode("Huyen@123456"));
             seller2.setVerified(true);
             seller2.setFullName("Trần Thị Bán 2");  // 15 ký tự
             seller2.setStatus(Account.AccountStatus.ACTIVE);
@@ -145,7 +116,7 @@ public class RoleDataInitializer implements CommandLineRunner {
 
             Account seller3 = new Account();
             seller3.setEmail("seller3@example.com");
-            seller3.setPassword(passwordEncoder.encode("123456"));
+            seller3.setPassword(passwordEncoder.encode("Huyen@123456"));
             seller3.setVerified(true);
             seller3.setFullName("Lê Thị Bán 3");  // 13 ký tự
             seller3.setStatus(Account.AccountStatus.ACTIVE);
@@ -156,7 +127,7 @@ public class RoleDataInitializer implements CommandLineRunner {
 
             Account seller4 = new Account();
             seller4.setEmail("seller4@example.com");
-            seller4.setPassword(passwordEncoder.encode("123456"));
+            seller4.setPassword(passwordEncoder.encode("Huyen@123456"));
             seller4.setVerified(true);
             seller4.setFullName("Phạm Quang Bán 4");  // 17 ký tự
             seller4.setStatus(Account.AccountStatus.ACTIVE);
@@ -168,7 +139,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             // ========== CUSTOMERS ==========
             Account customer1 = new Account();
             customer1.setEmail("customer1@example.com");
-            customer1.setPassword(passwordEncoder.encode("123456"));
+            customer1.setPassword(passwordEncoder.encode("Huyen@123456"));
             customer1.setVerified(true);
             customer1.setFullName("Phạm Minh KH 1");  // 14 ký tự
             customer1.setStatus(Account.AccountStatus.ACTIVE);
@@ -177,7 +148,7 @@ public class RoleDataInitializer implements CommandLineRunner {
 
             Account customer2 = new Account();
             customer2.setEmail("customer2@example.com");
-            customer2.setPassword(passwordEncoder.encode("123456"));
+            customer2.setPassword(passwordEncoder.encode("Huyen@123456"));
             customer2.setVerified(true);
             customer2.setFullName("Trịnh Hồng KH 2");  // 16 ký tự
             customer2.setStatus(Account.AccountStatus.ACTIVE);
@@ -186,7 +157,7 @@ public class RoleDataInitializer implements CommandLineRunner {
 
             Account customer3 = new Account();
             customer3.setEmail("customer3@example.com");
-            customer3.setPassword(passwordEncoder.encode("123456"));
+            customer3.setPassword(passwordEncoder.encode("Huyen@123456"));
             customer3.setVerified(true);
             customer3.setFullName("Nguyễn Văn KH 3");  // 16 ký tự
             customer3.setStatus(Account.AccountStatus.ACTIVE);
@@ -195,7 +166,7 @@ public class RoleDataInitializer implements CommandLineRunner {
 
             Account customer4 = new Account();
             customer4.setEmail("customer4@example.com");
-            customer4.setPassword(passwordEncoder.encode("123456"));
+            customer4.setPassword(passwordEncoder.encode("Huyen@123456"));
             customer4.setVerified(true);
             customer4.setFullName("Bùi Duy KH 4");  // 12 ký tự
             customer4.setStatus(Account.AccountStatus.ACTIVE);
@@ -205,7 +176,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             // ========== ADMIN ==========
             Account admin = new Account();
             admin.setEmail(FIXED_ADMIN_EMAIL);
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setPassword(passwordEncoder.encode("Huyen@123456"));
             admin.setFullName("Nguyễn Văn QTV");  // 14 ký tự
             admin.setStatus(Account.AccountStatus.ACTIVE);
             admin.setCreatedAt(LocalDateTime.now());
@@ -215,7 +186,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             // ========== MODERATOR ==========
             Account mod1 = new Account();
             mod1.setEmail("moderator1@example.com");
-            mod1.setPassword(passwordEncoder.encode("123456"));
+            mod1.setPassword(passwordEncoder.encode("Huyen@123456"));
             mod1.setVerified(true);
             mod1.setFullName("Trần Hữu KD");  // 12 ký tự
             mod1.setStatus(Account.AccountStatus.ACTIVE);
@@ -225,7 +196,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             // ========== MANAGER ==========
             Account manager = new Account();
             manager.setEmail("manager1@example.com");
-            manager.setPassword(passwordEncoder.encode("123456"));
+            manager.setPassword(passwordEncoder.encode("Huyen@123456"));
             manager.setVerified(true);
             manager.setFullName("Nguyễn Thị QLH");  // 15 ký tự
             manager.setStatus(Account.AccountStatus.ACTIVE);

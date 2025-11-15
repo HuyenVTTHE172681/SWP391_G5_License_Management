@@ -263,19 +263,11 @@ public class PaymentService {
     public boolean handlePaymentCallback(Map<String, String> params) {
         try {
             String responseCode = params.get("vnp_ResponseCode");
-            String txnRef = params.get("vnp_TxnRef");
             String orderInfoStr = params.get("vnp_OrderInfo");
-            String vnpAmount = params.get("vnp_Amount");
-            double amount = vnpAmount != null ? Double.parseDouble(vnpAmount) / 100.0 : 0.0;
-
-            boolean success = "00".equals(responseCode);
-//            System.out.println("VNPay ResponseCode: " + responseCode + ", Success: " + success + ", Amount: " + amount);
-
             if (orderInfoStr == null) {
                 System.err.println("No vnp_OrderInfo in params!");
                 return false;
             }
-
             Long orderId;
             try {
                 orderId = Long.parseLong(orderInfoStr);
@@ -283,21 +275,29 @@ public class PaymentService {
                 System.err.println("Invalid orderId from vnp_OrderInfo: " + orderInfoStr);
                 return false;
             }
-
             Optional<CustomerOrder> optionalOrder = orderRepository.findById(orderId);
             if (optionalOrder.isEmpty()) {
                 System.err.println("Order not found: " + orderId);
                 return false;
             }
-
             CustomerOrder order = optionalOrder.get();
-            System.out.println("Matched orderId: " + order.getOrderId() + " (status: " + order.getOrderStatus() + ")");
 
+            // FIX: Idempotent - Nếu đã SUCCESS, skip processing (tránh duplicate insert/email)
+            if (order.getOrderStatus() == CustomerOrder.OrderStatus.SUCCESS) {
+                System.out.println("Order " + orderId + " already processed (SUCCESS). Skipping callback.");
+                return true;  // Trả success để view OK
+            }
+
+            System.out.println("Matched orderId: " + order.getOrderId() + " (status: " + order.getOrderStatus() + ")");
             WalletTransaction tx = order.getTransaction();
             if (tx == null) {
                 System.err.println("No transaction linked to order " + orderId);
                 return false;
             }
+
+            String vnpAmount = params.get("vnp_Amount");
+            double amount = vnpAmount != null ? Double.parseDouble(vnpAmount) / 100.0 : 0.0;
+            boolean success = "00".equals(responseCode);
 
             // Update transaction
             tx.setStatus(success ? WalletTransaction.TransactionStatus.SUCCESS : WalletTransaction.TransactionStatus.FAILED);
@@ -307,7 +307,7 @@ public class PaymentService {
             // Update order
             if (success) {
                 order.setOrderStatus(CustomerOrder.OrderStatus.SUCCESS);
-
+                // Update seller wallet (giữ nguyên)
                 Account seller = order.getTool().getSeller();
                 Optional<Wallet> sellerWalletOpt = walletRepository.findByAccount(seller);
                 if (sellerWalletOpt.isPresent()) {
@@ -320,23 +320,20 @@ public class PaymentService {
                 } else {
                     System.err.println("No wallet for seller: " + seller.getEmail());
                 }
-
-                // Giảm quantity tool
+                // Giảm quantity (giữ nguyên)
                 Tool tool = order.getTool();
                 if (tool.getQuantity() > 0) {
                     tool.setQuantity(tool.getQuantity() - 1);
                     toolRepository.save(tool);
                     System.out.println("Decreased quantity for tool " + tool.getToolId() + " to " + tool.getQuantity());
                 }
-
-                // Tạo license account + gửi email
+                // FIX: Tạo/assign license (idempotent - check tồn tại trước)
                 createAndAssignLicense(order);
             } else {
                 order.setOrderStatus(CustomerOrder.OrderStatus.FAILED);
                 String message = params.get("vnp_Message") != null ? params.get("vnp_Message") : "Unknown error";
                 System.err.println("Payment failed for order " + order.getOrderId() + ": " + message + " (Code: " + responseCode + ")");
             }
-
             order.setUpdatedAt(LocalDateTime.now());
             orderRepository.save(order);
             System.out.println("Updated order " + order.getOrderId() + " to status: " + order.getOrderStatus());
@@ -348,13 +345,19 @@ public class PaymentService {
         }
     }
 
-    // REFACTOR: Tách tạo license account
+    // Tạo license account
     private void createAndAssignLicense(CustomerOrder order) {
         Tool tool = order.getTool();
         License license = order.getLicense();
         Account buyer = order.getAccount();
-
         String loginMethod = tool.getLoginMethod().toString();
+
+        // Check nếu đã có LicenseAccount cho order này (tránh duplicate)
+        Optional<LicenseAccount> existingAcc = licenseAccountRepository.findByOrder(order);
+        if (existingAcc.isPresent()) {
+            System.out.println("LicenseAccount already exists for order " + order.getOrderId() + ". Skipping creation.");
+            return;  // Đã xử lý trước đó (reload)
+        }
 
         if ("USER_PASSWORD".equals(loginMethod)) {
             // Tạo mới LicenseAccount cho USER_PASSWORD
@@ -371,45 +374,31 @@ public class PaymentService {
             sendUserPasswordEmail(order, acc);
         } else if ("TOKEN".equals(loginMethod)) {
             try {
-                // Debug count (giữ nguyên)
                 long unusedCount = licenseAccountRepository.findByLicense_Tool_ToolId(tool.getToolId())
                         .stream()
                         .filter(acc -> !acc.getUsed())
                         .count();
-//                System.out.println("Unused token count for toolId " + tool.getToolId() + ": " + unusedCount);
-
                 if (unusedCount == 0) {
                     throw new RuntimeException("No unused tokens available for tool " + tool.getToolId());
                 }
-
-//                System.out.println("Searching unused token for toolId: " + tool.getToolId() + " (using SQL Server TOP 1 query)");
                 Optional<LicenseAccount> unusedToken = licenseAccountRepository.findFirstByLicense_Tool_ToolIdAndUsedFalse(tool.getToolId());
-
-                // FIX: Log Optional content để debug
                 if (unusedToken.isPresent()) {
                     LicenseAccount tokenAcc = unusedToken.get();
-//                    System.out.println("SUCCESS: Found unused token via TOP 1: " + tokenAcc.getToken() + " (ID: " + tokenAcc.getLicenseAccountId() + ", licenseId: " + tokenAcc.getLicense().getLicenseId() + ")");
-
-                    // Assign/save/mail (giữ nguyên)
                     tokenAcc.setLicense(license);
                     tokenAcc.setOrder(order);
                     tokenAcc.setUsed(true);
                     tokenAcc.setStatus(LicenseAccount.Status.ACTIVE);
                     tokenAcc.setStartDate(LocalDateTime.now());
                     tokenAcc.setEndDate(LocalDateTime.now().plusDays(license.getDurationDays()));
-
                     LicenseAccount savedAcc = licenseAccountRepository.save(tokenAcc);
-
-//                    System.out.println("Assigned & saved token " + savedAcc.getToken() + " for order " + order.getOrderId() + ", status: " + savedAcc.getStatus());
                     sendTokenEmail(order, savedAcc);
                 } else {
-//                    System.out.println("WARNING: Query returned empty despite count=" + unusedCount + ". Possible data inconsistency or query issue.");
                     throw new RuntimeException("No unused token returned from query for toolId " + tool.getToolId());
                 }
             } catch (Exception e) {
-//                System.err.println("Error assigning TOKEN for order " + order.getOrderId() + ": " + e.getMessage());
+                System.err.println("Error assigning TOKEN for order " + order.getOrderId() + ": " + e.getMessage());
                 e.printStackTrace();
-                throw e; // Rollback
+                throw e;  // Rollback
             }
         }
     }

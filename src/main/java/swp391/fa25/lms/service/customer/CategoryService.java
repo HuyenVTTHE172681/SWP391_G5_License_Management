@@ -14,7 +14,7 @@ public class CategoryService {
     private CategoryRepository categoryRepo;
 
     public List<Category> getAllCategories() {
-        return categoryRepo.findAll();
+        return categoryRepo.findByStatus(Category.Status.ACTIVE);
     }
 
 }
