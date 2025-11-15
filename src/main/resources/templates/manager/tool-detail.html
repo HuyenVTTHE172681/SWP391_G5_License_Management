@@ -80,7 +80,7 @@
                 <!-- When has files -->
                 <ul class="file-list" th:if="${tool.files != null and !#lists.isEmpty(tool.files)}">
                     <li th:each="file : ${tool.files}">
-                        <a th:href="@   {${file.filePath}}" th:download="${file.filePath}" target="_blank">
+                        <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
                             <span th:text="${file.filePath}">tool-file.ext</span>
                         </a>
                         <span class="file-type" th:text="'(' + ${file.fileType} + ')'">(type)</span>

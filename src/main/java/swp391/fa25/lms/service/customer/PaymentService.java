@@ -322,8 +322,8 @@ public class PaymentService {
                 }
                 // Giảm quantity (giữ nguyên)
                 Tool tool = order.getTool();
-                if (tool.getQuantity() > 0) {
-//                    tool.setQuantity(tool.getQuantity() - licenseAccountRepository.findByStatus(LicenseAccount.Status.ACTIVE).size());
+                if (tool.getQuantity() > 0 && tool.getLoginMethod().equals(Tool.LoginMethod.TOKEN)) {
+                    tool.setQuantity(tool.getQuantity() - 1);
                     toolRepository.save(tool);
                     System.out.println("Decreased quantity for tool " + tool.getToolId() + " to " + tool.getQuantity());
                 }
