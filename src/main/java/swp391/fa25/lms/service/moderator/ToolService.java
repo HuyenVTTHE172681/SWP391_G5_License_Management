@@ -13,6 +13,7 @@ import swp391.fa25.lms.repository.ToolRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 import jakarta.persistence.criteria.Predicate;
 
 
@@ -26,20 +27,31 @@ public class ToolService {
     public Tool findById(long id) {
         return toolRepository.findByToolId(id);
     }
+
     public void save(Tool tool) {
         toolRepository.save(tool);
     }
+
     public Page<Tool> filterPendingTools(
             Long sellerId,
             Long categoryId,
             LocalDateTime uploadFrom,
             LocalDateTime uploadTo,
+            String toolName,
             Pageable pageable
     ) {
         Specification<Tool> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            if (toolName != null && !toolName.isBlank()) {
+                String trimmed = toolName.trim();
+                String pattern = "%" + trimmed + "%";
 
+                Predicate equalName = cb.equal(root.get("toolName"), trimmed);
+                Predicate likeName = cb.like(root.get("toolName"), pattern);
+
+                predicates.add(cb.or(equalName, likeName));
+            }
             if (sellerId != null) {
                 predicates.add(cb.equal(root.get("seller").get("accountId"), sellerId));
             }
@@ -73,6 +85,7 @@ public class ToolService {
         tool.setReviewedBy(reviewedBy);
         toolRepository.save(tool);
     }
+
     public void approveTool(Tool tool, String reviewedBy) {
         tool.setStatus(Tool.Status.APPROVED);
         tool.setUpdatedAt(LocalDateTime.now());
@@ -81,6 +94,7 @@ public class ToolService {
     }
 
     public Page<Tool> filterNonPendingTools(
+            String toolName,
             Long sellerId,
             Long categoryId,
             LocalDateTime uploadFrom,
@@ -94,6 +108,15 @@ public class ToolService {
         Specification<Tool> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            if (toolName != null && !toolName.isBlank()) {
+                String trimmed = toolName.trim();
+                String pattern = "%" + trimmed + "%";
+
+                Predicate equalName = cb.equal(root.get("toolName"), trimmed);
+                Predicate likeName = cb.like(root.get("toolName"), pattern);
+
+                predicates.add(cb.or(equalName, likeName));
+            }
             if (sellerId != null) {
                 predicates.add(cb.equal(root.get("seller").get("accountId"), sellerId));
             }
@@ -135,6 +158,7 @@ public class ToolService {
 
         return toolRepository.findAll(spec, pageable);
     }
+
     public Page<Tool> filterApprovedTools(
             Long sellerId,
             Long categoryId,

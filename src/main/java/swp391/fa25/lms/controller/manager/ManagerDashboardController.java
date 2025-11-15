@@ -1,7 +1,6 @@
 package swp391.fa25.lms.controller.manager;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
@@ -11,7 +10,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import swp391.fa25.lms.model.Account;
@@ -45,6 +43,7 @@ public class ManagerDashboardController {
 
     @Autowired
     private ManagerDashboardService dashboardService;
+
     @GetMapping({"", "/"})
     public String managerDashboard(
             // --- Filter cho biểu đồ Seller Package ---
@@ -82,19 +81,19 @@ public class ManagerDashboardController {
 
 
     @GetMapping("/upload-tool")
-    public String upload(@RequestParam(required = false) Long sellerId,
-                         @RequestParam(required = false) Long categoryId,
-                         @RequestParam(required = false)
-                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
-                         @RequestParam(required = false)
-                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
-                         @RequestParam(required = false)
-                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedFrom,
-                         @RequestParam(required = false)
-                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedTo,
-                         @RequestParam(defaultValue = "0") int page,
-                         @RequestParam(defaultValue = "10") int size,
-                         Model model) {
+    public String getListUploadTool(@RequestParam(required = false) Long sellerId,
+                                    @RequestParam(required = false) Long categoryId,
+                                    @RequestParam(required = false)
+                                    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
+                                    @RequestParam(required = false)
+                                    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
+                                    @RequestParam(required = false)
+                                    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedFrom,
+                                    @RequestParam(required = false)
+                                    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime approvedTo,
+                                    @RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "10") int size,
+                                    Model model) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
@@ -201,6 +200,7 @@ public class ManagerDashboardController {
 
     @GetMapping("/tool/list")
     public String listTools(
+            @RequestParam(required = false) String toolName,
             @RequestParam(required = false) Long sellerId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false)
@@ -220,12 +220,13 @@ public class ManagerDashboardController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         Page<Tool> tools = toolService.filterNonPendingTools(
-                sellerId, categoryId, uploadFrom, uploadTo,
+                toolName, sellerId, categoryId, uploadFrom, uploadTo,
                 approvedFrom, approvedTo, reviewedBy, status, pageable
         );
 
         List<Category> categories = categoryService.getAllCategories();
 
+        model.addAttribute("toolName", toolName);
         model.addAttribute("categories", categories);
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("tools", tools.getContent());
