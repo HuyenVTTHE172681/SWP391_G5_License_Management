@@ -22,8 +22,8 @@
 
         <!-- RIGHT: Header + info -->
         <div class="tool-info">
-            <h1 class="title-pill" th:text="${tool.toolName} + ' - ' + ${tool.toolId}">Tool Name - ID</h1>
-
+            <h1 class="title-pill" th:text="${tool.toolName}">Tool Name</h1>
+            <h3 class="title-pill" th:text="'Tool ID : ' + ${tool.seller.getAccountId()}"> Tool ID</h3>
             <p class="desc" th:text="${tool.description}">description</p>
 
             <!-- (Optional) license chips if manager page also needs them -->
@@ -36,6 +36,8 @@
                 <div class="meta-row">
                     <span class="meta-label">Seller:</span>
                     <span class="meta-value" th:text="${tool.seller.fullName}">Seller Name</span>
+                    <span class="meta-label">Account ID:</span>
+                    <span class="meta-value" th:text="${tool.seller != null ? tool.seller.getAccountId() : '00'} "></span>
                 </div>
                 <div class="meta-row">
                     <span class="meta-label">Category:</span>

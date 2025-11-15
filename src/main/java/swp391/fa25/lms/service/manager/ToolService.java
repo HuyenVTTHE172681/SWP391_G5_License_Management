@@ -74,6 +74,7 @@ public class ToolService {
     }
 
     public Page<Tool> filterNonPendingTools(
+            String toolName,
             Long sellerId,
             Long categoryId,
             LocalDateTime uploadFrom,
@@ -86,7 +87,15 @@ public class ToolService {
     ) {
         Specification<Tool> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            if (toolName != null && !toolName.isBlank()) {
+                String trimmed = toolName.trim();
+                String pattern = "%" + trimmed + "%";
 
+                Predicate equalName = cb.equal(root.get("toolName"), trimmed);
+                Predicate likeName = cb.like(root.get("toolName"), pattern);
+
+                predicates.add(cb.or(equalName, likeName));
+            }
             if (sellerId != null) {
                 predicates.add(cb.equal(root.get("seller").get("accountId"), sellerId));
             }

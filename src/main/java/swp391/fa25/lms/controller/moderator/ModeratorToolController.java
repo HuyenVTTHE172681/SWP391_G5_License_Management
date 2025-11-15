@@ -41,18 +41,21 @@ public class ModeratorToolController {
     @Autowired
     @Qualifier("moderator")
     private FeedbackReportService feedbackReportService;
+
     @GetMapping({"/", "/dashboard"})
     public String moderatorDashboard(Model model) {
         model.addAttribute("activePage", "dashboard");
-        model.addAttribute("uploadRequest", toolService.filterPendingTools(null,null,null,null, Pageable.unpaged()).getTotalElements());
-        model.addAttribute("reviewedTool", toolService.filterNonPendingTools(null,null,null,null, null, null, "MOD", null, Pageable.unpaged()).getTotalElements());
+        model.addAttribute("uploadRequest", toolService.filterPendingTools(null, null, null, null, null, Pageable.unpaged()).getTotalElements());
+        model.addAttribute("reviewedTool", toolService.filterNonPendingTools(null, null, null, null, null, null, null, "MOD", null, Pageable.unpaged()).getTotalElements());
         model.addAttribute("feedbackReport", feedbackReportService.findAllByStatus(FeedbackReport.Status.PENDING).size());
-        model.addAttribute("toolReport",  toolReportService.findByStatus(ToolReport.Status.PENDING).size());
+        model.addAttribute("toolReport", toolReportService.findByStatus(ToolReport.Status.PENDING).size());
         return "moderator/dashboard";
     }
+
     // View tool uploaded
     @GetMapping("/history")
     public String displayUploadedRequest(
+            @RequestParam(required = false) String toolName,
             @RequestParam(required = false) Long sellerId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String status,
@@ -67,8 +70,11 @@ public class ModeratorToolController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Tool> toolList = toolService.filterNonPendingTools(
+
+        Page<Tool> toolPage = toolService.filterNonPendingTools(
+                toolName,
                 sellerId,
                 categoryId,
                 uploadFrom,
@@ -82,7 +88,12 @@ public class ModeratorToolController {
 
         List<Category> categories = categoryService.getAllCategories();
 
-        model.addAttribute("toolList", toolList);
+        model.addAttribute("toolName", toolName);
+        model.addAttribute("toolList", toolPage.getContent());
+        model.addAttribute("toolPage", toolPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", toolPage.getTotalPages());
+        model.addAttribute("pageSize", size);
         model.addAttribute("categories", categories);
         model.addAttribute("sellerId", sellerId);
         model.addAttribute("categoryId", categoryId);
@@ -95,6 +106,7 @@ public class ModeratorToolController {
         return "moderator/uploaded";
     }
 
+
     //View request upload tool  pending
     @GetMapping("/uploadRequest")
     public String displayUploadRequest(@RequestParam(required = false) Long sellerId,
@@ -103,18 +115,30 @@ public class ModeratorToolController {
                                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadFrom,
                                        @RequestParam(required = false)
                                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime uploadTo,
+                                       @RequestParam(required = false) String toolName,
                                        @RequestParam(defaultValue = "0") int page,
                                        @RequestParam(defaultValue = "10") int size,
                                        Model model) {
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Tool> toolList = toolService.filterPendingTools(sellerId, categoryId, uploadFrom, uploadTo, pageable);
+        Page<Tool> toolPage = toolService.filterPendingTools(
+                sellerId, categoryId, uploadFrom, uploadTo, toolName, pageable
+        );
+
         List<Category> categories = categoryService.getAllCategories();
-        model.addAttribute("toolList", toolList);
+
+        model.addAttribute("toolName", toolName);
+        model.addAttribute("toolList", toolPage.getContent());
+        model.addAttribute("toolPage", toolPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", toolPage.getTotalPages());
+        model.addAttribute("pageSize", size);
         model.addAttribute("categories", categories);
         model.addAttribute("sellerId", sellerId);
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("uploadFrom", uploadFrom);
         model.addAttribute("uploadTo", uploadTo);
+
         return "moderator/request";
     }
 
@@ -181,14 +205,24 @@ public class ModeratorToolController {
             @RequestParam(required = false) Long toolId,
             @RequestParam(required = false) Long reporterId,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate fromDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate toDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             Model model) {
 
-        List<ToolReport> reports = toolReportService.filterReports(status, toolId, reporterId, fromDate, toDate);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").descending());
 
-        model.addAttribute("reports", reports);
+        Page<ToolReport> reportsPage = toolReportService.filterReports(
+                status, toolId, reporterId, fromDate, toDate, pageable
+        );
+
+        model.addAttribute("reports", reportsPage.getContent());
+        model.addAttribute("reportsPage", reportsPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", reportsPage.getTotalPages());
+        model.addAttribute("pageSize", size);
         model.addAttribute("status", status);
         model.addAttribute("toolId", toolId);
         model.addAttribute("reporterId", reporterId);
@@ -197,12 +231,14 @@ public class ModeratorToolController {
 
         return "moderator/tool-report";
     }
+
     @PostMapping("/tool/report/{id}/approve")
     public String approveReport(@PathVariable Long id, RedirectAttributes redirect) {
         toolReportService.updateStatus(id, ToolReport.Status.APPROVED);
         redirect.addFlashAttribute("success", "✅ Report approved successfully!");
         return "redirect:/moderator/tool/report";
     }
+
     @PostMapping("/tool/report/{id}/reject")
     public String rejectReport(@PathVariable Long id, RedirectAttributes redirect) {
         toolReportService.updateStatus(id, ToolReport.Status.REJECTED);

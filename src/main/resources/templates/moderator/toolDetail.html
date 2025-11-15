@@ -43,7 +43,10 @@
 
                 <div class="meta-row">
                     <span class="meta-label">Seller:</span>
-                    <span class="meta-value" th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'}"></span>
+                    <span class="meta-value" th:text="${tool.seller != null ? tool.seller.fullName : 'N/A'} "></span>
+                    <span class="meta-label">Account ID:</span>
+                    <span class="meta-value" th:text="${tool.seller != null ? tool.seller.getAccountId() : '00'} "></span>
+
                 </div>
                 <div class="meta-row">
                     <span class="meta-label">Reviewed By:</span>

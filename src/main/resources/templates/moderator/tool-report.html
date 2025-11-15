@@ -104,6 +104,56 @@
             </tr>
             </tbody>
         </table>
+        <!-- 🔢 Pagination -->
+        <div class="pagination" th:if="${totalPages >= 1}">
+            <!-- Prev -->
+            <a class="page-link prev"
+               th:if="${currentPage > 0}"
+               th:href="@{/moderator/tool/report(
+                        page=${currentPage - 1},
+                        size=${pageSize},
+                        status=${status},
+                        toolId=${toolId},
+                        reporterId=${reporterId},
+                        fromDate=${fromDate},
+                        toDate=${toDate}
+               )}">
+                « Prev
+            </a>
+
+            <!-- Page numbers -->
+            <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <a class="page-link"
+                   th:text="${i + 1}"
+                   th:classappend="${i} == ${currentPage} ? ' active' : ''"
+                   th:href="@{/moderator/tool/report(
+                            page=${i},
+                            size=${pageSize},
+                            status=${status},
+                            toolId=${toolId},
+                            reporterId=${reporterId},
+                            fromDate=${fromDate},
+                            toDate=${toDate}
+                   )}">
+                </a>
+            </span>
+
+            <!-- Next -->
+            <a class="page-link next"
+               th:if="${currentPage + 1 < totalPages}"
+               th:href="@{/moderator/tool/report(
+                        page=${currentPage + 1},
+                        size=${pageSize},
+                        status=${status},
+                        toolId=${toolId},
+                        reporterId=${reporterId},
+                        fromDate=${fromDate},
+                        toDate=${toDate}
+               )}">
+                Next »
+            </a>
+        </div>
+
     </main>
 </div>
 
