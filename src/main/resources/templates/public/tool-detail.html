@@ -8,88 +8,88 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link th:href="@{/css/home.css}" rel="stylesheet">
 
-    <!-- CSRF meta (để JS có thể lấy token) -->
+    <!-- CSRF META -->
     <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
     <meta name="_csrf_parameter" th:if="${_csrf != null}" th:content="${_csrf.parameterName}">
 </head>
+
 <body>
+
 <div th:replace="common/header :: header"></div>
 
 <main class="container my-5">
 
-    <!-- ======= FLASH MESSAGE: OK / ERROR ======= -->
-    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <span th:text="${error}">Có lỗi xảy ra.</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- FLASH ERROR -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <div th:if="${ok}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <span th:text="${ok}">Thao tác thành công.</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- FLASH OK -->
+    <div th:if="${ok}" class="alert alert-success alert-dismissible fade show">
+        <span th:text="${ok}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-    <!-- ======= END FLASH MESSAGE ======= -->
 
     <div class="row g-4">
-        <div class="col-md-5">
-            <div class="product-image">
-                <!-- Hiển thị ảnh thật nếu tool.image tồn tại -->
-                <img th:if="${tool.image != null}"
-                     th:src="@{'/' + ${tool.image}}"
-                     alt="Ảnh sản phẩm"
-                     class="img-fluid rounded">
 
-                <!-- Ảnh placeholder nếu không có ảnh -->
-                <img th:unless="${tool.image != null}"
-                     src="/placeholder.svg?height=250&width=350"
-                     alt="Ảnh mặc định"
-                     class="img-fluid rounded">
-            </div>
+        <!-- IMAGE -->
+        <div class="col-md-5">
+            <img th:if="${tool.image != null}" th:src="@{'/' + ${tool.image}}" class="img-fluid rounded">
+            <img th:unless="${tool.image != null}" src="/placeholder.svg?height=250&width=350" class="img-fluid rounded">
         </div>
 
+        <!-- INFO -->
         <div class="col-md-7">
+
             <div class="mb-2">
-                <span class="badge bg-secondary" th:text="${tool.category.categoryName}">Category</span>
-                <span class="product-name-detail" th:text="${tool.toolName}">Product Name</span>
+                <span class="badge bg-secondary" th:text="${tool.category.categoryName}"></span>
+                <span class="product-name-detail" th:text="${tool.toolName}"></span>
             </div>
 
+            <!-- RATING -->
             <div class="d-flex align-items-center mb-3">
                 <div class="me-3 stars">
                     <span th:each="i : ${#numbers.sequence(1,5)}">
                         <i th:class="${i <= avgRating ? 'fas fa-star text-warning' : 'far fa-star text-secondary'}"></i>
                     </span>
                 </div>
-                <div>
-                    <small th:text="${totalReviews} + ' đánh giá'">0 đánh giá</small>
-                </div>
+                <div><small th:text="${totalReviews} + ' đánh giá'"></small></div>
             </div>
 
+            <!-- SELLER & STOCK -->
             <div class="mb-2 sellerName">
-                <p>Người bán: <b th:text="${tool.seller.fullName}">Seller</b></p>
-                <p>Kho: <b th:text="${tool.quantity}">0</b></p>
+                <p>Người bán: <b th:text="${tool.seller.fullName}"></b></p>
+                <p>Kho: <b th:text="${tool.quantity}"></b></p>
 
-                <div class="price">
-                    <span id="license-price"
-                          th:data-price="${tool.licenses[0].price}"
-                          th:text="${tool.licenses[0].price != null ? tool.licenses[0].price + ' VND' : 'Miễn phí'}">
-                    </span>
-                </div>
+                <!-- PRICE SAFE -->
+                <span id="license-price"
+                      th:if="${!#lists.isEmpty(tool.licenses)}"
+                      th:data-price="${tool.licenses[0].price}"
+                      th:text="${tool.licenses[0].price != null ? tool.licenses[0].price + ' VND' : 'Miễn phí'}"></span>
+
+                <span th:if="${#lists.isEmpty(tool.licenses)}">Chưa có license</span>
             </div>
 
+            <!-- LICENSE LIST -->
             <div class="mb-2 sellerName">
                 <p>License</p>
-                <div th:if="${#lists.isEmpty(tool.licenses)}" class="text-muted mb-3">Chưa có license</div>
-                <div class="license-list">
+
+                <div th:if="${#lists.isEmpty(tool.licenses)}" class="text-muted">Chưa có license</div>
+
+                <div class="license-list" th:if="${!#lists.isEmpty(tool.licenses)}">
                     <div th:each="lic, iStat : ${tool.licenses}"
                          th:id="'lic-'+${lic.licenseId}"
-                         th:classappend="${iStat.index == 0} ? 'license-item active' : 'license-item'"
+                         th:class="'license-item' + (iStat.index == 0 ? ' active' : '')"
                          th:data-price="${lic.price}"
-                         th:text="${lic.name}"
                          th:data-licenseid="${lic.licenseId}"
+                         th:text="${lic.name}"
                          onclick="selectLicense(this)">
                     </div>
                 </div>
             </div>
 
+            <!-- BUY BUTTON -->
             <div class="actions mt-4 d-flex align-items-center gap-3">
                     <!--Payment VNPay-->
                 <form id="buyForm" th:action="@{/payment/create}" method="get">
@@ -97,58 +97,66 @@
 <!--                <form id="buyForm" th:action="@{/paypal-payment/create}" method="get">-->
                     <input type="hidden" name="toolId" th:value="${tool.toolId}">
                     <input type="hidden" id="selectedLicense" name="licenseId"
-                           th:value="${tool.licenses.size() > 0 ? tool.licenses[0].licenseId : 0}">
+                           th:value="${!#lists.isEmpty(tool.licenses) ? tool.licenses[0].licenseId : 0}">
+
                     <button type="button"
                             class="btn btn-success px-4"
                             th:disabled="${tool.quantity == 0}"
                             th:text="${tool.quantity == 0 ? 'Hết hàng' : 'Mua hàng'}"
-                            onclick="buyNow()">
-                    </button>
+                            onclick="buyNow()"></button>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- TABS -->
     <div class="mt-5">
-        <ul class="nav nav-tabs" id="detailTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="desc-tab" data-bs-toggle="tab" data-bs-target="#desc" type="button">Mô tả</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="review-tab" data-bs-toggle="tab" data-bs-target="#review" type="button">Đánh giá</button>
-            </li>
+        <ul class="nav nav-tabs">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#desc">Mô tả</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#review">Đánh giá</button></li>
         </ul>
 
         <div class="tab-content p-3 border border-top-0">
-            <div class="tab-pane fade show active" id="desc" role="tabpanel">
-                <div th:text="${tool.description}">Full description...</div>
+
+            <!-- DESCRIPTION -->
+            <div class="tab-pane fade show active" id="desc">
+                <div th:text="${tool.description}"></div>
             </div>
 
-            <div class="tab-pane fade" id="review" role="tabpanel">
+            <!-- REVIEWS -->
+            <div class="tab-pane fade" id="review">
+
                 <div th:if="${feedbackPage.content.size() == 0}" class="text-muted">Chưa có review</div>
 
+                <!-- FEEDBACK ITEM -->
                 <div th:each="fb : ${feedbackPage.content}" class="review-item py-3 border-bottom">
-                    <div class="d-flex align-items-start">
-                        <div class="me-3"><div style="width:48px;height:48px;border-radius:50%;background:#ddd;"></div></div>
+
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <div style="width:48px;height:48px;border-radius:50%;background:#ddd;"></div>
+                        </div>
+
                         <div class="flex-grow-1">
-                            <div class="d-flex align-items-center justify-content-between">
+
+                            <!-- HEADER -->
+                            <div class="d-flex justify-content-between">
                                 <div>
-                                    <strong th:text="${fb.account.fullName}">Người dùng</strong>
+                                    <strong th:text="${fb.account.fullName}"></strong>
                                     <small class="text-muted ms-2"
                                            th:if="${fb.createdAt != null}"
-                                           th:text="${#temporals.format(fb.createdAt, 'dd/MM/yyyy HH:mm')}">10/10/2025 12:34</small>
+                                           th:text="${#temporals.format(fb.createdAt, 'dd/MM/yyyy HH:mm')}"></small>
                                 </div>
 
-                                <!-- Fix buttons: Wrap all actions in one d-flex gap-1 div for side-by-side display -->
-                                <div th:if="${account != null}" class="d-flex gap-1 align-items-center">
-                                    <!-- Edit : Only if owner -->
-                                    <div th:if="${fb.account.accountId == account.accountId}" class="d-flex gap-1">
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           th:href="@{/feedback/{fid}/edit(fid=${fb.feedbackId})}">
-                                            <i class="fa-regular fa-pen-to-square"></i> Sửa
-                                        </a>
-                                    </div>
-                                    <!-- Report: Always for logged-in users -->
+                                <!-- ACTION BUTTONS -->
+                                <div th:if="${account != null}" class="d-flex gap-1">
+                                    <!-- Edit -->
+                                    <a th:if="${fb.account.accountId == account.accountId}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       th:href="@{/feedback/{fid}/edit(fid=${fb.feedbackId})}">
+                                        <i class="fa-regular fa-pen-to-square"></i> Sửa
+                                    </a>
+
+                                    <!-- Report -->
                                     <button class="btn btn-sm btn-outline-warning"
                                             th:attr="data-fid=${fb.feedbackId}"
                                             onclick="reportFeedback(this)">
@@ -157,61 +165,80 @@
                                 </div>
                             </div>
 
+                            <!-- STARS -->
                             <div class="stars my-1">
                                 <span th:each="i : ${#numbers.sequence(1,5)}">
                                     <i th:class="${i <= fb.rating ? 'fas fa-star text-warning' : 'far fa-star text-secondary'}"></i>
                                 </span>
                             </div>
 
-                            <div th:text="${fb.comment}">Comment...</div>
+                            <!-- COMMENT -->
+                            <div th:text="${fb.comment}"></div>
 
+                            <!-- REPLIES BLOCK (ĐÃ FIX ĐÓNG THẺ) -->
                             <div class="mt-3 ps-3 border-start"
-                                 th:with="reps=${repliesMap != null ? repliesMap[fb.feedbackId] : null}"
-                                 th:attr="id=${'replies-box-' + fb.feedbackId}">
-                                <div th:if="${reps != null and #lists.size(reps) > 0}">
+                                 th:with="reps=${repliesMap != null and repliesMap.containsKey(fb.feedbackId) ? repliesMap[fb.feedbackId] : null}"
+                                 th:id="'replies-box-' + ${fb.feedbackId}">
+
+                                <div th:if="${reps != null}">
                                     <div th:each="rep : ${reps}" class="mb-2">
                                         <div class="small text-muted">
                                             <i class="fa-solid fa-reply"></i>
-                                            <strong th:text="${rep.seller.fullName}">Seller</strong>
+                                            <strong th:text="${rep.seller.fullName}"></strong>
                                             <span th:if="${rep.createdAt != null}"
-                                                  th:text="' • ' + ${#temporals.format(rep.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                                                  th:text="' • ' + ${#temporals.format(rep.createdAt,'dd/MM/yyyy HH:mm')}"></span>
                                         </div>
-                                        <div th:text="${rep.content}">Nội dung phản hồi…</div>
+                                        <div th:text="${rep.content}"></div>
                                     </div>
                                 </div>
 
-                                <!-- Form reply cho seller -->
-                                <form th:if="${account != null and tool.seller != null and tool.seller.accountId == account.accountId}"
+                                <!-- SELLER REPLY FORM -->
+                                <form th:if="${account != null and tool.seller.accountId == account.accountId}"
                                       th:action="@{/seller/feedback/{fid}/reply(fid=${fb.feedbackId})}"
-                                      method="post" class="d-flex gap-2 mt-2 reply-form"
-                                      th:attr="data-fid=${fb.feedbackId}">
+                                      class="d-flex gap-2 mt-2 reply-form"
+                                      th:attr="data-fid=${fb.feedbackId}"
+                                      method="post">
+
                                     <input th:if="${_csrf != null}" type="hidden"
                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <input type="text" name="content" class="form-control form-control-sm"
-                                           placeholder="Trả lời người mua…" maxlength="200" required>
+
+                                    <input type="text" name="content" maxlength="200"
+                                           class="form-control form-control-sm"
+                                           placeholder="Trả lời người mua…" required>
+
                                     <button class="btn btn-sm btn-primary" type="submit">Gửi</button>
                                 </form>
-                            </div>
+
+                            </div> <!-- KẾT THÚC BLOCK REPLY -->
+
                         </div>
                     </div>
                 </div>
 
-                <!-- Pagination (sửa cú pháp URL) -->
+                <!-- PAGINATION -->
                 <nav th:if="${feedbackPage.totalPages > 1}" class="mt-3">
                     <ul class="pagination">
                         <li class="page-item" th:classappend="${feedbackPage.first} ? 'disabled'">
                             <a class="page-link"
-                               th:href="@{/tools/{id}(id=${tool.toolId},reviewPage=${feedbackPage.number - 1})#review}">Previous</a>
+                               th:href="@{/tools/{id}(id=${tool.toolId},reviewPage=${feedbackPage.number - 1})#review}">
+                                Previous
+                            </a>
                         </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, feedbackPage.totalPages - 1)}"
+
+                        <li th:each="i : ${#numbers.sequence(0, feedbackPage.totalPages - 1)}"
+                            class="page-item"
                             th:classappend="${i == feedbackPage.number} ? 'active'">
                             <a class="page-link"
                                th:href="@{/tools/{id}(id=${tool.toolId},reviewPage=${i})#review}"
-                               th:text="${i + 1}">1</a>
+                               th:text="${i + 1}">
+                            </a>
                         </li>
+
                         <li class="page-item" th:classappend="${feedbackPage.last} ? 'disabled'">
                             <a class="page-link"
-                               th:href="@{/tools/{id}(id=${tool.toolId},reviewPage=${feedbackPage.number + 1})#review}">Next</a>
+                               th:href="@{/tools/{id}(id=${tool.toolId},reviewPage=${feedbackPage.number + 1})#review}">
+                                Next
+                            </a>
                         </li>
                     </ul>
                 </nav>
@@ -221,303 +248,39 @@
 </main>
 
 <div th:replace="common/footer :: footer"></div>
-<div class="chat-button"><i class="fas fa-comment-dots"></i></div>
 
-<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="loginModalLabel">Yêu cầu đăng nhập</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">Bạn cần đăng nhập để tiếp tục mua hàng.</div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" onclick="redirectToLogin()">Đăng nhập</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal báo cáo Feedback -->
-<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Báo cáo đánh giá</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="reportForm">
-                    <input type="hidden" id="report-feedback-id">
-                    <div class="mb-3">
-                        <label class="form-label">Lý do</label>
-                        <select class="form-select" id="reportReason" required>
-                            <option value="">-- Chọn lý do --</option>
-                            <option value="SPAM">Spam</option>
-                            <option value="OFFENSIVE_LANGUAGE">Ngôn ngữ xúc phạm</option>
-                            <option value="FALSE_INFORMATION">Thông tin sai lệch</option>
-                            <option value="IRRELEVANT">Không liên quan</option>
-                            <option value="HARASSMENT">Quấy rối</option>
-                            <option value="PRIVACY_VIOLATION">Xâm phạm quyền riêng tư</option>
-                            <option value="OTHER">Khác</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Mô tả chi tiết (tùy chọn)</label>
-                        <textarea id="reportDescription" class="form-control" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button class="btn btn-warning" onclick="submitReport()">Gửi báo cáo</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
+<!-- JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script th:inline="javascript">
     /*<![CDATA[*/
+
     var isLoggedIn = /*[[${account != null}]]*/ false;
 
-    function formatPrice(price){ return new Intl.NumberFormat('vi-VN').format(price) + ' VND'; }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const el = document.getElementById('license-price');
-        if (el) {
-            const price = el.getAttribute('data-price');
-            el.textContent = (price && price !== '0') ? formatPrice(price) : 'Miễn phí';
-        }
-
-        if (window.location.hash === '#review') {
-            const tabBtn = document.getElementById('review-tab');
-            if (tabBtn) new bootstrap.Tab(tabBtn).show();
-        }
-
-        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(btn => {
-            btn.addEventListener('shown.bs.tab', e => {
-                const target = e.target.getAttribute('data-bs-target');
-                if (target) history.replaceState(null, '', target);
-            });
-        });
-
-        const defaultEl = document.querySelector('.license-item.active');
-        if (defaultEl) {
-            const priceEl = document.getElementById('license-price');
-            const price = defaultEl.getAttribute('data-price');
-            if (priceEl) priceEl.textContent = (price && price !== '0') ? formatPrice(price) : 'Miễn phí';
-            const licenseId = defaultEl.getAttribute('data-licenseid');
-            if (licenseId) document.getElementById('selectedLicense').value = licenseId;
-        }
-
-        // ==== Gắn AJAX submit cho tất cả form reply của seller (ở lại trang) ====
-        hookSellerReplyForms();
-    });
-
-    function selectLicense(el){
-        document.querySelectorAll('.license-item').forEach(e => e.classList.remove('active'));
-        el.classList.add('active');
-        const price = el.getAttribute('data-price');
-        const priceEl = document.getElementById('license-price');
-        if (priceEl) priceEl.textContent = (price && price !== '0') ? formatPrice(price) : 'Miễn phí';
-        const licenseId = el.getAttribute('data-licenseid');
-        if (licenseId) document.getElementById('selectedLicense').value = licenseId;
+    function formatPrice(price) {
+        return new Intl.NumberFormat('vi-VN').format(price) + ' VND';
     }
 
-    function buyNow(){
-        const selected = document.querySelector('.license-item.active');
-        const quantity = /*[[${tool.quantity}]]*/ 0;
-        if (quantity <= 0) return alert("Sản phẩm này hiện đã hết hàng, vui lòng quay lại sau!");
-        if (!selected) return alert('Vui lòng chọn gói license trước khi mua hàng!');
-        if (!isLoggedIn) { new bootstrap.Modal(document.getElementById('loginModal')).show(); return; }
+    function selectLicense(el) {
+        document.querySelectorAll('.license-item').forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
+        const price = el.dataset.price;
+        const priceEl = document.getElementById('license-price');
+        if (priceEl) priceEl.textContent = (price && price !== '0') ? formatPrice(price) : 'Miễn phí';
+        document.getElementById('selectedLicense').value = el.dataset.licenseid;
+    }
+
+    function buyNow() {
+        const qty = /*[[${tool.quantity}]]*/ 0;
+        if (qty <= 0) return alert("Hết hàng!");
+        if (!isLoggedIn) {
+            new bootstrap.Modal(document.getElementById('loginModal')).show();
+            return;
+        }
         document.getElementById('buyForm').submit();
     }
 
-    function redirectToLogin(){ window.location.href = '/login'; }
-
-    // ==== Xoá feedback (của người mua) – giữ nguyên
-    var reviewRedirect = /*[[@{/tools/{id}(id=${tool.toolId},reviewPage=${feedbackPage.number})#review}]]*/ '';
-    function confirmDeleteFeedback(btn){
-        const fid = btn.getAttribute('data-fid');
-        if (!fid) return;
-        if (confirm('Bạn chắc muốn xoá đánh giá này?')){
-            const form = document.createElement('form');
-            form.method = 'post';
-            form.action = `/feedback/${fid}/delete`;
-
-            const csrfParam = document.querySelector('meta[name="_csrf_parameter"]')?.content;
-            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-            if (csrfParam && csrfToken){
-                const inp = document.createElement('input');
-                inp.type = 'hidden'; inp.name = csrfParam; inp.value = csrfToken; form.appendChild(inp);
-            }
-
-            const red = document.createElement('input');
-            red.type = 'hidden'; red.name = 'redirect'; red.value = reviewRedirect; form.appendChild(red);
-
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
-
-    // ==== Helper: phát hiện kiểu "c h ữ  c á c h 1 space"
-    function looksSpacedOutText(s){
-        s = (s || '').trim().replace(/\s+/g, ' ');
-        if (s.length < 9) return false;                // tối thiểu như "a a a a a"
-        const parts = s.split(' ');
-        if (parts.length < 5) return false;
-        return parts.every(p => /^[\p{L}\p{N}]$/u.test(p));
-    }
-
-    // ==== Gắn AJAX cho form reply của seller (ở lại trang, không redirect)
-    function hookSellerReplyForms(){
-        const csrfParam = document.querySelector('meta[name="_csrf_parameter"]')?.content;
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-
-        document.querySelectorAll('form.reply-form').forEach(form => {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const input = form.querySelector('input[name="content"]');
-                if (!input) return;
-
-                const value = (input.value || '').trim();
-
-                // FE validate chặn "c h ữ"
-                if (looksSpacedOutText(value)){
-                    input.classList.add('is-invalid');
-                    if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('invalid-feedback')){
-                        const fb = document.createElement('div');
-                        fb.className = 'invalid-feedback';
-                        fb.textContent = 'Vui lòng không chèn khoảng trắng giữa từng ký tự.';
-                        input.after(fb);
-                    }
-                    input.focus();
-                    setTimeout(() => input.classList.remove('is-invalid'), 2000);
-                    return;
-                }
-
-                const fid = form.getAttribute('data-fid');
-                if (!fid) return;
-
-                // Gửi AJAX
-                const body = new URLSearchParams();
-                body.set('content', value);
-                if (csrfParam && csrfToken) body.set(csrfParam, csrfToken);
-
-                try{
-                    const res = await fetch(`/seller/feedback/${fid}/reply`, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-                        },
-                        body: body.toString()
-                    });
-
-                    if (!res.ok){
-                        const msg = await res.text();
-                        throw new Error(msg || 'Gửi phản hồi thất bại.');
-                    }
-
-                    // Nhận JSON và cập nhật UI, ở lại trang
-                    const data = await res.json(); // {feedbackId, replyId, sellerName, content, updatedAt}
-                    const box = document.getElementById(`replies-box-${fid}`);
-                    if (box){
-                        // Nếu trước đó "chưa có reply", dọn text "Chưa có..." nếu có
-                        const empty = box.querySelector('.text-muted');
-                        if (empty && empty.textContent?.trim().startsWith('Chưa')) empty.remove();
-
-                        const wrap = document.createElement('div');
-                        wrap.className = 'mb-2';
-                        wrap.innerHTML = `
-            <div class="small text-muted">
-              <i class="fa-solid fa-reply"></i>
-              <strong>${data.sellerName || 'Seller'}</strong>
-              ${data.updatedAt ? ' • ' + data.updatedAt : ''}
-            </div>
-            <div></div>
-          `;
-                        wrap.querySelector('div:last-child').textContent = data.content || '';
-                        box.appendChild(wrap);
-                    }
-
-                    input.value = '';
-                }catch(err){
-                    alert(err.message || 'Có lỗi xảy ra, vui lòng thử lại.');
-                }
-            });
-        });
-    }
     /*]]>*/
-
-    // Feedback report
-    let selectedFeedbackId = null;
-
-    function reportFeedback(btn){
-        selectedFeedbackId = btn.getAttribute('data-fid');
-        const modal = new bootstrap.Modal(document.getElementById('reportModal'));
-        modal.show();
-    }
-
-    async function submitReport(){
-        if (!selectedFeedbackId) return;
-        const reason = document.getElementById('reportReason').value;
-        const description = document.getElementById('reportDescription').value;
-
-        if (!reason) return alert("Vui lòng chọn lý do báo cáo.");
-
-        const csrfParam = document.querySelector('meta[name="_csrf_parameter"]')?.content;
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-
-        const body = new URLSearchParams();
-        body.set('reason', reason);
-        if (description) body.set('description', description);
-        if (csrfParam && csrfToken) body.set(csrfParam, csrfToken);
-
-        try {
-            const res = await fetch(`/feedback/${selectedFeedbackId}/report`, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-                },
-                body: body.toString()
-            });
-            const message = await res.text();
-
-            if (res.ok) {
-                alert(message);
-            } else if (res.status === 401) {
-                alert(message);
-                window.location.href = "/login";
-            } else if (res.status === 403) {
-                alert(message);
-            } else if (res.status === 404) {
-                alert(message);
-            } else if (res.status === 409) {
-                alert(message);
-            } else if (res.status === 429) {
-                alert(message);
-            } else {
-                alert("Đã xảy ra lỗi không xác định: " + message);
-            }
-
-            // Đóng modal sau khi báo cáo thành công
-            const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
-            if (modal) modal.hide();
-
-            // Reset form sau khi gửi
-            document.getElementById('reportForm').reset();
-        } catch(err) {
-            alert(err.message);
-        }
-    }
 </script>
 
 </body>

@@ -18,6 +18,9 @@ public interface LicenseAccountRepository extends JpaRepository<LicenseAccount, 
     // Lấy danh sách token theo tool_id
     List<LicenseAccount> findByLicense_Tool_ToolId(Long toolId);
 
+    Optional<LicenseAccount> findByUsername(String username);
+
+
     // Kiểm tra token đã tồn tại trong 1 tool chưa (chống trùng trong DB mode)
     boolean existsByLicense_Tool_ToolIdAndToken(Long toolId, String token);
     boolean existsByToken(String token);
