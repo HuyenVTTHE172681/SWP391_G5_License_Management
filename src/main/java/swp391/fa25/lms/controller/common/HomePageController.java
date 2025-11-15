@@ -11,9 +11,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import swp391.fa25.lms.model.Account;
+import swp391.fa25.lms.model.LicenseAccount;
 import swp391.fa25.lms.model.Tool;
+import swp391.fa25.lms.repository.LicenseAccountRepository;
 import swp391.fa25.lms.service.customer.CategoryService;
 import swp391.fa25.lms.service.customer.FavoriteService;
+import swp391.fa25.lms.service.customer.LicenseAccountService;
 import swp391.fa25.lms.service.customer.ToolService;
 
 import java.util.List;
@@ -28,6 +31,8 @@ public class HomePageController {
     @Autowired
     private FavoriteService favoriteService;
 
+    @Autowired
+    private LicenseAccountRepository licenseAccountRepository;
     @GetMapping("/")
     public String defaultRedirect() {
         // Default => redirect tới /home
@@ -69,6 +74,12 @@ public class HomePageController {
         Page<Tool> toolPage = toolService.searchAndFilterTools(
                 keyword, categoryId, dateFilter, priceFilter, ratingFilter, account, page, size
         );
+        for (Tool tool : toolPage.getContent()) {
+            List<LicenseAccount> active = licenseAccountRepository.findByStatusAndLicense_Tool_ToolId(LicenseAccount.Status.ACTIVE, tool.getToolId());
+            int origin = tool.getQuantity() == null ? 0 : tool.getQuantity();
+            int remain = origin - active.size();
+            tool.setAvailableQuantity(Math.max(remain, 0));
+        }
 
         model.addAttribute("tools", toolPage.getContent());
         model.addAttribute("currentPage", page);

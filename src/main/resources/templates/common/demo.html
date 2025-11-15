@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
 <div th:if="${license != null}"
      style="margin-top:16px;padding:16px 18px;border-radius:10px;
             border:1px solid #e5e7eb;background:#f9fafb;font-size:14px;">
@@ -26,9 +31,20 @@
                         #temporals.format(license.endDate, 'yyyy-MM-dd HH:mm') : 'N/A'}"></span>
     </p>
 
-    <p><strong>Token:</strong>
+    <p th:if="${license.getLicense().tool.loginMethod.equals(license.getLicense().tool.getLoginMethod().TOKEN)}">
+        <strong>Token:</strong>
         <span th:text="${license.token}"></span>
     </p>
+
+    <p><strong>Tool Files:</strong></p>
+    <ul>
+        <li th:each="file : ${tool.files}">
+            <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
+                <span th:text="${file.filePath}">tool-file.ext</span>
+            </a>
+            <span class="file-type" th:text="'(' + ${file.fileType} + ')'">(type)</span>
+        </li>
+    </ul>
 
     <p><strong>Used:</strong>
         <span th:text="${license.used ? 'Yes' : 'No'}"></span>
