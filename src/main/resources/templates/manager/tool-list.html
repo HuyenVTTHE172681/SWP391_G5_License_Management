@@ -5,6 +5,7 @@
     <title>Manager - Tool List</title>
     <link rel="stylesheet" th:href="@{/css/manager-tool-list.css}">
 </head>
+
 <body>
 <div class="layout">
 
@@ -30,10 +31,13 @@
             <h1>Tool List</h1>
 
             <!-- 🔍 FILTER FORM -->
-            <form method="get" th:action="@{/manager/tool/list}" class="filter-form">
+            <form method="get" th:action="@{/manager/tool/list}" class="filter-form"
+                  onsubmit="return validateFilterForm()">
                 <div class="filter-group">
                     <label>Seller ID:</label>
-                    <input type="number" name="sellerId" th:value="${selectedSellerId}">
+                    <input type="number" name="sellerId" th:value="${selectedSellerId}" min="1">
+                    <label>Tool Name: </label>
+                    <input type="text" name="toolName" th:value="${toolName}">
                 </div>
 
                 <div class="filter-group">
@@ -124,8 +128,88 @@
                 </tr>
                 </tbody>
             </table>
+            <div class="pagination-wrapper" th:if="${totalPages > 1}">
+                <div class="pagination">
+                    <!-- Nút Prev -->
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/manager/tool/list(
+                            page=${currentPage - 1},
+                            size=${pageSize},
+                            sellerId=${selectedSellerId},
+                            categoryId=${categoryId},
+                            uploadFrom=${uploadFrom},
+                            uploadTo=${uploadTo},
+                            approvedFrom=${approvedFrom},
+                            approvedTo=${approvedTo},
+                            reviewedBy=${reviewedBy},
+                            status=${status}
+                       )}">
+                        « Prev
+                    </a>
+
+                    <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:href="@{/manager/tool/list(
+                                page=${i},
+                                size=${pageSize},
+                                sellerId=${selectedSellerId},
+                                categoryId=${categoryId},
+                                uploadFrom=${uploadFrom},
+                                uploadTo=${uploadTo},
+                                approvedFrom=${approvedFrom},
+                                approvedTo=${approvedTo},
+                                reviewedBy=${reviewedBy},
+                                status=${status}
+                            )}"
+                           th:text="${i + 1}"
+                           th:classappend="${i == currentPage} ? 'active' : ''">
+                        </a>
+                    </span>
+
+                    <a th:if="${currentPage + 1 < totalPages}"
+                       th:href="@{/manager/tool/list(
+                            page=${currentPage + 1},
+                            size=${pageSize},
+                            sellerId=${selectedSellerId},
+                            categoryId=${categoryId},
+                            uploadFrom=${uploadFrom},
+                            uploadTo=${uploadTo},
+                            approvedFrom=${approvedFrom},
+                            approvedTo=${approvedTo},
+                            reviewedBy=${reviewedBy},
+                            status=${status}
+                       )}">
+                        Next »
+                    </a>
+                </div>
+            </div>
         </div>
     </main>
 </div>
+<script>
+    function validateFilterForm() {
+        const uploadFrom = document.querySelector('input[name="uploadFrom"]').value;
+        const uploadTo = document.querySelector('input[name="uploadTo"]').value;
+        const approvedFrom = document.querySelector('input[name="approvedFrom"]').value;
+        const approvedTo = document.querySelector('input[name="approvedTo"]').value;
+
+        const isAfter = (from, to) => {
+            if (!from || !to) return false;
+            return new Date(from) > new Date(to);
+        };
+
+        if (isAfter(uploadFrom, uploadTo)) {
+            alert("Upload From must be before Upload To.");
+            return false;
+        }
+
+        if (isAfter(approvedFrom, approvedTo)) {
+            alert("Approved From must be before Approved To.");
+            return false;
+        }
+
+        return true; // ok thì submit
+    }
+</script>
+
 </body>
 </html>

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -17,9 +19,18 @@ public class Category {
     private Long categoryId;
 
     @NotBlank(message = "Category name cannot be blank")
+    @Size(max = 100, message = "Category name must be at most 100 characters")
+    @Pattern(
+            regexp = "^(?!.* {2,}).+$",
+            message = "Category name must not contain consecutive spaces"
+    )
     @Column(nullable = false, columnDefinition = "NVARCHAR(100)")
     private String categoryName;
-
+    @Size(max = 100, message = "Description must be at most 100 characters")
+    @Pattern(
+            regexp = "^(?!.* {2,}).*$",
+            message = "Description must not contain consecutive spaces"
+    )
     @Column(columnDefinition = "NVARCHAR(100)")
     private String description;
 
@@ -32,6 +43,10 @@ public class Category {
 
     public enum Status {ACTIVE, DEACTIVATED}
 
+    @Pattern(
+            regexp = "^(?!.* {2,}).*$",
+            message = "Icon must not contain consecutive spaces"
+    )
     private String icon;
 
     public Category() {
