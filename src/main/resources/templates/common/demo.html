@@ -36,15 +36,15 @@
         <span th:text="${license.token}"></span>
     </p>
 
-    <p><strong>Tool Files:</strong></p>
-    <ul>
-        <li th:each="file : ${tool.files}">
-            <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
-                <span th:text="${file.filePath}">tool-file.ext</span>
-            </a>
-            <span class="file-type" th:text="'(' + ${file.fileType} + ')'">(type)</span>
-        </li>
-    </ul>
+<!--    <p><strong>Tool Files:</strong></p>-->
+<!--    <ul>-->
+<!--        <li th:each="file : ${tool.files}">-->
+<!--            <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">-->
+<!--                <span th:text="${file.filePath}">tool-file.ext</span>-->
+<!--            </a>-->
+<!--            <span class="file-type" th:text="'(' + ${file.fileType} + ')'">(type)</span>-->
+<!--        </li>-->
+<!--    </ul>-->
 
     <p><strong>Used:</strong>
         <span th:text="${license.used ? 'Yes' : 'No'}"></span>
