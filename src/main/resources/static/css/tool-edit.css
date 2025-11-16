@@ -144,3 +144,40 @@ body {
     justify-content: flex-end;
     gap: 0.7rem;
 }
+.current-files {
+    margin-top: 8px;
+    font-size: 0.9rem;
+}
+
+.current-files-title {
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.file-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 4px 0 0;
+}
+
+.file-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.file-list a {
+    text-decoration: none;
+    text-decoration-thickness: 1px;
+}
+
+.file-list a:hover {
+    text-decoration: underline;
+}
+
+.file-size {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+

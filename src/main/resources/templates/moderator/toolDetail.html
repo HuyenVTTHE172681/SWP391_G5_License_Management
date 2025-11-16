@@ -96,7 +96,10 @@
 
             <ul class="file-list" th:if="${tool.files != null and !#lists.isEmpty(tool.files)}">
                 <li th:each="file : ${tool.files}">
-                    <a th:href="@{${file.filePath}}" th:download="${file.filePath}" target="_blank">
+                    <!-- dùng '/' + filePath để khớp với ResourceHandler /uploads/** -->
+                    <a th:href="@{'/' + ${file.filePath}}"
+                       th:download="${file.filePath}"
+                       target="_blank">
                         <span th:text="${file.filePath}">tool-file.ext</span>
                     </a>
                     <span class="file-type" th:text="'(' + ${file.fileType} + ')'">(type)</span>
@@ -105,7 +108,7 @@
                 <!-- TOKEN grid (only when loginMethod == TOKEN) -->
                 <li class="token-block"
                     th:if="${tool.loginMethod?.name() == 'TOKEN' and licenseAccounts != null and !#lists.isEmpty(licenseAccounts)}">
-                    <p class="token-title">Token: (if login method == token)</p>
+                    <p class="token-title">Token: </p>
                     <div class="token-grid">
                         <span th:each="l : ${licenseAccounts}"
                               th:text="${l.token != null ? '*****' + #strings.substring(l.token, l.token.length() - 4) : 'No token'}"></span>

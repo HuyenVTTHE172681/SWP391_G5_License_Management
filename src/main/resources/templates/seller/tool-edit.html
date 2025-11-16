@@ -42,7 +42,33 @@
 
         <div class="form-group">
             <label class="form-label">Upload Tool File (.exe, .zip, .rar)</label>
+            <!-- upload file mới -->
             <input type="file" name="toolFile" class="form-control" accept=".exe,.zip,.rar">
+
+            <!-- file hiện có -->
+            <div class="current-files">
+                <span class="current-files-title">Current files:</span>
+
+                <!-- Nếu chưa có file -->
+                <span th:if="${#lists.isEmpty(tool.files)}">
+            <em>No file uploaded.</em>
+        </span>
+
+                <!-- Nếu đã có file -->
+                <ul class="file-list" th:if="${!#lists.isEmpty(tool.files)}">
+                    <li th:each="f : ${tool.files}">
+                        <!-- filePath đang lưu dạng: uploads/tools/xxx.zip -->
+                        <!-- => href="/uploads/tools/xxx.zip" -->
+                        <a th:href="@{'/' + ${f.filePath}}"
+                           th:text="${f.filePath}">
+                            Download
+                        </a>
+                    </li>
+                </ul>
+
+
+
+            </div>
         </div>
 
         <div class="form-group">
