@@ -57,6 +57,16 @@ public class ToolService {
         toolRepository.saveAndFlush(tool);
     }
 
+    @Transactional
+    public void activateTool(Long id) {
+        Tool tool = getToolById(id);
+        if (tool == null) throw new IllegalArgumentException("Tool not found");
+
+        tool.setStatus(Tool.Status.PUBLISHED);
+        tool.setUpdatedAt(LocalDateTime.now());
+        toolRepository.saveAndFlush(tool);
+    }
+
     // ==========================================================
     // 🔹 UPDATE TOOL
     // ==========================================================

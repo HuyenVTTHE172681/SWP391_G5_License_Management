@@ -136,6 +136,28 @@ public class ToolController {
         return "redirect:/seller/tools";
     }
 
+    @PostMapping("/{id}/activate")
+    public String activateTool(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttrs) {
+        Account seller = (Account) session.getAttribute("loggedInAccount");
+        if (seller == null) {
+            redirectAttrs.addFlashAttribute("error", "Please login again.");
+            return "redirect:/login";
+        }
+
+        if (!accountService.isSellerActive(seller)) {
+            redirectAttrs.addFlashAttribute("error", "Your seller package has expired. Please renew before continuing.");
+            return "redirect:/seller/renew";
+        }
+
+        try {
+            toolService.activateTool(id);
+            redirectAttrs.addFlashAttribute("success", "Tool has been activated successfully!");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/seller/tools";
+    }
     // ==========================================================
     // 🔹 FLOW 2: TOOL CREATION
     // ==========================================================

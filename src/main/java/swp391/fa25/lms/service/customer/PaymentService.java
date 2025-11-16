@@ -414,20 +414,52 @@ public class PaymentService {
             helper.setTo(order.getAccount().getEmail());
             helper.setSubject("[LMS] Thanh toán thành công - Thông tin tài khoản Tool");
 
+            Long toolId = order.getTool().getToolId();
+            String demoURL = "http://localhost:7070/demo/" + toolId;
+
             String body = """
-                <h2>Bạn đã mua thành công tool: <b>%s</b></h2>
-                <p><b>License:</b> %s</p>
-                <p><b>Tên đăng nhập:</b> %s</p>
-                <p><b>Mật khẩu:</b> %s</p>
-                <p>Thời hạn sử dụng đến: %s</p>
-                <br/>
-                <p>Chúc bạn trải nghiệm vui vẻ!</p>
-                """.formatted(
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background-color: #f4f4f4; padding: 20px; border-radius: 8px;">
+                    <h2 style="color: #007bff; text-align: center; margin-bottom: 20px; font-size: 24px;">Thanh toán thành công!</h2>
+                    
+                    <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px;">
+                        <strong>Tool đã mua:</strong> %s
+                    </p>
+                    
+                    <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px;">
+                        <strong>License:</strong> %s
+                    </p>
+                    
+                    <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px;">
+                        <strong>Tên đăng nhập:</strong> %s
+                    </p>
+                    
+                    <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px;">
+                        <strong>Mật khẩu:</strong> %s
+                    </p>
+                    
+                    <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 20px;">
+                        <strong>Thời hạn sử dụng đến:</strong> %s
+                    </p>
+                    
+                    <p style="text-align: center; margin-bottom: 20px;">
+                        <a href="%s" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Truy cập Tool ngay</a>
+                    </p>
+                    
+                    <p style="text-align: center; color: #666; font-size: 14px;">
+                        Chúc bạn trải nghiệm vui vẻ!
+                    </p>
+                </div>
+            </body>
+            </html>
+            """.formatted(
                     order.getTool().getToolName(),
                     order.getLicense().getName(),
                     acc.getUsername(),
                     acc.getPassword(),
-                    acc.getEndDate().toLocalDate()
+                    acc.getEndDate().toLocalDate(),
+                    demoURL  // Thêm đường dẫn mới
             );
 
             helper.setText(body, true);
@@ -449,19 +481,56 @@ public class PaymentService {
             helper.setTo(order.getAccount().getEmail());
             helper.setSubject("[LMS] Thanh toán thành công - Tool Token");
 
+            // Lấy toolId để build URL
+            Long toolId = order.getTool().getToolId();
+            String accessUrl = "http://localhost:7070/demo/" + toolId;
+
             String body = """
-                <h2>Bạn đã mua thành công tool: <b>%s</b></h2>
-                <p><b>License:</b> %s</p>
-                <p><b>Token sử dụng:</b> %s</p>
-                <p><b>Trạng thái token:</b> Đã kích hoạt</p>
-                <p>Thời hạn sử dụng đến: %s</p>
-                <br/>
-                <p><i>Lưu ý:</i> Token này chỉ được dùng một lần và không thể chỉnh sửa.</p>
-                """.formatted(
+                    <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <div style="background-color: #f4f4f4; padding: 20px; border-radius: 8px;">
+                            <h2 style="color: #007bff; text-align: center; margin-bottom: 20px; font-size: 24px;">Thanh toán thành công!</h2>
+                            
+                            <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px;">
+                                <strong>Tool đã mua:</strong> %s
+                            </p>
+                            
+                            <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px;">
+                                <strong>License:</strong> %s
+                            </p>
+                            
+                            <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px;">
+                                <strong>Token sử dụng:</strong> %s
+                            </p>
+                            
+                            <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px;">
+                                <strong>Trạng thái token:</strong> Đã kích hoạt
+                            </p>
+                            
+                            <p style="background-color: #fff; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 20px;">
+                                <strong>Thời hạn sử dụng đến:</strong> %s
+                            </p>
+                            
+                            <p style="text-align: center; margin-bottom: 20px;">
+                                <a href="%s" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Truy cập Tool ngay</a>
+                            </p>
+                            
+                            <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 10px;">
+                                <i>Lưu ý:</i> Token này chỉ được dùng một lần và không thể chỉnh sửa.
+                            </p>
+                            
+                            <p style="text-align: center; color: #666; font-size: 14px;">
+                                Chúc bạn trải nghiệm vui vẻ!
+                            </p>
+                        </div>
+                    </body>
+                    </html>
+                    """.formatted(
                     order.getTool().getToolName(),
                     order.getLicense().getName(),
                     tokenAcc.getToken(),
-                    tokenAcc.getEndDate().toLocalDate()
+                    tokenAcc.getEndDate().toLocalDate(),
+                    accessUrl  // Thêm đường dẫn mới
             );
 
             helper.setText(body, true);
