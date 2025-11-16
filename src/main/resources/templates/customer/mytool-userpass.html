@@ -38,7 +38,7 @@
                 <!-- Nút Renew: chỉ enable nếu tool không DEACTIVATED -->
                 <button class="btn btn-success"
                         th:if="${tool.loginMethod != null && tool.loginMethod.name() == 'USER_PASSWORD'
-                               && tool.status != null && tool.status.name() != 'DEACTIVATED'}"
+                               && tool.status != null && tool.status.name() != 'DEACTIVATED' && tool.availableQuantity > 0}"
                         data-bs-toggle="modal" data-bs-target="#renewModal">
                     Renew
                 </button>

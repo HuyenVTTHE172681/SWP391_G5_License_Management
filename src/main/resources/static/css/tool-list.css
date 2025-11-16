@@ -120,3 +120,38 @@ footer {
     .hero h1 { font-size: 1.8rem; }
     .btn-add { padding: 8px 16px; }
 }
+.btn.activate {
+    background-color: #16a34a;      /* xanh kích hoạt */
+    color: #ffffff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition:
+            background-color 0.2s ease,
+            transform 0.1s ease,
+            box-shadow 0.1s ease;
+}
+
+/* Icon trong nút */
+.btn.activate i {
+    font-size: 0.9rem;
+}
+
+/* Hover */
+.btn.activate:hover {
+    background-color: #15803d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Khi bấm giữ */
+.btn.activate:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
