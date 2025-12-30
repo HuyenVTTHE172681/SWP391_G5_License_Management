@@ -34,6 +34,10 @@ public class RoleDataInitializer implements CommandLineRunner {
     private WalletRepository walletRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private ToolFileRepository toolFileRepository;
+    @Autowired
+    private LicenseAccountRepository licenseAccountRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -263,10 +267,76 @@ public class RoleDataInitializer implements CommandLineRunner {
             t10.setStatus(Tool.Status.PUBLISHED);
             t10.setCreatedAt(LocalDateTime.now().minusDays(2));
 
-            toolRepo.saveAll(Arrays.asList(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10));
+            // === TOOL VỚI HAI KIỂU LOGIN METHOD ===
+            Tool tokenTool = new Tool();
+            tokenTool.setToolName("Facebook Token Generator");
+            tokenTool.setDescription("Tool tạo token đăng nhập Facebook tự động, bảo mật cao.");
+            tokenTool.setImage("/images/tools/token_tool.png");
+            tokenTool.setSeller(seller1);
+            tokenTool.setCategory(categories.get(2)); // Tăng tương tác
+            tokenTool.setStatus(Tool.Status.PUBLISHED);
+            tokenTool.setLoginMethod(Tool.LoginMethod.TOKEN);
+            tokenTool.setQuantity(5);
+            tokenTool.setCreatedAt(LocalDateTime.now().minusDays(3));
+
+            Tool userPassTool = new Tool();
+            userPassTool.setToolName("Instagram Auto Poster");
+            userPassTool.setDescription("Tự động đăng bài Instagram, hỗ trợ nhiều tài khoản.");
+            userPassTool.setImage("/images/tools/insta_poster.png");
+            userPassTool.setSeller(seller2);
+            userPassTool.setCategory(categories.get(1)); // Phần mềm
+            userPassTool.setStatus(Tool.Status.PUBLISHED);
+            userPassTool.setLoginMethod(Tool.LoginMethod.USER_PASSWORD);
+            userPassTool.setQuantity(10);
+            userPassTool.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+            toolRepo.saveAll(Arrays.asList(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, tokenTool, userPassTool));
         } else {
             System.out.println("Tool already exist, skipping initialization.");
         }
+
+        List<Category> categories = categoryRepo.findAll();
+        Account seller1 = accountRepo.findByEmail("seller1@example.com")
+                .orElseThrow(() -> new RuntimeException("Seller 1 not found"));
+        Account seller2 = accountRepo.findByEmail("seller2@example.com")
+                .orElseThrow(() -> new RuntimeException("Seller 1 not found"));
+
+        // ============ Tool File ============
+        Tool tokenTool = toolRepo.findByToolName("Facebook Token Generator")
+                .orElseThrow(() -> new RuntimeException("Token Tool not found"));
+        Tool userPassTool = toolRepo.findByToolName("Instagram Auto Poster")
+                .orElseThrow(() -> new RuntimeException("UserPass Tool not found"));
+
+        ToolFile tokenOriginal = new ToolFile();
+        tokenOriginal.setTool(tokenTool);
+        tokenOriginal.setFilePath("/files/facebook_token/original.zip");
+        tokenOriginal.setFileType(ToolFile.FileType.ORIGINAL);
+        tokenOriginal.setUploadedBy(seller1);
+        tokenOriginal.setCreatedAt(LocalDateTime.now().minusDays(5));
+
+        ToolFile tokenWrapped = new ToolFile();
+        tokenWrapped.setTool(tokenTool);
+        tokenWrapped.setFilePath("/files/facebook_token/wrapped.zip");
+        tokenWrapped.setFileType(ToolFile.FileType.WRAPPED);
+        tokenWrapped.setUploadedBy(seller1);
+        tokenWrapped.setCreatedAt(LocalDateTime.now().minusDays(3));
+
+        ToolFile instaOriginal = new ToolFile();
+        instaOriginal.setTool(userPassTool);
+        instaOriginal.setFilePath("/files/insta_poster/original.zip");
+        instaOriginal.setFileType(ToolFile.FileType.ORIGINAL);
+        instaOriginal.setUploadedBy(seller2);
+        instaOriginal.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+        ToolFile instaWrapped = new ToolFile();
+        instaWrapped.setTool(userPassTool);
+        instaWrapped.setFilePath("/files/insta_poster/wrapped.zip");
+        instaWrapped.setFileType(ToolFile.FileType.WRAPPED);
+        instaWrapped.setUploadedBy(seller2);
+        instaWrapped.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+        toolFileRepository.saveAll(Arrays.asList(tokenOriginal, tokenWrapped, instaOriginal, instaWrapped));
+        System.out.println("Tool files initialized.");
 
         // ============ FEEDBACK ============
         if (feedbackRepo.count() == 0) {
@@ -295,21 +365,7 @@ public class RoleDataInitializer implements CommandLineRunner {
             f3.setComment("Phân tích rất chi tiết, đáng tiền!");
             f3.setCreatedAt(LocalDateTime.now());
 
-            Feedback f4 = new Feedback();
-            f4.setAccount(customer);
-            f4.setTool(tools.get(2));
-            f4.setRating(4);
-            f4.setComment("Kho su dung");
-            f4.setCreatedAt(LocalDateTime.now().minusDays(8));
-
-            Feedback f5 = new Feedback();
-            f5.setAccount(customer);
-            f5.setTool(tools.get(2));
-            f5.setRating(5);
-            f5.setComment("Kho su dung");
-            f5.setCreatedAt(LocalDateTime.now().minusDays(8));
-
-            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3, f4, f5));
+            feedbackRepo.saveAll(Arrays.asList(f1, f2, f3));
         } else {
             System.out.println("Feedback already exist, skipping initialization.");
         }
@@ -379,15 +435,64 @@ public class RoleDataInitializer implements CommandLineRunner {
             License l21 = new License("Gói Premium", tools.get(9), 365, 149.99, null, LocalDateTime.now().minusDays(1));
             License l22 = new License("Gói dùng thử", tools.get(9), 14, 0.0, null, LocalDateTime.now().minusDays(3));
 
+            // License cho tokenTool
+            License tokenLicense1 = new License("Gói dùng thử 7 ngày", tokenTool, 7, 10000.0, null, LocalDateTime.now().minusDays(2));
+            License tokenLicense2 = new License("Gói 1 tháng", tokenTool, 30, 40000.0, null, LocalDateTime.now().minusDays(1));
+
+            // License cho userPassTool
+            License userPassLicense1 = new License("Gói 1 tháng", userPassTool, 30, 19000.0, null, LocalDateTime.now().minusDays(2));
+            License userPassLicense2 = new License("Gói 6 tháng", userPassTool, 180, 69000.0, null, LocalDateTime.now().minusDays(1));
+
             licenseRepo.saveAll(Arrays.asList(
                     l1, l2, l3, l4, l5, l6, l7, l8, l9, l10,
-                    l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22
+                    l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22,
+                    tokenLicense1, tokenLicense2, userPassLicense1, userPassLicense2
             ));
 
             System.out.println("Default licenses have been initialized.");
         } else {
             System.out.println("Licenses already exist, skipping initialization.");
         }
+
+
+        // ============ LICENSE ACCOUNT ============
+        if (licenseAccountRepository.count() == 0) {
+            // Token-based accounts
+            LicenseAccount token1 = new LicenseAccount();
+            token1.setTool(tokenTool);
+            token1.setUsername("N/A");
+            token1.setPassword("N/A");
+            token1.setToken("ABC123XYZ");
+            token1.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
+            token1.setUsed(false);
+
+            LicenseAccount token2 = new LicenseAccount();
+            token2.setTool(tokenTool);
+            token2.setUsername("N/A");
+            token2.setPassword("N/A");
+            token2.setToken("XYZ789QWE");
+            token2.setLoginMethod(LicenseAccount.LoginMethod.TOKEN);
+            token2.setUsed(false);
+
+            // User-password accounts
+            LicenseAccount acc1 = new LicenseAccount();
+            acc1.setTool(userPassTool);
+            acc1.setUsername("insta_user_01");
+            acc1.setPassword(passwordEncoder.encode("pass123"));
+            acc1.setLoginMethod(LicenseAccount.LoginMethod.USER_PASSWORD);
+            acc1.setUsed(false);
+
+            LicenseAccount acc2 = new LicenseAccount();
+            acc2.setTool(userPassTool);
+            acc2.setUsername("insta_user_02");
+            acc2.setPassword(passwordEncoder.encode("pass456"));
+            acc2.setLoginMethod(LicenseAccount.LoginMethod.USER_PASSWORD);
+            acc2.setUsed(false);
+
+            licenseAccountRepository.saveAll(Arrays.asList(token1, token2, acc1, acc2));
+            System.out.println("License accounts initialized.");
+        }
+
 
         // ============ WALLET ============
         // Tạo ví mặc định cho tất cả Seller (nếu chưa có)
@@ -411,6 +516,8 @@ public class RoleDataInitializer implements CommandLineRunner {
         }
 
         System.out.println("Wallet initialization completed successfully.");
+
+
     }
 
     }
