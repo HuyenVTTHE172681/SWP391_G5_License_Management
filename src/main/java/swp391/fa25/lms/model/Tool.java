@@ -43,6 +43,13 @@ public class Tool {
     @Column(name = "login_method")
     private Set<String> loginMethods = new HashSet<>();
 
+    @Enumerated(EnumType.STRING)
+    private LoginMethod loginMethod;
+    public enum LoginMethod {
+        USER_PASSWORD,
+        TOKEN
+    }
+
     @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -218,5 +225,17 @@ public class Tool {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public LoginMethod getLoginMethod() {
+        return loginMethod;
+    }
+
+    public void setLoginMethod(LoginMethod loginMethod) {
+        this.loginMethod = loginMethod;
+    }
+
+    public Tool(LoginMethod loginMethod) {
+        this.loginMethod = loginMethod;
     }
 }

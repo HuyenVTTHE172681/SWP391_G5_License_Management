@@ -51,5 +51,6 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     @EntityGraph(attributePaths = {"licenses", "seller", "category"})
     Optional<Tool> findByToolIdAndStatus(Long toolId, Tool.Status status);
     Optional<Tool> findById(Long toolId);
+    Optional<Tool> findByToolName(String toolName);
 
 }
