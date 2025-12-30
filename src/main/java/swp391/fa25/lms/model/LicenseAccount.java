@@ -27,7 +27,7 @@ public class LicenseAccount {
     private License license;
 
     @OneToOne
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    @JoinColumn(name = "order_id", unique = true)
     private CustomerOrder order; // mỗi order sinh ra 1 license account
 
     @ManyToOne
@@ -45,7 +45,7 @@ public class LicenseAccount {
     private LocalDateTime endDate;
     private LocalDateTime lastLogin;
     private String deviceInfo;
-    private Integer maxDevices;
+    private Integer maxDevices = 1;
 
     // ===== NEW FIELDS =====
     @Enumerated(EnumType.STRING)
